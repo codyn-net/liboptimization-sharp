@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{6438EC09-091A-4BDF-8E81-9C1F0B5CD2B3}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>optimization-sharp</AssemblyName>
+    <RootNamespace>optimization</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>protobuf-net.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Optimizer.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Messages\Task.cs" />
+    <Compile Include="Solution.cs" />
+    <Compile Include="Boundary.cs" />
+    <Compile Include="Parameter.cs" />
+    <Compile Include="State.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Random.cs" />
+    <Compile Include="Store\IStore.cs" />
+    <Compile Include="Fitness\IFitness.cs" />
+    <Compile Include="Fitness\Expression.cs" />
+    <Compile Include="Fitness\Default.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Messages\" />
+    <Folder Include="Store\" />
+    <Folder Include="Fitness\" />
+  </ItemGroup>
+</Project>
