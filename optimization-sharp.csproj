@@ -52,10 +52,16 @@
     <Compile Include="Storage\Storage.cs" />
     <Compile Include="Fitness.cs" />
     <Compile Include="Storage\SQLite.cs" />
+    <Compile Include="Math\Tokenizer.cs" />
+    <Compile Include="Math\Expression.cs" />
+    <Compile Include="Math\Instruction.cs" />
+    <Compile Include="Math\Operations.cs" />
+    <Compile Include="Job.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Messages\" />
     <Folder Include="Storage\" />
+    <Folder Include="Math\" />
   </ItemGroup>
 </Project>
