@@ -1,94 +1,101 @@
 using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 using System.Reflection;
+using System.Collections;
 
 namespace Optimization
 {
-	[XmlType("settings")]
-	public class Settings : Dictionary<string, object>
+	public class Settings : IEnumerable<KeyValuePair<string, object>>
 	{
-		[XmlType("setting")]
-		public struct Serialize
+		public class Name : Attribute
 		{
-			[XmlAttribute("name")]
-			public string Name;
+			private string d_name;
 			
-			[XmlText()]
-			public object Value;
-			
-			public Serialize(string name, string val)
+			public Name(string name)
 			{
-				Name = name;
-				Value = val;
+				d_name = name;
+			}
+			
+			public override string ToString()
+			{
+				return d_name;
 			}
 		}
 		
-		public List<KeyValuePair<string, object>> TypedSettings()
+		private Dictionary<string, FieldInfo> d_settings;
+		
+		public Settings()
 		{
-			List<KeyValuePair<string, object>> ret = new List<KeyValuePair<string, object>>();
-			
-			foreach (FieldInfo info in GetType().GetFields())
+			d_settings = new Dictionary<string, FieldInfo>();
+		}
+		
+		private void Scan()
+		{
+			if (d_settings.Count != 0)
 			{
-				object[] attrs = info.GetCustomAttributes(typeof(XmlElementAttribute), false);
+				return;
+			}
+			
+			foreach (FieldInfo info in GetType().GetFields(BindingFlags.Public | BindingFlags.Instance))
+			{
+				object[] attrs = info.GetCustomAttributes(typeof(Name), false);
+				string nm = info.Name;
 				
-				if (attrs.Length == 0)
+				if (attrs.Length != 0)
 				{
-					continue;
+					nm = (attrs[0] as Name).ToString();
 				}
 				
-				XmlElementAttribute at = attrs[0] as XmlElementAttribute;
-				ret.Add(new KeyValuePair<string, object>(at.ElementName, info.GetValue(this)));
+				d_settings[nm] = info;
 			}
-			
-			return ret;
 		}
 		
-		public object TypedSetting(string name)
+		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
-			foreach (FieldInfo info in GetType().GetFields())
+			Scan();
+
+			foreach (KeyValuePair<string, FieldInfo> pair in d_settings)
 			{
-				object[] attrs = info.GetCustomAttributes(typeof(XmlElementAttribute), false);
-				
-				if (attrs.Length == 0)
-				{
-					continue;
-				}
-				
-				XmlElementAttribute at = attrs[0] as XmlElementAttribute;
-				
-				if (at.ElementName == name)
-				{
-					return info.GetValue(this);
-				}
+				yield return new KeyValuePair<string, object>(pair.Key, pair.Value.GetValue(this));
 			}
-			
-			return null;
 		}
 		
-		public string AsString(string key)
+		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return this[key].ToString();
+			return GetEnumerator();
 		}
-		
-		protected Serialize[] GetSerialized()
-		{
-			List<Serialize> settings = new List<Serialize>();
-			
-			foreach (KeyValuePair<string,object> setting in this)
-			{
-				settings.Add(new Serialize(setting.Key, setting.Value.ToString()));
-			}
-			
-			return settings.ToArray();
-		}
-		
-		[XmlElement("settings", typeof(Serialize))]
-		public Serialize[] Serialized
+
+		public object this[string name]
 		{
 			get
 			{
-				return GetSerialized();
+				Scan();
+				
+				if (!d_settings.ContainsKey(name))
+				{
+					return null;
+				}
+				
+				return d_settings[name].GetValue(this);
+			}
+			set
+			{
+				Scan();
+				
+				if (d_settings.ContainsKey(name))
+				{
+					FieldInfo info = d_settings[name];
+					
+					try
+					{
+						object val = Convert.ChangeType(value, info.FieldType);
+						d_settings[name].SetValue(this, val);
+					}
+					catch (Exception)
+					{
+						// Do nothing if conversion failed...
+					}
+				}
 			}
 		}
 	}
