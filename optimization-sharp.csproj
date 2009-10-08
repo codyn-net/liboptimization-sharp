@@ -8,7 +8,7 @@
     <ProjectGuid>{6438EC09-091A-4BDF-8E81-9C1F0B5CD2B3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>optimization-sharp</AssemblyName>
-    <RootNamespace>optimization</RootNamespace>
+    <RootNamespace>Optimization</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,6 +35,9 @@
       <HintPath>protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
+    <Reference Include="Mono.Data.SqliteClient" />
+    <Reference Include="Mono.Data.Sqlite" />
+    <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Optimizer.cs" />
@@ -46,15 +49,13 @@
     <Compile Include="State.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="Random.cs" />
-    <Compile Include="Store\IStore.cs" />
-    <Compile Include="Fitness\IFitness.cs" />
-    <Compile Include="Fitness\Expression.cs" />
-    <Compile Include="Fitness\Default.cs" />
+    <Compile Include="Storage\Storage.cs" />
+    <Compile Include="Fitness.cs" />
+    <Compile Include="Storage\SQLite.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Messages\" />
-    <Folder Include="Store\" />
-    <Folder Include="Fitness\" />
+    <Folder Include="Storage\" />
   </ItemGroup>
 </Project>

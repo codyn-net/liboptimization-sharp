@@ -8,22 +8,25 @@ namespace Optimization
 		uint d_id;
 		State d_state;
 		
-		Fitness.IFitness d_fitness;
+		Fitness d_fitness;
 		List<Parameter> d_parameters;
 		Dictionary<string, Parameter> d_parameterMap;
 		
-		public Solution(uint id, Fitness.IFitness fitness, State state)
+		public Solution(uint id, Fitness fitness, State state)
 		{
-			d_id = id;
-			d_state = state;
-			d_fitness = fitness;
-			
 			d_parameters = new List<Parameter>();
 			d_parameterMap = new Dictionary<string, Parameter>();
 		}
 		
 		public Solution() : this(0, null, null)
 		{
+		}
+		
+		public virtual void Initialize(uint id, Fitness fitness, State state)
+		{
+			d_id = id;
+			d_fitness = fitness;
+			d_state = state;
 		}
 		
 		public List<Parameter> Parameters
@@ -54,13 +57,13 @@ namespace Optimization
 		
 		public object Clone()
 		{
-			Solution ret = new Solution(d_id, d_fitness.Clone() as Fitness.IFitness, d_state);
+			Solution ret = new Solution(d_id, d_fitness.Clone() as Fitness, d_state);
 			ret.Copy(this);
 			
 			return ret;
 		}
 		
-		public Fitness.IFitness Fitness
+		public Fitness Fitness
 		{
 			get
 			{

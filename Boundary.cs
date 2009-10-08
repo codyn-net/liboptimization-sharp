@@ -25,6 +25,10 @@ namespace Optimization
 		{
 		}
 		
+		public Boundary() : this("")
+		{
+		}
+		
 		[XmlAttribute("name")]
 		public string Name
 		{

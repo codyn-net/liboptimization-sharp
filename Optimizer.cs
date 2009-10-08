@@ -4,6 +4,7 @@ using System.Xml.Serialization;
 
 namespace Optimization
 {
+	[XmlType("optimizer")]
 	public abstract class Optimizer
 	{
 		public class Settings : Optimization.Settings
@@ -15,23 +16,27 @@ namespace Optimization
 			public uint PopulationSize;
 		}
 		
-		IStore d_store;
-		State d_state;
+		private Storage.Storage d_storage;
 		
-		List<Parameter> d_parameters;
-		List<Boundary> d_boundaries;
+		private State d_state;
+		private Fitness d_fitness;
 		
-		List<Solution> d_population;
-		Solution d_best;
+		private List<Parameter> d_parameters;
+		private List<Boundary> d_boundaries;
 		
-		uint d_currentIteration;
+		private List<Solution> d_population;
+		private Solution d_best;
 		
-		Settings d_settings;
+		private uint d_currentIteration;
+		
+		private Settings d_settings;
 		
 		public Optimizer()
 		{
 			d_state = new State();
-			d_settings = new Settings();
+			d_fitness = new Fitness();
+
+			d_settings = SettingsFactory();
 			
 			d_population = new List<Solution>();
 			d_parameters = new List<Parameter>();
@@ -42,16 +47,18 @@ namespace Optimization
 		{
 			// Create the initial population
 			InitializePopulation();
+			
+			d_storage.Begin();
 		}
 		
-		virtual public Fitness.IFitness CreateFitness()
+		protected Settings SettingsFactory()
 		{
-			return new Fitness.Default();
+			return new Settings();
 		}
 		
-		virtual protected Solution CreateSolution(uint id)
+		protected Solution SolutionFactory(uint idx)
 		{
-			return new Solution(id, CreateFitness(), d_state);
+			return new Solution(idx, d_fitness, d_state);
 		}
 		
 		virtual public void InitializePopulation()
@@ -62,7 +69,7 @@ namespace Optimization
 			for (uint idx = 0; idx < d_settings.PopulationSize; ++idx)
 			{
 				// Create new solution
-				Solution solution = CreateSolution(idx);
+				Solution solution = SolutionFactory(idx);
 				
 				// Set solution parameter template
 				solution.Parameters = d_parameters;
@@ -79,16 +86,7 @@ namespace Optimization
 			d_population.Add(solution);
 		}
 		
-		[XmlElement("parameters", typeof(Parameter))]
-		public List<Parameter> Parameters
-		{
-			get
-			{
-				return d_parameters;
-			}
-		}
-		
-		[XmlElement("boundaries", typeof(Boundary))]
+		[XmlArray("boundaries")]
 		public List<Boundary> Boundaries
 		{
 			get
@@ -96,25 +94,48 @@ namespace Optimization
 				return d_boundaries;
 			}
 		}
-		
-		public IStore Store
+
+		[XmlArray("parameters")]
+		public List<Parameter> Parameters
 		{
 			get
 			{
-				return d_store;
+				return d_parameters;
+			}
+		}
+
+		[XmlIgnore()]
+		public Storage.Storage Storage
+		{
+			get
+			{
+				return d_storage;
 			}
 			set
 			{
-				 d_store = value;
+				 d_storage = value;
 			}
 		}
 		
-		public abstract string Name
+		[XmlIgnore()]
+		public State State
 		{
-			get;
+			get
+			{
+				return d_state;
+			}
 		}
 		
-		[XmlElement()]
+		[XmlIgnore()]
+		public Fitness Fitness
+		{
+			get
+			{
+				return d_fitness;
+			}
+		}
+		
+		[XmlElement("configuration")]
 		public Settings Configuration
 		{
 			get
@@ -127,6 +148,7 @@ namespace Optimization
 			}
 		}
 		
+		[XmlIgnore()]
 		public uint CurrentIteration
 		{
 			get
@@ -167,7 +189,7 @@ namespace Optimization
 			UpdateBest();
 			
 			// Then tell the store to save the current iteration
-			d_store.SaveIteration(this);
+			d_storage.SaveIteration();
 
 			// Increment the iteration number
 			IncrementIteration();
@@ -175,6 +197,7 @@ namespace Optimization
 			// Check if the optimization is finished
 			if (Finished())
 			{
+				d_storage.End();
 				return false;
 			}
 		

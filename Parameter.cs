@@ -3,6 +3,7 @@ using System.Xml.Serialization;
 
 namespace Optimization
 {
+	[XmlType("parameter")]
 	public class Parameter : ICloneable
 	{
 		private string d_name;
@@ -29,6 +30,10 @@ namespace Optimization
 		{
 		}
 		
+		public Parameter() : this ("")
+		{
+		}
+		
 		public object Clone()
 		{
 			return new Parameter(d_name, d_value, d_boundary);
@@ -47,7 +52,7 @@ namespace Optimization
 			}
 		}
 		
-		[XmlAttribute("value")]
+		[XmlIgnore()]
 		public double Value
 		{
 			get
@@ -60,6 +65,7 @@ namespace Optimization
 			}
 		}
 		
+		[XmlIgnore()]
 		public Boundary Boundary
 		{
 			get
@@ -78,6 +84,10 @@ namespace Optimization
 			get
 			{
 				return d_boundary.Name;
+			}
+			set
+			{
+				d_boundary = new Boundary(value);
 			}
 		}
 	}
