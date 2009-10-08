@@ -1,19 +1,63 @@
 using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
+using System.Reflection;
 
 namespace Optimization
 {
-	[XmlType("optimizer")]
-	public abstract class Optimizer
+	public class Optimizer
 	{
 		public class Settings : Optimization.Settings
 		{
-			[XmlElement("max-iterations")]
+			[Settings.Name("max-iterations")]
 			public uint MaxIterations;
 			
-			[XmlElement("population-size")]
+			[Settings.Name("population-size")]
 			public uint PopulationSize;
+		}
+		
+		public class TypeClass : Attribute
+		{
+			Type d_type;
+			
+			public TypeClass()
+			{
+				d_type = null;
+			}
+			
+			public TypeClass(Type type)
+			{
+				d_type = type;
+			}
+			
+			public Type Type
+			{
+				get
+				{
+					return d_type;
+				}
+			}
+		}
+		
+		public class SolutionClass : TypeClass
+		{
+			public SolutionClass()
+			{
+			}
+			
+			public SolutionClass(Type type) : base(type)
+			{
+			}
+		}
+		
+		public class SettingsClass : TypeClass
+		{
+			public SettingsClass()
+			{
+			}
+			
+			public SettingsClass(Type type) : base(type)
+			{
+			}
 		}
 		
 		private Storage.Storage d_storage;
@@ -30,15 +74,17 @@ namespace Optimization
 		private uint d_currentIteration;
 		
 		private Settings d_settings;
+		private ConstructorInfo d_solutionConstructor;
 		
 		public Optimizer()
 		{
-			d_state = new State();
 			d_fitness = new Fitness();
 
-			d_settings = SettingsFactory();
+			d_settings = CreateSettings();
+			d_state = new State(d_settings);
 			
 			d_population = new List<Solution>();
+
 			d_parameters = new List<Parameter>();
 			d_boundaries = new List<Boundary>();
 		}
@@ -51,14 +97,91 @@ namespace Optimization
 			d_storage.Begin();
 		}
 		
-		protected Settings SettingsFactory()
+		private Type FindTypeClass(Type parent, Type attrType)
 		{
+			object[] attrs;
+			TypeClass t;
+			
+			// Check for the attribute on the current type
+			attrs = GetType().GetCustomAttributes(attrType, true);
+			
+			if (attrs.Length != 0)
+			{
+				t = attrs[0] as TypeClass;
+				
+				if (t.Type != null && t.Type.IsSubclassOf(parent))
+				{
+					return t.Type;
+				}
+			}
+			
+			Type potential = null;
+			
+			// Find subclasses with the attrType attribute
+			foreach (Type type in GetType().GetNestedTypes(BindingFlags.Public))
+			{
+				if (!type.IsSubclassOf(parent))
+				{
+					continue;
+				}
+				
+				// Store potential subclass here if we don't find anything with the attribute
+				potential = type;
+				attrs = type.GetCustomAttributes(attrType, true);
+				
+				if (attrs.Length == 0)
+				{
+					continue;
+				}
+				
+				t = attrs[0] as TypeClass;
+				
+				if (t.Type == null)
+				{
+					return type;
+				}
+				else
+				{
+					return t.Type;
+				}
+			}
+			
+			return potential;
+		}
+		
+		protected virtual Settings CreateSettings()
+		{
+			Type type = FindTypeClass(typeof(Settings), typeof(SettingsClass));
+			
+			if (type != null)
+			{
+				object ret = type.GetConstructor(new Type[] {}).Invoke(new object[] {});
+				
+				return ret as Settings;
+			}
+			
 			return new Settings();
 		}
 		
-		protected Solution SolutionFactory(uint idx)
+		protected virtual Solution CreateSolution(uint idx)
 		{
-			return new Solution(idx, d_fitness, d_state);
+			if (d_solutionConstructor == null)
+			{
+				Type type = FindTypeClass(typeof(Settings), typeof(SettingsClass));
+				
+				if (type != null)
+				{
+					d_solutionConstructor = type.GetConstructor(new Type[] {typeof(uint), typeof(Fitness), typeof(State)});
+				}
+			}
+			
+			if (d_solutionConstructor == null)
+			{
+				return new Solution(idx, d_fitness, d_state);
+			}
+
+			object ret = d_solutionConstructor.Invoke(new object[] {idx, d_fitness, d_state});
+			return ret as Solution;
 		}
 		
 		virtual public void InitializePopulation()
@@ -69,7 +192,7 @@ namespace Optimization
 			for (uint idx = 0; idx < d_settings.PopulationSize; ++idx)
 			{
 				// Create new solution
-				Solution solution = SolutionFactory(idx);
+				Solution solution = CreateSolution(idx);
 				
 				// Set solution parameter template
 				solution.Parameters = d_parameters;
@@ -86,7 +209,6 @@ namespace Optimization
 			d_population.Add(solution);
 		}
 		
-		[XmlArray("boundaries")]
 		public List<Boundary> Boundaries
 		{
 			get
@@ -95,7 +217,6 @@ namespace Optimization
 			}
 		}
 
-		[XmlArray("parameters")]
 		public List<Parameter> Parameters
 		{
 			get
@@ -104,7 +225,6 @@ namespace Optimization
 			}
 		}
 
-		[XmlIgnore()]
 		public Storage.Storage Storage
 		{
 			get
@@ -116,8 +236,7 @@ namespace Optimization
 				 d_storage = value;
 			}
 		}
-		
-		[XmlIgnore()]
+
 		public State State
 		{
 			get
@@ -125,8 +244,7 @@ namespace Optimization
 				return d_state;
 			}
 		}
-		
-		[XmlIgnore()]
+
 		public Fitness Fitness
 		{
 			get
@@ -134,21 +252,7 @@ namespace Optimization
 				return d_fitness;
 			}
 		}
-		
-		[XmlElement("configuration")]
-		public Settings Configuration
-		{
-			get
-			{
-				return d_settings;
-			}
-			set
-			{
-				d_settings = value;
-			}
-		}
-		
-		[XmlIgnore()]
+
 		public uint CurrentIteration
 		{
 			get
@@ -161,6 +265,13 @@ namespace Optimization
 			}
 		}
 		
+		public Settings Configuration
+		{
+			get
+			{
+				return d_settings;
+			}
+		}
 		
 		protected virtual void UpdateBest()
 		{
