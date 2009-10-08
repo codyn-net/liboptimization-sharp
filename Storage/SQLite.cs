@@ -43,14 +43,8 @@ namespace Optimization.Storage
 			
 			Settings settings = Optimizer.Configuration;
 			
-			// Typed settings
-			foreach (KeyValuePair<string, object> pair in settings.TypedSettings())
-			{
-				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", pair.Key, pair.Value.ToString());
-			}
-			
-			// General settings
-			foreach (KeyValuePair<string,object> pair in settings)
+			// Settings
+			foreach (KeyValuePair<string, object> pair in settings)
 			{
 				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", pair.Key, pair.Value.ToString());
 			}
