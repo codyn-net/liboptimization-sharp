@@ -1,9 +1,7 @@
 using System;
-using System.Xml.Serialization;
 
 namespace Optimization
 {
-	[XmlType("boundary")]
 	public class Boundary
 	{
 		private string d_name;
@@ -29,7 +27,6 @@ namespace Optimization
 		{
 		}
 		
-		[XmlAttribute("name")]
 		public string Name
 		{
 			get
@@ -42,7 +39,6 @@ namespace Optimization
 			}
 		}
 		
-		[XmlAttribute("min")]
 		public double Min
 		{
 			get
@@ -55,7 +51,6 @@ namespace Optimization
 			}
 		}
 		
-		[XmlAttribute("max")]
 		public double Max
 		{
 			get
