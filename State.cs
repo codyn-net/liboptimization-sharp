@@ -5,10 +5,22 @@ namespace Optimization
 		private Random d_random;
 		private Settings d_settings;
 		
-		public State()
+		public State(Random random, Settings settings)
 		{
-			d_random = new Random();
-			d_settings = new Settings();
+			d_random = random;
+			d_settings = settings;
+		}
+		
+		public State(Random random) : this(random, new Settings())
+		{
+		}
+		
+		public State(Settings settings) : this(new Random(), settings)
+		{
+		}
+		
+		public State() : this(new Random(), new Settings())
+		{
 		}
 		
 		public Random Random
