@@ -1,9 +1,8 @@
 using System;
-using System.Xml.Serialization;
 
 namespace Optimization
 {
-	[XmlType("parameter")]
+
 	public class Parameter : ICloneable
 	{
 		private string d_name;
@@ -39,7 +38,6 @@ namespace Optimization
 			return new Parameter(d_name, d_value, d_boundary);
 		}
 		
-		[XmlAttribute("name")]
 		public string Name
 		{
 			get
@@ -52,7 +50,6 @@ namespace Optimization
 			}
 		}
 		
-		[XmlIgnore()]
 		public double Value
 		{
 			get
@@ -65,7 +62,6 @@ namespace Optimization
 			}
 		}
 		
-		[XmlIgnore()]
 		public Boundary Boundary
 		{
 			get
@@ -75,19 +71,6 @@ namespace Optimization
 			set
 			{
 				d_boundary = value;
-			}
-		}
-		
-		[XmlAttribute("boundary")]
-		public string BoundaryName
-		{
-			get
-			{
-				return d_boundary.Name;
-			}
-			set
-			{
-				d_boundary = new Boundary(value);
 			}
 		}
 	}
