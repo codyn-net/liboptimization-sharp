@@ -131,8 +131,8 @@ namespace Optimization
 			
 			Type potential = null;
 			
-			// Find subclasses with the attrType attribute
-			foreach (Type type in GetType().GetNestedTypes(BindingFlags.Public))
+			// Find subclasses
+			foreach (Type type in Assembly.GetCallingAssembly().GetTypes())
 			{
 				if (!type.IsSubclassOf(parent))
 				{
