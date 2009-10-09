@@ -10,16 +10,24 @@ namespace Optimization
 		
 		Fitness d_fitness;
 		List<Parameter> d_parameters;
-		Dictionary<string, Parameter> d_parameterMap;
+		Dictionary<string, object> d_data;
 		
 		public Solution(uint id, Fitness fitness, State state)
 		{
 			d_parameters = new List<Parameter>();
-			d_parameterMap = new Dictionary<string, Parameter>();
+			d_data = new Dictionary<string, object>();
 		}
 		
 		public Solution() : this(0, null, null)
 		{
+		}
+		
+		public Dictionary<string, object> Data
+		{
+			get
+			{
+				return d_data;
+			}
 		}
 		
 		public virtual void Initialize(uint id, Fitness fitness, State state)
@@ -76,7 +84,6 @@ namespace Optimization
 			Parameter cp = parameter.Clone() as Parameter;
 
 			d_parameters.Add(cp);
-			d_parameterMap[cp.Name] = cp;
 		}
 		
 		public Parameter Add(string name, double min, double max)
@@ -89,15 +96,12 @@ namespace Optimization
 		
 		public void Remove(string name)
 		{
-			if (!d_parameterMap.ContainsKey(name))
+			Parameter param = d_parameters.Find(delegate (Parameter par) { return par.Name == name; });
+			
+			if (param != null)
 			{
-				return;
+				d_parameters.Remove(param);
 			}
-			
-			Parameter parameter = d_parameterMap[name];
-			
-			d_parameters.Remove(parameter);
-			d_parameterMap.Remove(name);
 		}
 		
 		public void Reset()
@@ -110,7 +114,7 @@ namespace Optimization
 		
 		public override string ToString ()
 		{
-			return String.Format("[Solution: Id={1}, Parameters={2}]", d_id, d_parameterMap.ToString());
+			return String.Format("[Solution: Id={1}, Parameters={2}]", d_id, d_parameters.ToString());
 		}
 		
 		public uint Id
