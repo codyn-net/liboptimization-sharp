@@ -57,6 +57,10 @@
     <Compile Include="Math\Instruction.cs" />
     <Compile Include="Math\Operations.cs" />
     <Compile Include="Job.cs" />
+    <Compile Include="Dispatcher.cs" />
+    <Compile Include="Connection.cs" />
+    <Compile Include="Application.cs" />
+    <Compile Include="Constants.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
