@@ -11,6 +11,8 @@ namespace Optimization
 		Dictionary<string, Expression> d_variables;
 		Dictionary<string, double> d_values;
 		
+		object d_value;
+		
 		public Fitness()
 		{
 			d_variables = new Dictionary<string, Expression>();
@@ -97,7 +99,11 @@ namespace Optimization
 		{
 			get
 			{
-				if (d_expression == null)
+				if (d_value != null)
+				{
+					return Convert.ToDouble(d_value);
+				}
+				else if (d_expression == null)
 				{
 					return SingleFitness();
 				}
@@ -106,6 +112,16 @@ namespace Optimization
 					return ExpressionFitness();
 				}
 			}
+			set
+			{
+				d_value = value;
+			}
+		}
+		
+		public void Reset()
+		{
+			d_value = null;
+			d_values.Clear();
 		}
 		
 		public object Clone()
@@ -122,7 +138,18 @@ namespace Optimization
 				fit.d_values[pair.Key] = pair.Value;
 			}
 			
-			return null;
+			fit.d_value = d_value;			
+			return fit;
+		}
+		
+		public static bool operator>(Fitness first, Fitness second)
+		{
+			return first.Value > second.Value;
+		}
+		
+		public static bool operator<(Fitness first, Fitness second)
+		{
+			return first.Value < second.Value;
 		}
 		
 		public Expression Expression

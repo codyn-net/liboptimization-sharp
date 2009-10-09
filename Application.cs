@@ -1,17 +1,35 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using Optimization.Messages;
 
 namespace Optimization
 {
 	public class Application<T> where T : Optimizer, new()
 	{
+		public delegate void MessageHandler(object source, string message);
+		public delegate void ProgressHandler(object source, double progress);
+		public delegate void JobHandler(object source, Job<T> job);
+
+		public event MessageHandler OnStatus = delegate {};
+		public event MessageHandler OnError = delegate {};
+		
+		public event ProgressHandler OnProgress = delegate {};
+		public event JobHandler OnJob = delegate {};
+		
 		class Message
 		{
 		}
 		
-		class MessageData : Message
+		class MessageResponse : Message
 		{
-			public byte[] Data;
+			public Response Response;
+			
+			public MessageResponse(Response response)
+			{
+				Response = response;
+			}
 		}
 		
 		class MessageClosed : Message
@@ -20,39 +38,32 @@ namespace Optimization
 		
 		Job<T> d_job;
 		Connection d_connection;
-		List<string> d_arguments;
 		
 		string d_masterAddress;
-		string d_jobFilename;
-		
 		object d_messageLock;
-		Stack<Message> d_messages;
+
+		Queue<Message> d_messages;
 		bool d_quitting;
 		
-		byte[] d_buffer;
+		Dictionary<uint, Solution> d_running;
 
-		public Application(string[] args)
+		public Application(ref string[] args)
 		{
 			d_connection = new Connection();
 			d_quitting = false;
 			
 			d_messageLock = new object();
-			d_messages = new Stack<Message>();
-			d_buffer = new byte[0];
+			d_messages = new Queue<Message>();
+			d_running = new Dictionary<uint, Solution>();
 
 			d_connection.OnClosed += HandleOnClosed;
-			d_connection.OnDataReceived += HandleOnDataReceived;
+			d_connection.OnResponseReceived += HandleOnResponseReceived;
 			
-			ParseArguments(args);
-			
-			if (!String.IsNullOrEmpty(d_jobFilename))
-			{
-				d_job = new Job<T>(d_jobFilename);
-			}
+			ParseArguments(ref args);
 			
 			if (String.IsNullOrEmpty(d_masterAddress))
 			{
-				d_masterAddress = "localhost:" + Constants.MasterPort;
+				d_masterAddress = "localhost:" + (int)Constants.MasterPort;
 			}
 		}
 		
@@ -60,16 +71,13 @@ namespace Optimization
 		{
 			lock(d_messageLock)
 			{
-				d_messages.Push(msg);
+				d_messages.Enqueue(msg);
 			}
 		}
 
-		private void HandleOnDataReceived(object source, byte[] buffer)
+		private void HandleOnResponseReceived(object source, Response response)
 		{
-			MessageData msg = new MessageData();
-			msg.Data = buffer;
-			
-			AddMessage(msg);
+			AddMessage(new MessageResponse(response));
 		}
 
 		private void HandleOnClosed(object sender, EventArgs e)
@@ -77,9 +85,9 @@ namespace Optimization
 			AddMessage(new MessageClosed());
 		}
 		
-		private void ParseArguments(string[] args)
+		private void ParseArguments(ref string[] args)
 		{
-			d_arguments = new List<string>();
+			List<string> rest = new List<string>();
 			int i = 0;
 			
 			while (i < args.Length)
@@ -94,21 +102,15 @@ namespace Optimization
 						++i;
 					}
 				}
-				else if (arg == "--job")
-				{
-					if (i + 1 < args.Length)
-					{
-						d_jobFilename = args[i + 1];
-						++i;
-					}
-				}
 				else
 				{
-					d_arguments.Add(arg);
+					rest.Add(arg);
 				}
 				
 				++i;
 			}
+			
+			args = rest.ToArray();
 		}
 		
 		public Job<T> Job
@@ -143,18 +145,128 @@ namespace Optimization
 			
 			return d_connection.Connect(host, port);
 		}
+
+		protected virtual void NewIteration()
+		{			
+			// Next iteration for optimizer
+			if (!d_job.Optimizer.Next())
+			{
+				OnStatus(this, "Finished optimization");
+
+				// No more iterations, we're done
+				d_quitting = true;
+				return;
+			}
+			
+			// Send optimizer population as batch to the master
+			if (!Send())
+			{
+				Error("Could not send batch to master, exiting...");
+				d_quitting = true;
+			}
+		}
 		
-		private void ProcessData(byte[] data)
+		protected virtual void Done(Solution solution)
 		{
-			int size = d_buffer.Length;
+			d_running.Remove(solution.Id);
 			
-			// Copy data in the buffer
-			Array.Resize(d_buffer, d_buffer.Length + data.Length);
-			Array.Copy(data, 0, d_buffer, size, data.Length);
+			if (d_running.Count == 0)
+			{
+				NewIteration();
+			}
+		}
+		
+		protected void Error(string format, params object[] args)
+		{
+			Error(String.Format(format, args));
+		}
+		
+		protected virtual void Error(string str)
+		{
+			OnError(this, str);
+		}
+		
+		protected virtual void OnSuccess(Response response)
+		{			
+			Solution solution = d_running[response.Id];
 			
-			// See if we can construct some response from the master
+			// Create fitness dictionary from response
+			Dictionary<string, double> fitness = new Dictionary<string, double>();
 			
-			Messages.Response response;
+			foreach (Response.FitnessType item in response.Fitness)
+			{
+				fitness.Add(item.Name, item.Value);
+			}
+			
+			// Update the solution fitness			
+			solution.Update(fitness);
+			
+			OnStatus(this, "Solution " + solution.Id + " finished successfully");
+			Done(solution);
+		}
+		
+		protected string FailureToString(Response.FailureType failure)
+		{
+			switch (failure.Type)
+			{
+				case Response.FailureType.TypeType.Disconnected:
+					return "Disconnected";
+				case Response.FailureType.TypeType.Dispatcher:
+					return "Dispatcher failure";
+				case Response.FailureType.TypeType.DispatcherNotFound:
+					return "Dispatcher not found";
+				case Response.FailureType.TypeType.NoResponse:
+					return "No response";
+				case Response.FailureType.TypeType.Timeout:
+					return "Timeout";
+				case Response.FailureType.TypeType.WrongRequest:
+					return "Wrong request";
+				default:
+					return "Unknown";
+			}
+		}
+		
+		protected virtual void OnFailed(Response response)
+		{
+			Solution solution = d_running[response.Id];
+			Error("Solution {0} failed: {1} ({2})", solution.Id, FailureToString(response.Failure), response.Failure.Message);
+			
+			// Setting value directly will override expressions until Fitness.Clear()
+			solution.Fitness.Value = 0;
+			Done(solution);
+		}
+		
+		protected virtual void OnChallenge(Response response)
+		{
+			// TODO: decide something
+		}
+		
+		private void HandleResponse(Response response)
+		{
+			if (!d_running.ContainsKey(response.Id))
+			{
+				Error("Received response for inactive solution: {0}", response.Id);
+				return;
+			}
+			
+			// Handle response by default handler
+			switch (response.Status)
+			{
+				case Response.StatusType.Success:
+					OnSuccess(response);
+				break;
+				case Response.StatusType.Failed:
+					OnFailed(response);
+				break;
+				case Response.StatusType.Challenge:
+					OnChallenge(response);
+				break;
+			}
+		}
+		
+		protected virtual void Close()
+		{
+			d_quitting = true;
 		}
 		
 		private void HandleMessages()
@@ -165,15 +277,16 @@ namespace Optimization
 				{
 					while (d_messages.Count != 0)
 					{
-						Message msg = d_messages.Pop();
+						Message msg = d_messages.Dequeue();
 						
 						if (msg is MessageClosed)
 						{
-							d_quitting = true;
+							Error("Connection closed");
+							Close();
 						}
-						else if (msg is MessageData)
+						else if (msg is MessageResponse)
 						{
-							ProcessData((msg as MessageData).Data);
+							HandleResponse((msg as MessageResponse).Response);
 						}
 					}
 				}
@@ -183,10 +296,33 @@ namespace Optimization
 			}	
 		}
 		
-		public void Run()
+		protected virtual bool Send()
 		{
+			foreach (Solution solution in d_job.Optimizer.Population)
+			{
+				d_running[solution.Id] = solution;
+			}
+			
+			OnStatus(this, "Sending new iteration " + d_job.Optimizer.CurrentIteration + " => " + d_job.Optimizer.Population.Count);
+			return d_connection.Send(d_job);
+		}
+		
+		public void Run(Job<T> job)
+		{
+			d_job = job;
+			
+			OnJob(this, job);
+			
 			if (!Connect())
 			{
+				Error("Could not connect to master");
+				return;
+			}
+			
+			// Send initial batch of solutions
+			if (!Send())
+			{
+				Error("Could not send first batch of solutions to master");
 				return;
 			}
 			
@@ -204,6 +340,8 @@ namespace Optimization
 				// Sleep a bit
 				System.Threading.Thread.Sleep(100);
 			}
+			
+			d_connection.Disconnect();
 		}
 	}
 }

@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 using System.Collections.Generic;
 using Optimization.Math;
 using System.Text;
+using System.IO;
 
 namespace Optimization.Storage
 {
@@ -21,10 +22,27 @@ namespace Optimization.Storage
 				return;
 			}
 			
-			d_connection = new SqliteConnection("file=" + Uri);
+			Uri = UniqueFile(Uri);
+			
+			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3");
 			d_connection.Open();
 			
 			CreateTables();
+		}
+		
+		private string UniqueFile(string filename)
+		{
+			string orig = Path.GetFullPath(filename);
+			string unique = orig;
+			int i = 1;
+			
+			while (File.Exists(unique))
+			{
+				unique = orig + "." + i;
+				++i;
+			}
+			
+			return unique;
 		}
 		
 		public override void End()
@@ -61,10 +79,11 @@ namespace Optimization.Storage
 			}
 			
 			builder.Append(")");
+			
 			Query(builder.ToString());
 
-			Query("CREATE INDEX IF NOT EXISTS fitness_index ON fitness(`index`)");
-			Query("CREATE INDEX IF NOT EXISTS fitness_iteration ON fitness(`index_iteration`)");
+			Query("CREATE INDEX fitness_index ON fitness(`index`)");
+			Query("CREATE INDEX fitness_iteration ON fitness(`iteration`)");
 		}
 		
 		private void InitializeSolutionData()
@@ -131,13 +150,13 @@ namespace Optimization.Storage
 				builder.AppendFormat(", `_{0}`", norm);
 				values.AppendFormat(", @{0}", i);
 				
-				vals.Add(pair.Value);
+				vals.Add(pair.Value.ToString());
 				
 				++i;
 			}
 			
-			builder.AppendFormat(") {0})", values);			
-			Query(builder.ToString(), vals.ToArray());	
+			builder.AppendFormat(") {0})", values);	
+			Query(builder.ToString(), vals.ToArray());
 			
 			foreach (KeyValuePair<string, object> pair in solution.Data)
 			{
@@ -157,21 +176,21 @@ namespace Optimization.Storage
 			
 			int bestid = -1;
 			double bestfitness = 0;
-			
+
 			if (Optimizer.Best != null)
 			{
 				bestid = (int)Optimizer.Best.Id;
 				bestfitness = Optimizer.Best.Fitness.Value;
 			}
-			
+
 			Query("INSERT INTO `iteration` (`iteration`, `best_id`, `best_fitness`, `time`) VALUES(@0, @1, @2, @3)",
-			      Optimizer.CurrentIteration, bestid, bestfitness, (DateTime.UtcNow - new DateTime(1970,1,1,0,0,0)).TotalSeconds);
+			      Optimizer.CurrentIteration, bestid, bestfitness, UnixTimeStamp);
 			
 			foreach (Solution solution in Optimizer)
 			{
 				Save(solution);
 			}
-			
+
 			Query("COMMIT");
 		}
 		
@@ -199,7 +218,7 @@ namespace Optimization.Storage
 			}
 			
 			Query("CREATE TABLE IF NOT EXISTS `iteration` (`iteration` INT PRIMARY KEY, `best_id` INT, `best_fitness` DOUBLE, `time` INT)");
-			Query("CREATE INDEX IF OT EXISTS iteration_iteration ON iteration(`iteration`)");
+			Query("CREATE INDEX IF NOT EXISTS iteration_iteration ON iteration(`iteration`)");
 			
 			Query("CREATE TABLE IF NOT EXISTS `solution` (`index` INT, `iteration` INT REFERENCES `iteration` (`iteration`), `values` TEXT, `value_names` TEXT, `fitness` DOUBLE)");
 			Query("CREATE INDEX IF NOT EXISTS solution_index ON solution(`index`)");
@@ -275,6 +294,19 @@ namespace Optimization.Storage
 		private bool Query(string s, params object[] parameters)
 		{
 			return Query(s, null, parameters);
+		}
+		
+		private long UnixTimeStamp
+		{
+			get
+			{
+				return (long)(DateTime.UtcNow - new DateTime(1970,1,1,0,0,0)).TotalSeconds;
+			}
+		}
+		
+		public override void Log(string type, string str)
+		{
+			Query("INSERT INTO `log` (`time`, `type`, `message`) VALUES (@0, @1)", UnixTimeStamp, type, str);
 		}
 	}
 }

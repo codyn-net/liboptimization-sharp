@@ -16,6 +16,8 @@ namespace Optimization
 		{
 			d_parameters = new List<Parameter>();
 			d_data = new Dictionary<string, object>();
+			
+			Initialize(id, fitness, state);
 		}
 		
 		public Solution() : this(0, null, null)
@@ -54,7 +56,7 @@ namespace Optimization
 			}
 		}
 		
-		public void Copy(Solution other)
+		public virtual void Copy(Solution other)
 		{
 			// Copy over parameters
 			foreach (Parameter parameter in other.Parameters)
@@ -63,7 +65,7 @@ namespace Optimization
 			}
 		}
 		
-		public object Clone()
+		public virtual object Clone()
 		{
 			Solution ret = new Solution(d_id, d_fitness.Clone() as Fitness, d_state);
 			ret.Copy(this);
@@ -79,7 +81,7 @@ namespace Optimization
 			}
 		}
 		
-		public void Add(Parameter parameter)
+		public virtual void Add(Parameter parameter)
 		{
 			Parameter cp = parameter.Clone() as Parameter;
 
@@ -94,7 +96,7 @@ namespace Optimization
 			return parameter;
 		}
 		
-		public void Remove(string name)
+		public virtual void Remove(string name)
 		{
 			Parameter param = d_parameters.Find(delegate (Parameter par) { return par.Name == name; });
 			
@@ -104,7 +106,7 @@ namespace Optimization
 			}
 		}
 		
-		public void Reset()
+		public virtual void Reset()
 		{
 			foreach (Parameter parameter in d_parameters)
 			{
@@ -134,6 +136,16 @@ namespace Optimization
 			get
 			{
 				return d_state;
+			}
+		}
+		
+		public virtual void Update(Dictionary<string, double> fitness)
+		{
+			d_fitness.Reset();
+			
+			foreach (KeyValuePair<string, double> pair in fitness)
+			{
+				d_fitness.Values[pair.Key] = pair.Value;
 			}
 		}
 	}

@@ -11,6 +11,8 @@ namespace Optimization.Storage
 		{
 			d_uri = uri;
 			d_optimizer = optimizer;
+			
+			d_optimizer.Storage = this;
 		}
 		
 		public string Uri
@@ -42,6 +44,10 @@ namespace Optimization.Storage
 		}
 		
 		public virtual void End()
+		{
+		}
+		
+		public virtual void Log(string type, string str)
 		{
 		}
 	}

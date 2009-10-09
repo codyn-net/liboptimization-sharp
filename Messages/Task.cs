@@ -7,42 +7,55 @@ namespace Optimization.Messages
 	public class Task
 	{
 		[ProtoContract()]
-		public class Parameter
+		public class DescriptionType
 		{
+			[ProtoContract()]
+			public class ParameterType
+			{
+				[ProtoMember(1, IsRequired=true)]
+				public string Name;
+				
+				[ProtoMember(2, IsRequired=true)]
+				public double Value;
+				
+				[ProtoMember(3, IsRequired=true)]
+				public double Min;
+				
+				[ProtoMember(4, IsRequired=true)]
+				public double Max;
+			}
+			
+			[ProtoContract()]
+			public class KeyValueType
+			{
+				[ProtoMember(1, IsRequired=true)]
+				public string Key;
+				
+				[ProtoMember(2, IsRequired=true)]
+				public string Value;
+			}
+			
 			[ProtoMember(1, IsRequired=true)]
-			public string Name;
+			public string Job;
 			
 			[ProtoMember(2, IsRequired=true)]
-			public double Value;
+			public string Optimizer;
 			
-			[ProtoMember(3, IsRequired=true)]
-			public double Min;
-			
-			[ProtoMember(4, IsRequired=true)]
-			public double Max;
-		}
-		
-		[ProtoContract()]
-		public class KeyValue
-		{
-			[ProtoMember(1, IsRequired=true)]
-			public string Key;
-			
-			[ProtoMember(2, IsRequired=true)]
-			public string Value;
+			[ProtoMember(3)]
+			public ParameterType[] Parameters;
+
+			[ProtoMember(4)]
+			public KeyValueType[] Settings;
 		}
 		
 		[ProtoMember(1, IsRequired=true)]
 		public UInt32 Id;
 		
 		[ProtoMember(2, IsRequired=true)]
-		public string Optimizer;
+		public string Dispatcher;
 		
-		[ProtoMember(3)]
-		public Parameter[] Parameters;
-		
-		[ProtoMember(4)]
-		public KeyValue[] Settings;
+		[ProtoMember(3, IsRequired=true)]
+		public DescriptionType Description;
 	}
 	
 	[ProtoContract()]

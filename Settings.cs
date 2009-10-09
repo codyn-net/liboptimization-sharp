@@ -5,55 +5,73 @@ using System.Collections;
 
 namespace Optimization
 {
-	public class Settings : IEnumerable<KeyValuePair<string, object>>
+	[AttributeUsage(AttributeTargets.Field)]
+	public class SettingAttribute : Attribute
 	{
-		public class Name : Attribute
+		public string Name;
+		public object Default;
+		
+		public SettingAttribute(string name, object def)
 		{
-			private string d_name;
-			
-			public Name(string name)
-			{
-				d_name = name;
-			}
-			
-			public override string ToString()
-			{
-				return d_name;
-			}
+			Name = name;
+			Default = def;
 		}
 		
+		public SettingAttribute(string name) : this(name, null)
+		{
+		}
+
+		public SettingAttribute() : this("")
+		{
+		}
+	}
+	
+	public class Settings : IEnumerable<KeyValuePair<string, object>>
+	{
 		private Dictionary<string, FieldInfo> d_settings;
 		
 		public Settings()
 		{
 			d_settings = new Dictionary<string, FieldInfo>();
+			
+			Scan();
 		}
 		
 		private void Scan()
 		{
-			if (d_settings.Count != 0)
-			{
-				return;
-			}
-			
 			foreach (FieldInfo info in GetType().GetFields(BindingFlags.Public | BindingFlags.Instance))
 			{
-				object[] attrs = info.GetCustomAttributes(typeof(Name), false);
+				object[] attrs = info.GetCustomAttributes(typeof(SettingAttribute), false);
 				string nm = info.Name;
+				object def = null;
 				
 				if (attrs.Length != 0)
 				{
-					nm = (attrs[0] as Name).ToString();
+					SettingAttribute attr = attrs[0] as SettingAttribute;
+					
+					nm = attr.Name;
+					def = attr.Default;
 				}
 				
+				if (def != null)
+				{
+					try
+					{
+						object val = Convert.ChangeType(def, info.FieldType);
+						info.SetValue(this, val);
+					}
+					catch
+					{
+						Console.WriteLine("Could not set default value {0} for setting {1}", def, nm);
+					}
+				}
+		
 				d_settings[nm] = info;
 			}
 		}
 		
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
-			Scan();
-
 			foreach (KeyValuePair<string, FieldInfo> pair in d_settings)
 			{
 				yield return new KeyValuePair<string, object>(pair.Key, pair.Value.GetValue(this));
@@ -69,8 +87,6 @@ namespace Optimization
 		{
 			get
 			{
-				Scan();
-				
 				if (!d_settings.ContainsKey(name))
 				{
 					return null;
@@ -80,8 +96,6 @@ namespace Optimization
 			}
 			set
 			{
-				Scan();
-				
 				if (d_settings.ContainsKey(name))
 				{
 					FieldInfo info = d_settings[name];
@@ -91,9 +105,22 @@ namespace Optimization
 						object val = Convert.ChangeType(value, info.FieldType);
 						d_settings[name].SetValue(this, val);
 					}
-					catch (Exception)
+					catch (Exception e)
 					{
-						// Do nothing if conversion failed...
+						if (info.FieldType.IsEnum)
+						{
+							// Try special parsing for enums
+							object ret = Enum.Parse(info.FieldType, value.ToString(), true);
+							
+							if (ret != null)
+							{
+								d_settings[name].SetValue(this, ret);
+							}
+						}
+						else
+						{						
+							Console.Error.WriteLine("Could not set {0} to {1}: {2}", name, value, e);
+						}
 					}
 				}
 			}

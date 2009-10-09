@@ -9,10 +9,10 @@ namespace Optimization
 	{
 		public class Settings : Optimization.Settings
 		{
-			[Settings.Name("max-iterations")]
+			[Setting("max-iterations", 30)]
 			public uint MaxIterations;
 			
-			[Settings.Name("population-size")]
+			[Setting("population-size", 30)]
 			public uint PopulationSize;
 		}
 		
@@ -103,7 +103,7 @@ namespace Optimization
 			d_storage = CreateStorage();
 		}
 		
-		public void Initialize()
+		public virtual void Initialize()
 		{
 			// Create the initial population
 			InitializePopulation();
@@ -132,7 +132,7 @@ namespace Optimization
 			Type potential = null;
 			
 			// Find subclasses
-			foreach (Type type in Assembly.GetCallingAssembly().GetTypes())
+			foreach (Type type in Assembly.GetEntryAssembly().GetTypes())
 			{
 				if (!type.IsSubclassOf(parent))
 				{
@@ -194,7 +194,7 @@ namespace Optimization
 		{
 			if (d_solutionConstructor == null)
 			{
-				Type type = FindTypeClass(typeof(Settings), typeof(SettingsClass));
+				Type type = FindTypeClass(typeof(Solution), typeof(SolutionClass));
 				
 				if (type != null)
 				{
@@ -342,11 +342,19 @@ namespace Optimization
 			return null;
 		}
 		
+		public virtual string Name
+		{
+			get
+			{
+				return GetType().Name.ToLower();
+			}
+		}
+		
 		protected virtual void UpdateBest()
 		{
 			foreach (Solution solution in d_population)
-			{
-				if (solution.Fitness.Value > d_best.Fitness.Value)
+			{				
+				if (d_best == null || solution.Fitness.Value > d_best.Fitness.Value)
 				{
 					d_best = solution.Clone() as Solution;
 				}
@@ -397,6 +405,16 @@ namespace Optimization
 		public virtual void Update(Solution solution)
 		{
 			// NOOP
+		}
+		
+		public void Log(string type, string format, params object[] args)
+		{
+			Log(type, String.Format(format, args));
+		}
+		
+		public virtual void Log(string type, string str)
+		{
+			d_storage.Log(type, str);
 		}
 	}
 }

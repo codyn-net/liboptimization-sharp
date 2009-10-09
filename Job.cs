@@ -9,6 +9,7 @@ namespace Optimization
 		private string d_name;
 		private T d_optimizer;
 		private Dispatcher d_dispatcher;
+		private int d_priority;
 		
 		public Job()
 		{
@@ -30,25 +31,44 @@ namespace Optimization
 		{
 			d_optimizer = new T();
 			
-			XmlNode node = doc.SelectSingleNode("/job");
-			
-			if (node == null)
-			{
-				return;
-			}
-			
-			XmlAttribute attr = node.Attributes["name"];
-				
-			if (attr != null)
-			{
-				d_name = attr.Value;
-			}
-			
+			LoadJob(doc);			
 			LoadSettings(doc);
 			LoadBoundaries(doc);
 			LoadParameters(doc);
 			LoadFitness(doc);
 			LoadDispatcher(doc);
+			
+			if (String.IsNullOrEmpty(d_name))
+			{
+				throw new Exception("No job name provided");
+			}
+			
+			if (String.IsNullOrEmpty(d_dispatcher.Name))
+			{
+				throw new Exception("No dispatcher name provided");
+			}
+		}
+		
+		private void LoadJob(XmlDocument doc)
+		{
+			XmlNode node = doc.SelectSingleNode("/job");
+			
+			if (node != null)
+			{
+				XmlAttribute attr = node.Attributes["name"];
+				
+				if (attr != null)
+				{
+					d_name = attr.Value;
+				}
+			}
+			
+			node = doc.SelectSingleNode("/job/priority");
+			
+			if (node != null)
+			{
+				d_priority = int.Parse(node.InnerText);
+			}
 		}
 		
 		public static Job<T> FromXml(string xml)
@@ -200,6 +220,18 @@ namespace Optimization
 			get
 			{
 				return d_optimizer;
+			}
+		}
+		
+		public int Priority
+		{
+			get
+			{
+				return d_priority;
+			}
+			set
+			{
+				d_priority = value;
 			}
 		}
 	}
