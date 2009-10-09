@@ -235,11 +235,27 @@ namespace Optimization
 			d_population.Add(solution);
 		}
 		
+		public Solution Best
+		{
+			get
+			{
+				return d_best;
+			}
+		}
+		
 		public List<Boundary> Boundaries
 		{
 			get
 			{
 				return d_boundaries;
+			}
+		}
+		
+		public List<Solution> Population
+		{
+			get
+			{
+				return d_population;
 			}
 		}
 
