@@ -39,6 +39,18 @@ namespace Optimization
 			}
 		}
 		
+		public Dictionary<string, double> Values
+		{
+			get
+			{
+				return d_values;
+			}
+			set
+			{
+				d_values = value;
+			}
+		}
+		
 		public void AddVariable(string name, string expression)
 		{
 			Expression expr = new Expression();
