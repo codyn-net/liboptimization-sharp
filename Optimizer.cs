@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Collections;
 
 namespace Optimization
 {
-	public class Optimizer
+	public class Optimizer : IEnumerable<Solution>
 	{
 		public class Settings : Optimization.Settings
 		{
@@ -266,7 +267,20 @@ namespace Optimization
 				return d_parameters;
 			}
 		}
-
+		
+		public IEnumerator<Solution> GetEnumerator()
+		{
+			foreach (Solution solution in d_population)
+			{
+				yield return solution;
+			}
+		}
+		
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+		
 		public Storage.Storage Storage
 		{
 			get
