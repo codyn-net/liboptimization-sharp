@@ -329,6 +329,19 @@ namespace Optimization
 			}
 		}
 		
+		public Boundary Boundary(string name)
+		{
+			foreach (Boundary boundary in d_boundaries)
+			{
+				if (boundary.Name == name)
+				{
+					return boundary;
+				}
+			}
+			
+			return null;
+		}
+		
 		protected virtual void UpdateBest()
 		{
 			foreach (Solution solution in d_population)
