@@ -1,7 +1,7 @@
 using System;
 using ProtoBuf;
 
-namespace Optimization.messages
+namespace Optimization.Messages
 {
 	[ProtoContract()]
 	public class Task
