@@ -81,17 +81,6 @@ namespace Optimization
 			}
 		}
 		
-		public class StorageClass : TypeClass
-		{
-			public StorageClass()
-			{
-			}
-			
-			public StorageClass(Type type) : base(type)
-			{
-			}
-		}
-		
 		private Storage.Storage d_storage;
 		
 		private State d_state;
@@ -199,14 +188,6 @@ namespace Optimization
 		
 		protected virtual Storage.Storage CreateStorage()
 		{
-			Type type = FindTypeClass(typeof(Storage.Storage), typeof(StorageClass));
-			
-			if (type != null)
-			{
-				object ret = type.GetConstructor(new Type[] {}).Invoke(new object[] {});
-				return ret as Storage.Storage;
-			}
-			
 			return new Storage.SQLite();
 		}
 		
