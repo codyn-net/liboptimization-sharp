@@ -411,6 +411,7 @@ namespace Optimization
 		
 			// Update the population to make new solutions
 			Update();
+
 			return true;
 		}
 		

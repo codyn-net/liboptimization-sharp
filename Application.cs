@@ -23,6 +23,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Optimization.Messages;
+using System.Threading;
+using System.Security.Cryptography;
 
 namespace Optimization
 {
@@ -37,6 +39,10 @@ namespace Optimization
 		
 		public event ProgressHandler OnProgress = delegate {};
 		public event JobHandler OnJob = delegate {};
+		public event EventHandler OnIterate = delegate {};
+
+		private EventWaitHandle d_waitHandle;
+		private SHA1CryptoServiceProvider d_sha1Provider;
 		
 		class Message
 		{
@@ -77,7 +83,7 @@ namespace Optimization
 			d_running = new Dictionary<uint, Solution>();
 
 			d_connection.OnClosed += HandleOnClosed;
-			d_connection.OnResponseReceived += HandleOnResponseReceived;
+			d_connection.OnCommunicationReceived += HandleOnCommunicationReceived;
 			
 			ParseArguments(ref args);
 			
@@ -85,19 +91,50 @@ namespace Optimization
 			{
 				d_masterAddress = "localhost:" + (int)Constants.MasterPort;
 			}
+
+			d_waitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
+			d_sha1Provider = new SHA1CryptoServiceProvider();
+		}
+
+		public EventWaitHandle WaitHandle
+		{
+			get
+			{
+				return d_waitHandle;
+			}
 		}
 		
-		private void AddMessage(Message msg)
+		private void AddMessage(params Message[] messages)
 		{
 			lock(d_messageLock)
 			{
-				d_messages.Enqueue(msg);
+				foreach (Message msg in messages)
+				{
+					d_messages.Enqueue(msg);
+				}
 			}
+
+			d_waitHandle.Set();			
 		}
 
-		private void HandleOnResponseReceived(object source, Response response)
+		private void HandleOnCommunicationReceived(object source, Communication[] communication)
 		{
-			AddMessage(new MessageResponse(response));
+			List<Message> messages = new List<Message>();
+
+			foreach (Communication comm in communication)
+			{
+				switch (comm.Type)
+				{
+					case Communication.CommunicationType.Response:
+						messages.Add(new MessageResponse(comm.Response));
+					break;
+					default:
+						// NOOP
+					break;
+				}
+			}
+			
+			AddMessage(messages.ToArray());
 		}
 
 		private void HandleOnClosed(object sender, EventArgs e)
@@ -168,14 +205,31 @@ namespace Optimization
 
 		protected virtual void NewIteration()
 		{			
-			// Next iteration for optimizer
+			// Next iteration for optimizer			
 			if (!d_job.Optimizer.Next())
 			{
-				OnStatus(this, "Finished optimization");
+				try
+				{
+					OnStatus(this, "Finished optimization");
+					OnProgress(this, d_job.Optimizer.CurrentIteration / (double)d_job.Optimizer.Configuration.MaxIterations);
+				}
+				catch (Exception e)
+				{
+					Console.Error.WriteLine("Erreur: " + e);
+				}
 
 				// No more iterations, we're done
 				d_quitting = true;
 				return;
+			}
+
+			try
+			{
+				OnProgress(this, d_job.Optimizer.CurrentIteration / (double)d_job.Optimizer.Configuration.MaxIterations);
+			}
+			catch (Exception e)
+			{
+				Console.Error.WriteLine("Erreur: " + e);
 			}
 			
 			// Send optimizer population as batch to the master
@@ -203,7 +257,14 @@ namespace Optimization
 		
 		protected virtual void Error(string str)
 		{
-			OnError(this, str);
+			try
+			{
+				OnError(this, str);
+			}
+			catch (Exception e)
+			{
+				Console.Error.WriteLine("Erreur: " + e);
+			}
 		}
 		
 		protected virtual void OnSuccess(Response response)
@@ -221,7 +282,15 @@ namespace Optimization
 			// Update the solution fitness			
 			solution.Update(fitness);
 			
-			OnStatus(this, "Solution " + solution.Id + " finished successfully");
+			try
+			{
+				OnStatus(this, "Solution " + solution.Id + " finished successfully");
+			}
+			catch (Exception e)
+			{
+				Console.Error.WriteLine("Erreur: " + e);
+			}
+			
 			Done(solution);
 		}
 		
@@ -258,7 +327,21 @@ namespace Optimization
 		
 		protected virtual void OnChallenge(Response response)
 		{
-			// TODO: decide something
+			// Take the challenge and encrypt it with the job token.
+			// Then send it back to the master
+			byte[] bytes = Encoding.ASCII.GetBytes(d_job.Token + response.Challenge);
+			byte[] encoded = d_sha1Provider.ComputeHash(bytes);
+			
+			string ashex = BitConverter.ToString(encoded).Replace("-", "");
+			
+			Communication res = new Communication();
+
+			res.Type = Communication.CommunicationType.Token;
+			res.Token = new Token();
+			res.Token.Id = response.Id;
+			res.Token.Response = ashex;
+			
+			d_connection.Send(res);
 		}
 		
 		private void HandleResponse(Response response)
@@ -310,8 +393,9 @@ namespace Optimization
 						}
 					}
 				}
-				catch (Exception)
+				catch (Exception e)
 				{
+					Console.Error.WriteLine("Erreur: " + e);
 				}
 			}	
 		}
@@ -349,19 +433,31 @@ namespace Optimization
 			// Main loop
 			while (true)
 			{
-				HandleMessages();		
+				d_waitHandle.WaitOne();
+				HandleMessages();
 				
+				try
+				{
+					OnIterate(this, new EventArgs());
+				}
+				catch (Exception e)
+				{
+					Console.Error.WriteLine("Erreur: " + e);
+				}
+
 				// Usually means the connection with the master was broken
 				if (d_quitting)
 				{
 					break;
 				}
-				
-				// Sleep a bit
-				System.Threading.Thread.Sleep(100);
 			}
 			
 			d_connection.Disconnect();
+		}
+
+		public void Stop()
+		{
+			d_quitting = true;
 		}
 	}
 }

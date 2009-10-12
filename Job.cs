@@ -30,11 +30,13 @@ namespace Optimization
 		private T d_optimizer;
 		private Dispatcher d_dispatcher;
 		private int d_priority;
+		private string d_token;
 		
 		public Job()
 		{
 			d_dispatcher = new Dispatcher();
 			d_name = "";
+			d_token = "";
 		}
 		
 		public Job(string filename) : this()
@@ -224,6 +226,18 @@ namespace Optimization
 			get
 			{
 				return d_name;
+			}
+		}
+		
+		public string Token
+		{
+			get
+			{
+				return d_token;
+			}
+			set
+			{
+				d_token = value;
 			}
 		}
 		

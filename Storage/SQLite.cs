@@ -123,8 +123,10 @@ namespace Optimization.Storage
 		
 		private void InitializeFirst()
 		{
+			Query("BEGIN TRANSACTION");
 			InitializeFitnessTable();
 			InitializeSolutionData();
+			Query("COMMIT");
 		}
 		
 		delegate object ParameterValueFunc(Parameter parameter);
@@ -151,7 +153,7 @@ namespace Optimization.Storage
 			      solution.Fitness.Value);
 			
 			StringBuilder builder = new StringBuilder();
-			builder.Append("INSERT INTO `fitness (`index`, `iteration`, `value`");
+			builder.Append("INSERT INTO `fitness` (`index`, `iteration`, `value`");
 			
 			List<object> vals = new List<object>();
 			vals.Add(solution.Id);
@@ -175,24 +177,24 @@ namespace Optimization.Storage
 				++i;
 			}
 			
-			builder.AppendFormat(") {0})", values);	
+			builder.AppendFormat(") {0})", values);		
 			Query(builder.ToString(), vals.ToArray());
 			
 			foreach (KeyValuePair<string, object> pair in solution.Data)
 			{
-				Query("UPDATE `fitness` SET `_" + NormalizeName(pair.Key) + "` = @0 WHERE `index` = @1 AND `iteration` = @2",
+				Query("UPDATE `solution` SET `_" + NormalizeName(pair.Key) + "` = @0 WHERE `index` = @1 AND `iteration` = @2",
 				      pair.Value.ToString(), solution.Id, Optimizer.CurrentIteration);
 			}
 		}
 		
 		public override void SaveIteration()
 		{
-			Query("BEGIN TRANSACTION");
-			
 			if (Optimizer.CurrentIteration == 0)
 			{
 				InitializeFirst();
 			}
+
+			Query("BEGIN TRANSACTION");
 			
 			int bestid = -1;
 			double bestfitness = 0;
@@ -279,15 +281,34 @@ namespace Optimization.Storage
 				cmd.Parameters.Add(par);
 			}
 			
-			bool ret;
+			bool ret = false;
 			
-			IDataReader reader = cmd.ExecuteReader();
-			
-			if (cb != null)
+			if (cb == null)
 			{
-				ret = false;
+				try
+				{
+					ret = cmd.ExecuteNonQuery() > 0;
+				}
+				catch (Exception e)
+				{
+					Console.Error.WriteLine("Error in query `{0}': {1}", s, e.Message);
+				}
+			}
+			else
+			{
+				IDataReader reader;
 				
-				while (reader.Read())
+				try
+				{
+					reader = cmd.ExecuteReader();
+				}
+				catch (Exception e)
+				{
+					reader = null;
+					Console.Error.WriteLine("Error in query `{0}': {1}", s, e.Message);
+				}
+			
+				while (reader != null && reader.Read())
 				{
 					ret = cb(reader);
 					
@@ -296,14 +317,13 @@ namespace Optimization.Storage
 						break;
 					}
 				}
+
+				if (reader != null)
+				{
+					reader.Close();
+					reader = null;
+				}
 			}
-			else
-			{
-				ret = true;
-			}
-			
-			reader.Close();
-			reader = null;
 			
 			cmd.Dispose();
 			cmd = null;

@@ -34,8 +34,8 @@ namespace Optimization
 		private byte[] d_readBuffer;
 		private byte[] d_buffer;
 		
-		public delegate void ResponseReceivedHandler(object source, Response response);
-		public event ResponseReceivedHandler OnResponseReceived = delegate {};
+		public delegate void CommunicationReceivedHandler(object source, Communication[] communication);
+		public event CommunicationReceivedHandler OnCommunicationReceived = delegate {};
 		
 		public event EventHandler OnClosed = delegate {};
 		
@@ -44,6 +44,8 @@ namespace Optimization
 			d_client = new TcpClient();
 			d_readBuffer = new byte[4096];
 			d_buffer = new byte[0];
+			
+			d_client.NoDelay = true;
 		}
 
 		public bool Connect(string host, int port)
@@ -93,6 +95,7 @@ namespace Optimization
 			
 			MemoryStream ms = new MemoryStream(d_buffer);
 			long lastPos = 0;
+			List<Communication> communications = new List<Communication>();
 
 			while (ms.Position < ms.Length)
 			{				
@@ -106,27 +109,33 @@ namespace Optimization
 				}
 				
 				// Construct response message from data
-				Response response;
+				Communication communication;
 				
 				try
 				{
 					MemoryStream stream = new MemoryStream(d_buffer, (int)ms.Position, (int)num);
-					response = ProtoBuf.Serializer.Deserialize<Response>(stream);
+					communication = ProtoBuf.Serializer.Deserialize<Communication>(stream);
 				}
-				catch
+				catch (Exception e)
 				{
+					Console.Error.WriteLine("Could not parse communication: " + e.Message);
 					break;
 				}
 
-				if (response == null)
+				if (communication == null)
 				{
 					break;
 				}
 				
 				ms.Position += num;
+				communications.Add(communication);
 
-				OnResponseReceived(this, response);
 				lastPos = ms.Position;
+			}
+			
+			if (communications.Count != 0)
+			{
+				OnCommunicationReceived(this, communications.ToArray());
 			}
 			
 			d_buffer = new byte[ms.Length - lastPos];
@@ -213,7 +222,7 @@ namespace Optimization
 			return task;
 		}
 		
-		private Batch Construct<T>(Job<T> job) where T : Optimizer, new()
+		private Communication Construct<T>(Job<T> job) where T : Optimizer, new()
 		{
 			Batch batch = new Batch();
 			batch.Priority = job.Priority;
@@ -226,7 +235,12 @@ namespace Optimization
 			}
 			
 			batch.Tasks = tasks.ToArray();
-			return batch;
+
+			Communication communication = new Communication();
+			communication.Type = Communication.CommunicationType.Batch;
+			communication.Batch = batch;
+			
+			return communication;
 		}
 		
 		public void Disconnect()
@@ -234,21 +248,18 @@ namespace Optimization
 			d_client.Close();
 		}
 		
-		public bool Send<T>(Job<T> job) where T : Optimizer, new()
+		public bool Send(Communication communication)
 		{
-			// Send a batch of tasks to the master
 			if (!d_client.Connected)
 			{
 				return false;
 			}
-			
-			Batch batch = Construct(job);
 
 			MemoryStream stream = new MemoryStream();
 			
 			try
 			{
-				ProtoBuf.Serializer.Serialize(stream, batch);
+				ProtoBuf.Serializer.Serialize(stream, communication);
 			}
 			catch
 			{
@@ -271,6 +282,17 @@ namespace Optimization
 			}
 			
 			return true;
+		}
+		
+		public bool Send<T>(Job<T> job) where T : Optimizer, new()
+		{
+			// Send a batch of tasks to the master
+			if (!d_client.Connected)
+			{
+				return false;
+			}
+			
+			return Send(Construct(job));
 		}
 	}
 }
