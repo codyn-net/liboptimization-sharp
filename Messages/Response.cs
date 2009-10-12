@@ -1,5 +1,5 @@
 /*
- *  Task.cs - This file is part of optimization-sharp
+ *  Response.cs - This file is part of optimization-sharp
  *
  *  Copyright (C) 2009 - Jesse van den Kieboom
  *
@@ -24,57 +24,79 @@ using ProtoBuf;
 namespace Optimization.Messages
 {
 	[ProtoContract()]
-	public class Task
+	public class Response
 	{
 		[ProtoContract()]
-		public class DescriptionType
+		public enum StatusType
+		{
+			[ProtoEnum()]
+			Success = 0,
+			
+			[ProtoEnum()]
+			Failed = 1,
+			
+			[ProtoEnum()]
+			Challenge = 2
+		}
+		
+		[ProtoContract()]
+		public class FitnessType
+		{
+			[ProtoMember(1, IsRequired=true)]
+			public string Name;
+			
+			[ProtoMember(2, IsRequired=true)]
+			public double Value;
+		}
+		
+		[ProtoContract()]
+		public class FailureType
 		{
 			[ProtoContract()]
-			public class ParameterType
+			public enum TypeType
 			{
-				[ProtoMember(1, IsRequired=true)]
-				public string Name;
+				[ProtoEnum()]
+				Timeout = 0,
 				
-				[ProtoMember(2, IsRequired=true)]
-				public double Value;
+				[ProtoEnum()]
+				DispatcherNotFound = 1,
 				
-				[ProtoMember(3, IsRequired=true)]
-				public double Min;
+				[ProtoEnum()]
+				NoResponse = 2,
 				
-				[ProtoMember(4, IsRequired=true)]
-				public double Max;
-			}
-			
-			[ProtoContract()]
-			public class KeyValueType
-			{
-				[ProtoMember(1, IsRequired=true)]
-				public string Key;
+				[ProtoEnum()]
+				Dispatcher = 3,
 				
-				[ProtoMember(2, IsRequired=true)]
-				public string Value;
+				[ProtoEnum()]
+				Unknown = 4,
+				
+				[ProtoEnum()]
+				WrongRequest = 5,
+				
+				[ProtoEnum()]
+				Disconnected = 6
 			}
 			
 			[ProtoMember(1, IsRequired=true)]
-			public string Job;
+			public TypeType Type;
 			
-			[ProtoMember(2, IsRequired=true)]
-			public string Optimizer;
-			
-			[ProtoMember(3)]
-			public ParameterType[] Parameters;
-
-			[ProtoMember(4)]
-			public KeyValueType[] Settings;
+			[ProtoMember(2, IsRequired=false)]
+			public string Message;
 		}
 		
 		[ProtoMember(1, IsRequired=true)]
 		public UInt32 Id;
 		
 		[ProtoMember(2, IsRequired=true)]
-		public string Dispatcher;
+		public StatusType Status;
 		
-		[ProtoMember(3, IsRequired=true)]
-		public DescriptionType Description;
+		[ProtoMember(3)]
+		public FitnessType[] Fitness;
+		
+		[ProtoMember(4, IsRequired=false)]
+		public string Challenge;
+		
+		[ProtoMember(5, IsRequired=false)]
+		public FailureType Failure;
 	}
 }
