@@ -1,5 +1,5 @@
 /*
- *  Communication.cs - This file is part of optimization-sharp
+ *  Cancel.cs - This file is part of optimization-sharp
  *
  *  Copyright (C) 2009 - Jesse van den Kieboom
  *
@@ -24,43 +24,9 @@ using ProtoBuf;
 namespace Optimization.Messages
 {
 	[ProtoContract()]
-	public class Communication
+	public class Cancel
 	{
-		[ProtoContract()]
-		public enum CommunicationType
-		{
-			[ProtoEnum()]
-			Batch = 0,
-			
-			[ProtoEnum()]
-			Task = 1,
-			
-			[ProtoEnum()]
-			Response = 2,
-			
-			[ProtoEnum()]
-			Token = 3,
-			
-			[ProtoEnum()]
-			Cancel = 4
-		}
-		
 		[ProtoMember(1, IsRequired=true)]
-		public CommunicationType Type;
-		
-		[ProtoMember(2, IsRequired=false)]
-		public Batch Batch;
-		
-		[ProtoMember(3, IsRequired=false)]
-		public Task Task;
-		
-		[ProtoMember(4, IsRequired=false)]
-		public Response Response;
-		
-		[ProtoMember(5, IsRequired=false)]
-		public Token Token;
-		
-		[ProtoMember(6, IsRequired=false)]
-		public Cancel Cancel;
+		public UInt32 Id;
 	}
 }

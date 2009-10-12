@@ -68,6 +68,7 @@
     <Compile Include="Messages\Response.cs" />
     <Compile Include="Messages\Token.cs" />
     <Compile Include="Messages\Batch.cs" />
+    <Compile Include="Messages\Cancel.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
