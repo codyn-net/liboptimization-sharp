@@ -1,0 +1,7 @@
+Name: optimization-sharp
+Description: optimization-sharp
+Version: 0.1
+Libraries=@expanded_libdir@/@PACKAGE@/optimization-sharp.dll @expanded_libdir@/@PACKAGE@/protobuf-net.dll
+
+Requires: 
+Libs: -r:@expanded_libdir@/@PACKAGE@/optimization-sharp.dll -r:@expanded_libdir@/@PACKAGE@/protobuf-net.dll

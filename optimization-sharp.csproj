@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{6438EC09-091A-4BDF-8E81-9C1F0B5CD2B3}</ProjectGuid>
+    <ProjectGuid>{2271FB19-6282-412F-829C-502609B99FCC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>optimization-sharp</AssemblyName>
     <RootNamespace>Optimization</RootNamespace>
@@ -17,8 +17,7 @@
     <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
+    <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -26,54 +25,47 @@
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Reference Include="System" />
+    <Compile Include="Application.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Boundary.cs" />
+    <Compile Include="Connection.cs" />
+    <Compile Include="Console.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="Dispatcher.cs" />
+    <Compile Include="Fitness.cs" />
+    <Compile Include="Job.cs" />
+    <Compile Include="Optimizer.cs" />
+    <Compile Include="Parameter.cs" />
+    <Compile Include="Random.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Solution.cs" />
+    <Compile Include="State.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="Visual.cs" />
+    <Compile Include="Math\Expression.cs" />
+    <Compile Include="Math\Instruction.cs" />
+    <Compile Include="Math\Operations.cs" />
+    <Compile Include="Math\Tokenizer.cs" />
+    <Compile Include="Messages\Batch.cs" />
+    <Compile Include="Messages\Cancel.cs" />
+    <Compile Include="Messages\Communication.cs" />
+    <Compile Include="Messages\Response.cs" />
+    <Compile Include="Messages\Task.cs" />
+    <Compile Include="Messages\Token.cs" />
+    <Compile Include="Storage\SQLite.cs" />
+    <Compile Include="Storage\Storage.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>protobuf-net.dll</HintPath>
     </Reference>
-    <Reference Include="System.Xml" />
     <Reference Include="Mono.Data.SqliteClient" />
-    <Reference Include="Mono.Data.Sqlite" />
     <Reference Include="System.Data" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Optimizer.cs" />
-    <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Messages\Task.cs" />
-    <Compile Include="Solution.cs" />
-    <Compile Include="Boundary.cs" />
-    <Compile Include="Parameter.cs" />
-    <Compile Include="State.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="Random.cs" />
-    <Compile Include="Storage\Storage.cs" />
-    <Compile Include="Fitness.cs" />
-    <Compile Include="Storage\SQLite.cs" />
-    <Compile Include="Math\Tokenizer.cs" />
-    <Compile Include="Math\Expression.cs" />
-    <Compile Include="Math\Instruction.cs" />
-    <Compile Include="Math\Operations.cs" />
-    <Compile Include="Job.cs" />
-    <Compile Include="Dispatcher.cs" />
-    <Compile Include="Connection.cs" />
-    <Compile Include="Application.cs" />
-    <Compile Include="Constants.cs" />
-    <Compile Include="Console.cs" />
-    <Compile Include="Visual.cs" />
-    <Compile Include="Utils.cs" />
-    <Compile Include="Messages\Communication.cs" />
-    <Compile Include="Messages\Response.cs" />
-    <Compile Include="Messages\Token.cs" />
-    <Compile Include="Messages\Batch.cs" />
-    <Compile Include="Messages\Cancel.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <Folder Include="Messages\" />
-    <Folder Include="Storage\" />
-    <Folder Include="Math\" />
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
 </Project>
