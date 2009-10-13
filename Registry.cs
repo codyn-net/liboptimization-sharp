@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.IO;
 
 namespace Optimization
 {
@@ -12,6 +13,8 @@ namespace Optimization
 		{
 			Scan();
 
+			name = name.ToLower();
+
 			if (!s_optimizers.ContainsKey(name))
 			{
 				return null;
@@ -22,7 +25,7 @@ namespace Optimization
 		
 		private static void Add(Type type)
 		{
-			s_optimizers[Optimizer.GetName(type)] = type;
+			s_optimizers[Optimizer.GetName(type).ToLower()] = type;
 		}
 		
 		private static void Scan(Assembly asm)
@@ -47,6 +50,33 @@ namespace Optimization
 
 			foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
 			{
+				Scan(asm);
+			}
+			
+			// Scan in libdir thing
+			string dirpath = Path.Combine(Path.Combine(Directories.Lib, "optimization-sharp"), "optimizers");
+			string[] files = Directory.GetFiles(dirpath);
+			
+			foreach (string file in files)
+			{
+				
+				if (!file.EndsWith(".dll"))
+				{
+					continue;
+				}
+				
+				Assembly asm;
+				
+				try
+				{
+					asm = Assembly.LoadFile(file);
+				}
+				catch (Exception e)
+				{
+					Console.Error.WriteLine("Could not load assembly: " + e.Message);
+					continue;
+				}
+				
 				Scan(asm);
 			}
 		}

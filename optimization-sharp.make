@@ -54,6 +54,7 @@ FILES = \
 	Connection.cs \
 	Constants.cs \
 	Dispatcher.cs \
+	Directories.cs \
 	Fitness.cs \
 	Job.cs \
 	Optimizer.cs \

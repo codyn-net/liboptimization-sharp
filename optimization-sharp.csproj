@@ -57,6 +57,7 @@
     <Compile Include="Storage\Storage.cs" />
     <Compile Include="Registry.cs" />
     <Compile Include="Attributes.cs" />
+    <Compile Include="Directories.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
