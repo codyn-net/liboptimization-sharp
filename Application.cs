@@ -413,7 +413,10 @@ namespace Optimization
 		
 		public void Run(Job job)
 		{
+			d_quitting = false;
+
 			d_job = job;
+			d_job.Initialize();
 			
 			OnJob(this, job);
 			

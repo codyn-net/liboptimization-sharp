@@ -131,7 +131,7 @@ namespace Optimization
 		
 		protected virtual Storage.Storage CreateStorage()
 		{
-			return new Storage.SQLite();
+			return new Storage.SQLite(this);
 		}
 		
 		protected virtual Solution CreateSolution(uint idx)

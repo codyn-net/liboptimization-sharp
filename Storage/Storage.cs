@@ -27,14 +27,11 @@ namespace Optimization.Storage
 		private string d_uri;
 		private Optimizer d_optimizer;
 		
-		public virtual void Initialize(string uri, Optimizer optimizer)
+		public Storage(Optimizer optimizer)
 		{
-			d_uri = uri;
 			d_optimizer = optimizer;
-			
-			d_optimizer.Storage = this;
 		}
-		
+
 		public string Uri
 		{
 			get

@@ -35,6 +35,10 @@ namespace Optimization.Storage
 		private delegate bool RowCallback(IDataReader reader);
 		private SqliteConnection d_connection;
 		
+		public SQLite(Optimizer optimizer) : base(optimizer)
+		{
+		}
+		
 		public override void Begin()
 		{
 			if (String.IsNullOrEmpty(Uri))

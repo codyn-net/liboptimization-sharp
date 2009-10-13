@@ -101,6 +101,11 @@ namespace Optimization
 			return ret;
 		}
 		
+		public void Initialize()
+		{
+			d_optimizer.Initialize();
+		}
+		
 		private void LoadOptimizer(XmlDocument doc)
 		{
 			XmlNode node = doc.SelectSingleNode("/job/optimizer");
