@@ -21,13 +21,14 @@
 using System;
 using System.Xml;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Optimization
 {
-	public class Job<T> where T : Optimizer, new()
+	public class Job
 	{
 		private string d_name;
-		private T d_optimizer;
+		private Optimizer d_optimizer;
 		private Dispatcher d_dispatcher;
 		private int d_priority;
 		private string d_token;
@@ -51,12 +52,8 @@ namespace Optimization
 		
 		private void Load(XmlDocument doc)
 		{
-			d_optimizer = new T();
-			
-			LoadJob(doc);			
-			LoadSettings(doc);
-			LoadBoundaries(doc);
-			LoadParameters(doc);
+			LoadJob(doc);
+			LoadOptimizer(doc);
 			LoadFitness(doc);
 			LoadDispatcher(doc);
 			
@@ -93,15 +90,37 @@ namespace Optimization
 			}
 		}
 		
-		public static Job<T> FromXml(string xml)
+		public static Job FromXml(string xml)
 		{
 			XmlDocument doc = new XmlDocument();
 			doc.LoadXml(xml);
 			
-			Job<T> ret = new Job<T>();
+			Job ret = new Job();
 			ret.Load(doc);
 			
 			return ret;
+		}
+		
+		private void LoadOptimizer(XmlDocument doc)
+		{
+			XmlNode node = doc.SelectSingleNode("/job/optimizer");
+			XmlAttribute attr = node.Attributes["name"];
+			
+			if (attr == null)
+			{
+				throw new Exception("Optimizer name not specified");
+			}
+			
+			d_optimizer = Registry.Create(attr.Value);
+			
+			if (d_optimizer == null)
+			{
+				throw new Exception(String.Format("Optimizer {0} could not be found", attr.Value));
+			}
+			
+			LoadSettings(doc);
+			LoadBoundaries(doc);
+			LoadParameters(doc);
 		}
 		
 		private void LoadSettings(XmlDocument doc)
@@ -249,7 +268,7 @@ namespace Optimization
 			}
 		}
 		
-		public T Optimizer
+		public Optimizer Optimizer
 		{
 			get
 			{

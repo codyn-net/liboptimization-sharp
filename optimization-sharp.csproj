@@ -32,7 +32,6 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Boundary.cs" />
     <Compile Include="Connection.cs" />
-    <Compile Include="Console.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="Fitness.cs" />
@@ -43,7 +42,6 @@
     <Compile Include="Settings.cs" />
     <Compile Include="Solution.cs" />
     <Compile Include="State.cs" />
-    <Compile Include="Utils.cs" />
     <Compile Include="Visual.cs" />
     <Compile Include="Math\Expression.cs" />
     <Compile Include="Math\Instruction.cs" />
@@ -57,6 +55,8 @@
     <Compile Include="Messages\Token.cs" />
     <Compile Include="Storage\SQLite.cs" />
     <Compile Include="Storage\Storage.cs" />
+    <Compile Include="Registry.cs" />
+    <Compile Include="Attributes.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">

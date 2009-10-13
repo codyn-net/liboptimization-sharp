@@ -37,7 +37,9 @@ namespace Optimization
 			d_parameters = new List<Parameter>();
 			d_data = new Dictionary<string, object>();
 			
-			Initialize(id, fitness, state);
+			d_id = id;
+			d_fitness = fitness;
+			d_state = state;
 		}
 		
 		public Solution() : this(0, null, null)
@@ -50,13 +52,6 @@ namespace Optimization
 			{
 				return d_data;
 			}
-		}
-		
-		public virtual void Initialize(uint id, Fitness fitness, State state)
-		{
-			d_id = id;
-			d_fitness = fitness;
-			d_state = state;
 		}
 		
 		public List<Parameter> Parameters

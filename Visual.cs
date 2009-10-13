@@ -2,11 +2,11 @@ using System;
 
 namespace Optimization
 {
-	public class Visual<T> where T : Optimizer, new()
+	public class Visual
 	{
-		private Application<T> d_application;
+		private Application d_application;
 		
-		public Visual(Application<T> application)
+		public Visual(Application application)
 		{
 			d_application = application;
 			
@@ -27,7 +27,7 @@ namespace Optimization
 			// NOOP
 		}
 
-		protected virtual void OnJob(object source, Job<T> job)
+		protected virtual void OnJob(object source, Job job)
 		{
 			// NOOP
 		}
@@ -42,7 +42,7 @@ namespace Optimization
 			// NOOP
 		}
 		
-		protected Application<T> Application
+		protected Application Application
 		{
 			get
 			{

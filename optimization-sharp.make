@@ -49,9 +49,9 @@ all: $(ASSEMBLY) $(PROGRAMFILES) $(LINUX_PKGCONFIG)
 FILES = \
 	Application.cs \
 	AssemblyInfo.cs \
+	Attributes.cs \
 	Boundary.cs \
 	Connection.cs \
-	Console.cs \
 	Constants.cs \
 	Dispatcher.cs \
 	Fitness.cs \
@@ -59,10 +59,10 @@ FILES = \
 	Optimizer.cs \
 	Parameter.cs \
 	Random.cs \
+	Registry.cs \
 	Settings.cs \
 	Solution.cs \
 	State.cs \
-	Utils.cs \
 	Visual.cs \
 	Math/Expression.cs \
 	Math/Instruction.cs \

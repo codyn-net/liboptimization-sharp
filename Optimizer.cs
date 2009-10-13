@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Collections;
+using Optimization.Attributes;
 
 namespace Optimization
 {
@@ -35,52 +36,7 @@ namespace Optimization
 			[Setting("population-size", 30)]
 			public uint PopulationSize;
 		}
-		
-		public class TypeClass : Attribute
-		{
-			Type d_type;
-			
-			public TypeClass()
-			{
-				d_type = null;
-			}
-			
-			public TypeClass(Type type)
-			{
-				d_type = type;
-			}
-			
-			public Type Type
-			{
-				get
-				{
-					return d_type;
-				}
-			}
-		}
-		
-		public class SolutionClass : TypeClass
-		{
-			public SolutionClass()
-			{
-			}
-			
-			public SolutionClass(Type type) : base(type)
-			{
-			}
-		}
-		
-		public class SettingsClass : TypeClass
-		{
-			public SettingsClass()
-			{
-			}
-			
-			public SettingsClass(Type type) : base(type)
-			{
-			}
-		}
-		
+
 		private Storage.Storage d_storage;
 		
 		private State d_state;
@@ -120,25 +76,23 @@ namespace Optimization
 			d_storage.Begin();
 		}
 		
-		private Type FindTypeClass(Type parent, Type attrType)
+		private int TypeDistance(Type parent, Type child)
 		{
-			object[] attrs;
-			TypeClass t;
+			int ret = 0;
 			
-			// Check for the attribute on the current type
-			attrs = GetType().GetCustomAttributes(attrType, true);
-			
-			if (attrs.Length != 0)
+			while (!child.Equals(parent))
 			{
-				t = attrs[0] as TypeClass;
-				
-				if (t.Type != null && t.Type.IsSubclassOf(parent))
-				{
-					return t.Type;
-				}
+				child = child.BaseType;
+				++ret;
 			}
 			
-			Type potential = null;
+			return ret;
+		}
+		
+		private Type FindTypeClass(Type parent)
+		{
+			Type found = null;
+			int distance = 0;
 			
 			// Find subclasses
 			foreach (Type type in Assembly.GetEntryAssembly().GetTypes())
@@ -149,32 +103,21 @@ namespace Optimization
 				}
 				
 				// Store potential subclass here if we don't find anything with the attribute
-				potential = type;
-				attrs = type.GetCustomAttributes(attrType, true);
-				
-				if (attrs.Length == 0)
+				int dist = TypeDistance(parent, type);
+
+				if (found == null || dist > distance)
 				{
-					continue;
-				}
-				
-				t = attrs[0] as TypeClass;
-				
-				if (t.Type == null)
-				{
-					return type;
-				}
-				else
-				{
-					return t.Type;
+					found = type;
+					distance = dist;
 				}
 			}
 			
-			return potential;
+			return found;
 		}
 		
 		protected virtual Settings CreateSettings()
 		{
-			Type type = FindTypeClass(typeof(Settings), typeof(SettingsClass));
+			Type type = FindTypeClass(typeof(Settings));
 			
 			if (type != null)
 			{
@@ -195,7 +138,7 @@ namespace Optimization
 		{
 			if (d_solutionConstructor == null)
 			{
-				Type type = FindTypeClass(typeof(Solution), typeof(SolutionClass));
+				Type type = FindTypeClass(typeof(Solution));
 				
 				if (type != null)
 				{
@@ -343,11 +286,29 @@ namespace Optimization
 			return null;
 		}
 		
-		public virtual string Name
+		public static string GetName(Type type)
+		{
+			object[] attr = type.GetCustomAttributes(typeof(OptimizerAttribute), false);
+			string name = null;
+			
+			if (attr.Length != 0)
+			{
+				name = (attr[0] as OptimizerAttribute).Name;
+			}
+			
+			if (name == null)
+			{
+				name = type.Name;
+			}
+			
+			return name;
+		}
+		
+		public string Name
 		{
 			get
 			{
-				return GetType().Name.ToLower();
+				return Optimizer.GetName(GetType());
 			}
 		}
 		

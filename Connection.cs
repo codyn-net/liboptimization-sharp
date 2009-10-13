@@ -118,7 +118,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					Console.Error.WriteLine("Could not parse communication: " + e.Message);
+					System.Console.Error.WriteLine("Could not parse communication: " + e.Message);
 					break;
 				}
 
@@ -153,7 +153,7 @@ namespace Optimization
 			catch (System.IO.IOException e)
 			{
 				// Closed
-				Console.WriteLine("Exception in data reading: " + e.Message);
+				System.Console.WriteLine("Exception in data reading: " + e.Message);
 				OnClosed(this, new EventArgs());
 
 				d_client.Close();
@@ -175,7 +175,7 @@ namespace Optimization
 			}
 		}
 		
-		private Task Construct<T>(Job<T> job, Solution solution) where T : Optimizer, new()
+		private Task Construct(Job job, Solution solution)
 		{
 			Task task = new Task();
 			
@@ -222,7 +222,7 @@ namespace Optimization
 			return task;
 		}
 		
-		private Communication Construct<T>(Job<T> job) where T : Optimizer, new()
+		private Communication Construct(Job job)
 		{
 			Batch batch = new Batch();
 			batch.Priority = job.Priority;
@@ -284,7 +284,7 @@ namespace Optimization
 			return true;
 		}
 		
-		public bool Send<T>(Job<T> job) where T : Optimizer, new()
+		public bool Send(Job job)
 		{
 			// Send a batch of tasks to the master
 			if (!d_client.Connected)

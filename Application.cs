@@ -28,11 +28,11 @@ using System.Security.Cryptography;
 
 namespace Optimization
 {
-	public class Application<T> where T : Optimizer, new()
+	public class Application
 	{
 		public delegate void MessageHandler(object source, string message);
 		public delegate void ProgressHandler(object source, double progress);
-		public delegate void JobHandler(object source, Job<T> job);
+		public delegate void JobHandler(object source, Job job);
 
 		public event MessageHandler OnStatus = delegate {};
 		public event MessageHandler OnError = delegate {};
@@ -62,7 +62,7 @@ namespace Optimization
 		{
 		}
 		
-		Job<T> d_job;
+		Job d_job;
 		Connection d_connection;
 		
 		string d_masterAddress;
@@ -170,7 +170,7 @@ namespace Optimization
 			args = rest.ToArray();
 		}
 		
-		public Job<T> Job
+		public Job Job
 		{
 			get
 			{
@@ -215,7 +215,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("Erreur: " + e);
 				}
 
 				// No more iterations, we're done
@@ -229,7 +229,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("Erreur: " + e);
 			}
 			
 			// Send optimizer population as batch to the master
@@ -263,7 +263,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("Erreur: " + e);
 			}
 		}
 		
@@ -288,7 +288,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("Erreur: " + e);
 			}
 			
 			Done(solution);
@@ -395,7 +395,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("Erreur: " + e);
 				}
 			}	
 		}
@@ -411,7 +411,7 @@ namespace Optimization
 			return d_connection.Send(d_job);
 		}
 		
-		public void Run(Job<T> job)
+		public void Run(Job job)
 		{
 			d_job = job;
 			
@@ -442,7 +442,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("Erreur: " + e);
 				}
 
 				// Usually means the connection with the master was broken

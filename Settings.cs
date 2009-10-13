@@ -22,30 +22,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Collections;
+using Optimization.Attributes;
 
 namespace Optimization
 {
-	[AttributeUsage(AttributeTargets.Field)]
-	public class SettingAttribute : Attribute
-	{
-		public string Name;
-		public object Default;
-		
-		public SettingAttribute(string name, object def)
-		{
-			Name = name;
-			Default = def;
-		}
-		
-		public SettingAttribute(string name) : this(name, null)
-		{
-		}
-
-		public SettingAttribute() : this("")
-		{
-		}
-	}
-	
 	public class Settings : IEnumerable<KeyValuePair<string, object>>
 	{
 		private Dictionary<string, FieldInfo> d_settings;
