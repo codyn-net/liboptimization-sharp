@@ -54,7 +54,6 @@ namespace Optimization
 		{
 			LoadJob(doc);
 			LoadOptimizer(doc);
-			LoadFitness(doc);
 			LoadDispatcher(doc);
 			
 			if (String.IsNullOrEmpty(d_name))
@@ -109,6 +108,12 @@ namespace Optimization
 		private void LoadOptimizer(XmlDocument doc)
 		{
 			XmlNode node = doc.SelectSingleNode("/job/optimizer");
+			
+			if (node == null)
+			{
+				throw new Exception("No optimizer found in XML");
+			}
+			
 			XmlAttribute attr = node.Attributes["name"];
 			
 			if (attr == null)
@@ -123,93 +128,7 @@ namespace Optimization
 				throw new Exception(String.Format("Optimizer {0} could not be found", attr.Value));
 			}
 			
-			LoadSettings(doc);
-			LoadBoundaries(doc);
-			LoadParameters(doc);
-		}
-		
-		private void LoadSettings(XmlDocument doc)
-		{
-			XmlNodeList nodes = doc.SelectNodes("/job/optimizer/setting");
-			
-			foreach (XmlNode node in nodes)
-			{
-				XmlAttribute attr = node.Attributes["name"];
-				
-				if (attr != null)
-				{
-					d_optimizer.Configuration[attr.Value] = node.InnerText;
-				}
-			}
-		}
-		
-		private void LoadBoundaries(XmlDocument doc)
-		{
-			XmlNodeList nodes = doc.SelectNodes("/job/optimizer/boundaries/boundary");
-			
-			foreach (XmlNode node in nodes)
-			{
-				XmlAttribute nm = node.Attributes["name"];
-				XmlAttribute min = node.Attributes["min"];
-				XmlAttribute max = node.Attributes["max"];
-				
-				if (nm != null && min != null && max != null)
-				{
-					d_optimizer.Boundaries.Add(new Boundary(nm.Value, Double.Parse(min.Value), Double.Parse(max.Value)));
-				}
-			}
-		}
-		
-		private void LoadParameters(XmlDocument doc)
-		{
-			XmlNodeList nodes = doc.SelectNodes("/job/optimizer/parameters/parameter");
-			
-			foreach (XmlNode node in nodes)
-			{
-				XmlAttribute nm = node.Attributes["name"];
-				XmlAttribute bound = node.Attributes["boundary"];
-				
-				if (nm != null && bound != null)
-				{
-					Boundary boundary = d_optimizer.Boundary(bound.Value);
-					
-					if (boundary != null)
-					{
-						d_optimizer.Parameters.Add(new Parameter(nm.Value, boundary));
-					}
-				}
-			}
-				
-		}
-		
-		private void LoadFitness(XmlDocument doc)
-		{
-			XmlNode expression = doc.SelectSingleNode("/job/optimizer/fitness/expression");
-			
-			if (expression == null)
-			{
-				return;
-			}
-			
-			if (!d_optimizer.Fitness.Expression.Parse(expression.InnerText))
-			{
-				Console.Error.WriteLine("Could not parse fitness");
-				return;
-			}
-			
-			XmlNodeList nodes = doc.SelectNodes("/job/optimizer/fitness/variable");
-			
-			foreach (XmlNode node in nodes)
-			{
-				XmlAttribute nm = node.Attributes["name"];
-				
-				if (nm == null)
-				{
-					continue;
-				}
-				
-				d_optimizer.Fitness.AddVariable(nm.Value, node.InnerText);
-			}
+			d_optimizer.FromXml(node);
 		}
 		
 		private void LoadDispatcher(XmlDocument doc)

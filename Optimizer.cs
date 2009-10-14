@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Collections;
 using Optimization.Attributes;
+using System.Xml;
 
 namespace Optimization
 {
@@ -286,6 +287,18 @@ namespace Optimization
 			return null;
 		}
 		
+		public static string GetDescription(Type type)
+		{
+			object[] attr = type.GetCustomAttributes(typeof(OptimizerAttribute), false);
+			
+			if (attr.Length != 0)
+			{
+				return (attr[0] as OptimizerAttribute).Description;
+			}
+			
+			return null;
+		}
+		
 		public static string GetName(Type type)
 		{
 			object[] attr = type.GetCustomAttributes(typeof(OptimizerAttribute), false);
@@ -378,6 +391,98 @@ namespace Optimization
 		public virtual void Log(string type, string str)
 		{
 			d_storage.Log(type, str);
+		}
+		
+		public virtual void FromXml(XmlNode node)
+		{
+			LoadSettings(node);
+			LoadBoundaries(node);
+			LoadParameters(node);
+			LoadFitness(node);
+		}
+
+		private void LoadSettings(XmlNode root)
+		{
+			XmlNodeList nodes = root.SelectNodes("setting");
+			
+			foreach (XmlNode node in nodes)
+			{
+				XmlAttribute attr = node.Attributes["name"];
+				
+				if (attr != null)
+				{
+					d_settings[attr.Value] = node.InnerText;
+				}
+			}
+		}
+		
+		private void LoadBoundaries(XmlNode root)
+		{
+			XmlNodeList nodes = root.SelectNodes("boundaries/boundary");
+			
+			foreach (XmlNode node in nodes)
+			{
+				XmlAttribute nm = node.Attributes["name"];
+				XmlAttribute min = node.Attributes["min"];
+				XmlAttribute max = node.Attributes["max"];
+				
+				if (nm != null && min != null && max != null)
+				{
+					d_boundaries.Add(new Boundary(nm.Value, Double.Parse(min.Value), Double.Parse(max.Value)));
+				}
+			}
+		}
+		
+		private void LoadParameters(XmlNode root)
+		{
+			XmlNodeList nodes = root.SelectNodes("parameters/parameter");
+			
+			foreach (XmlNode node in nodes)
+			{
+				XmlAttribute nm = node.Attributes["name"];
+				XmlAttribute bound = node.Attributes["boundary"];
+				
+				if (nm != null && bound != null)
+				{
+					Boundary boundary = Boundary(bound.Value);
+					
+					if (boundary != null)
+					{
+						d_parameters.Add(new Parameter(nm.Value, boundary));
+					}
+				}
+			}
+				
+		}
+		
+		private void LoadFitness(XmlNode root)
+		{
+			XmlNode expression = root.SelectSingleNode("fitness/expression");
+			
+			if (expression == null)
+			{
+				return;
+			}
+			
+			if (!d_fitness.Expression.Parse(expression.InnerText))
+			{
+				Console.Error.WriteLine("Could not parse fitness");
+				return;
+			}
+			
+			XmlNodeList nodes = root.SelectNodes("fitness/variable");
+			
+			foreach (XmlNode node in nodes)
+			{
+				XmlAttribute nm = node.Attributes["name"];
+				
+				if (nm == null)
+				{
+					continue;
+				}
+				
+				d_fitness.AddVariable(nm.Value, node.InnerText);
+			}
 		}
 	}
 }

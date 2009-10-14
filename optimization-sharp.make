@@ -76,7 +76,8 @@ FILES = \
 	Messages/Task.cs \
 	Messages/Token.cs \
 	Storage/SQLite.cs \
-	Storage/Storage.cs 
+	Storage/Storage.cs \
+	Options.cs
 
 DATA_FILES = 
 
