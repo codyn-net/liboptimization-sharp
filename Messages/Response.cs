@@ -84,6 +84,16 @@ namespace Optimization.Messages
 			public string Message;
 		}
 		
+		[ProtoContract()]
+		public class KeyValueType
+		{
+			[ProtoMember(1, IsRequired=true)]
+			public string Key;
+			
+			[ProtoMember(2, IsRequired=true)]
+			public string Value;
+		}
+		
 		[ProtoMember(1, IsRequired=true)]
 		public UInt32 Id;
 		
@@ -98,5 +108,8 @@ namespace Optimization.Messages
 		
 		[ProtoMember(5, IsRequired=false)]
 		public FailureType Failure;
+		
+		[ProtoMember(6)]
+		public KeyValueType[] Data;
 	}
 }

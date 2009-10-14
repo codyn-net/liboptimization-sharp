@@ -53,7 +53,6 @@ FILES = \
 	Boundary.cs \
 	Connection.cs \
 	Constants.cs \
-	Dispatcher.cs \
 	Directories.cs \
 	Fitness.cs \
 	Job.cs \
@@ -75,9 +74,12 @@ FILES = \
 	Messages/Response.cs \
 	Messages/Task.cs \
 	Messages/Token.cs \
+	Messages/Messages.cs \
 	Storage/SQLite.cs \
 	Storage/Storage.cs \
-	Options.cs
+	Options.cs \
+	Dispatcher/Dispatcher.cs \
+	Dispatcher/Webots.cs
 
 DATA_FILES = 
 

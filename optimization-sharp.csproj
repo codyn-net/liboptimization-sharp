@@ -33,7 +33,6 @@
     <Compile Include="Boundary.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Dispatcher.cs" />
     <Compile Include="Fitness.cs" />
     <Compile Include="Job.cs" />
     <Compile Include="Optimizer.cs" />
@@ -59,6 +58,9 @@
     <Compile Include="Attributes.cs" />
     <Compile Include="Directories.cs" />
     <Compile Include="Options.cs" />
+    <Compile Include="Dispatcher\Dispatcher.cs" />
+    <Compile Include="Messages\Messages.cs" />
+    <Compile Include="Dispatcher\Webots.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
@@ -69,5 +71,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System" />
     <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Dispatcher\" />
   </ItemGroup>
 </Project>

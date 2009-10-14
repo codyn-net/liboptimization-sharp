@@ -31,10 +31,10 @@ namespace Optimization
 	{
 		public class Settings : Optimization.Settings
 		{
-			[Setting("max-iterations", 30)]
+			[Setting("max-iterations", 30, Description="Maximum number of iterations")]
 			public uint MaxIterations;
 			
-			[Setting("population-size", 30)]
+			[Setting("population-size", 30, Description="Solution population size")]
 			public uint PopulationSize;
 		}
 
@@ -179,6 +179,11 @@ namespace Optimization
 		virtual public void Add(Solution solution)
 		{
 			d_population.Add(solution);
+		}
+		
+		virtual public void Remove(Solution solution)
+		{
+			d_population.Remove(solution);
 		}
 		
 		public Solution Best

@@ -27,15 +27,47 @@ namespace Optimization
 {
 	public class Job
 	{
+		public class Dispatch
+		{
+			Dictionary<string, string> d_settings;
+			string d_name;
+			
+			public Dispatch()
+			{
+				d_name = "";
+				d_settings = new Dictionary<string, string>();
+			}
+			
+			public string Name
+			{
+				get
+				{
+					return d_name;
+				}
+				set
+				{
+					d_name = value;
+				}
+			}
+			
+			public Dictionary<string, string> Settings
+			{
+				get
+				{
+					return d_settings;
+				}
+			}
+		}
+
 		private string d_name;
 		private Optimizer d_optimizer;
-		private Dispatcher d_dispatcher;
+		private Dispatch d_dispatcher;
 		private int d_priority;
 		private string d_token;
 		
 		public Job()
 		{
-			d_dispatcher = new Dispatcher();
+			d_dispatcher = new Dispatch();
 			d_name = "";
 			d_token = "";
 		}
@@ -184,7 +216,7 @@ namespace Optimization
 			}
 		}
 		
-		public Dispatcher Dispatcher
+		public Dispatch Dispatcher
 		{
 			get
 			{

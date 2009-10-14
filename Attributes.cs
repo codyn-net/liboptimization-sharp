@@ -8,6 +8,7 @@ namespace Optimization.Attributes
 	{
 		public string Name;
 		public object Default;
+		public string Description;
 		
 		public SettingAttribute(string name, object def)
 		{
@@ -27,8 +28,8 @@ namespace Optimization.Attributes
 	[AttributeUsage(AttributeTargets.Class)]
 	public class OptimizerAttribute : Attribute
 	{
-		string d_name;
-		string d_description;
+		public string Name;
+		public string Description;
 
 		public OptimizerAttribute()
 		{
@@ -36,31 +37,7 @@ namespace Optimization.Attributes
 
 		public OptimizerAttribute(string name)
 		{
-			d_name = name;
-		}
-		
-		public string Name
-		{
-			get
-			{
-				return d_name;
-			}
-			set
-			{
-				d_name = value;
-			}
-		}
-		
-		public string Description
-		{
-			get
-			{
-				return d_description;
-			}
-			set
-			{
-				d_description = value;
-			}
-		}
+			Name = name;
+		}		
 	}
 }

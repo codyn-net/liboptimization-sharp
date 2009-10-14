@@ -28,11 +28,17 @@ namespace Optimization
 {
 	public class Settings : IEnumerable<KeyValuePair<string, object>>
 	{
-		private Dictionary<string, FieldInfo> d_settings;
+		private class Setting
+		{
+			public FieldInfo Info;
+			public SettingAttribute Attribute;
+		}
+		
+		private Dictionary<string, Setting> d_settings;
 		
 		public Settings()
 		{
-			d_settings = new Dictionary<string, FieldInfo>();
+			d_settings = new Dictionary<string, Setting>();
 			
 			Scan();
 		}
@@ -45,12 +51,17 @@ namespace Optimization
 				string nm = info.Name;
 				object def = null;
 				
+				Setting item = new Setting();
+				item.Info = info;
+				
 				if (attrs.Length != 0)
 				{
 					SettingAttribute attr = attrs[0] as SettingAttribute;
 					
 					nm = attr.Name;
 					def = attr.Default;
+					
+					item.Attribute = attr;
 				}
 				
 				if (def != null)
@@ -66,21 +77,32 @@ namespace Optimization
 					}
 				}
 		
-				d_settings[nm] = info;
+				d_settings[nm] = item;
 			}
 		}
 		
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
-			foreach (KeyValuePair<string, FieldInfo> pair in d_settings)
+			foreach (KeyValuePair<string, Setting> pair in d_settings)
 			{
-				yield return new KeyValuePair<string, object>(pair.Key, pair.Value.GetValue(this));
+				yield return new KeyValuePair<string, object>(pair.Key, pair.Value.Info.GetValue(this));
 			}
 		}
 		
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return GetEnumerator();
+		}
+		
+		public string Description(string name)
+		{
+			if (!d_settings.ContainsKey(name))
+			{
+				return null;
+			}
+			
+			Setting item = d_settings[name];
+			return item.Attribute != null ? item.Attribute.Description : null;
 		}
 
 		public object this[string name]
@@ -92,18 +114,18 @@ namespace Optimization
 					return null;
 				}
 				
-				return d_settings[name].GetValue(this);
+				return d_settings[name].Info.GetValue(this);
 			}
 			set
 			{
 				if (d_settings.ContainsKey(name))
 				{
-					FieldInfo info = d_settings[name];
+					FieldInfo info = d_settings[name].Info;
 					
 					try
 					{
 						object val = Convert.ChangeType(value, info.FieldType);
-						d_settings[name].SetValue(this, val);
+						info.SetValue(this, val);
 					}
 					catch (Exception e)
 					{
@@ -114,7 +136,7 @@ namespace Optimization
 							
 							if (ret != null)
 							{
-								d_settings[name].SetValue(this, ret);
+								info.SetValue(this, ret);
 							}
 						}
 						else
