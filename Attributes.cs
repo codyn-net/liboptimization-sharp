@@ -28,6 +28,11 @@ namespace Optimization.Attributes
 	public class OptimizerAttribute : Attribute
 	{
 		string d_name;
+		string d_description;
+
+		public OptimizerAttribute()
+		{
+		}
 
 		public OptimizerAttribute(string name)
 		{
@@ -39,6 +44,22 @@ namespace Optimization.Attributes
 			get
 			{
 				return d_name;
+			}
+			set
+			{
+				d_name = value;
+			}
+		}
+		
+		public string Description
+		{
+			get
+			{
+				return d_description;
+			}
+			set
+			{
+				d_description = value;
 			}
 		}
 	}
