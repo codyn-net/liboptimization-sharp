@@ -142,32 +142,29 @@ namespace Optimization
 			AddMessage(new MessageClosed());
 		}
 		
-		private void ParseArguments(ref string[] args)
+		private void ShowHelp(NDesk.Options.OptionSet optionSet)
 		{
-			List<string> rest = new List<string>();
-			int i = 0;
+			System.Console.WriteLine("Usage: optijob [OPTIONS] <jobs>");
+			System.Console.WriteLine();
+			System.Console.WriteLine("Options:");
+			optionSet.WriteOptionDescriptions(System.Console.Out);
 			
-			while (i < args.Length)
-			{
-				string arg = args[i];
-				
-				if (arg == "--master")
-				{
-					if (i + 1 < args.Length)
-					{
-						d_masterAddress = args[i + 1];
-						++i;
-					}
-				}
-				else
-				{
-					rest.Add(arg);
-				}
-				
-				++i;
-			}
+			Environment.Exit(0);
+		}
+		
+		protected virtual void AddOptions(NDesk.Options.OptionSet optionSet)
+		{
+			optionSet.Add("h|help", "Show this help message", delegate (string s) { ShowHelp(optionSet); });
+			optionSet.Add("m=|master=", "Specify master connection string", delegate (string s) { d_masterAddress = s; });
+		}
+		
+		protected virtual void ParseArguments(ref string[] args)
+		{
+			NDesk.Options.OptionSet optionSet = new NDesk.Options.OptionSet();
 			
-			args = rest.ToArray();
+			AddOptions(optionSet);
+			
+			args = optionSet.Parse(args).ToArray();
 		}
 		
 		public Job Job
