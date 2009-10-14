@@ -7,25 +7,96 @@ namespace Optimization
 {
 	public class Registry
 	{
-		private static Dictionary<string, Type> s_optimizers;
+		private static List<Type> s_types;
 		
 		public static Optimizer Create(string name)
 		{
 			Scan();
+			
+			Type type = Find(name);
 
-			name = name.ToLower();
-
-			if (!s_optimizers.ContainsKey(name))
+			if (type == null)
 			{
 				return null;
 			}
-
-			return s_optimizers[name].GetConstructor(new Type[] {}).Invoke(new object[] {}) as Optimizer;
+			return type.GetConstructor(new Type[] {}).Invoke(new object[] {}) as Optimizer;
 		}
 		
-		private static void Add(Type type)
+		public static List<Type> Optimizers
 		{
-			s_optimizers[Optimizer.GetName(type).ToLower()] = type;
+			get
+			{
+				Scan();
+				return s_types;
+			}
+		}
+		
+		private static void GetNames(Type type, out string part, out string full)
+		{
+			part = Optimizer.GetName(type).ToLower();
+			full = type.Namespace.ToLower() + "." + part;
+			
+			string prefix = "optimization.optimizers.";
+			
+			if (full.StartsWith(prefix))
+			{
+				full = full.Substring(prefix.Length);
+			}
+		}
+		
+		private static string OptimizerNames(List<Type> types)
+		{
+			List<string> names = new List<string>();
+			
+			foreach (Type type in types)
+			{
+				names.Add(type.FullName);
+			}
+			
+			return String.Join(", ", names.ToArray());
+		}
+		
+		private static Type Find(string name)
+		{
+			List<Type> partialMatches = new List<Type>();
+			List<Type> fullMatches = new List<Type>();
+			
+			name = name.ToLower();
+			
+			foreach (Type type in s_types)
+			{
+				string part;
+				string full;
+				 
+				GetNames(type, out part, out full);
+
+				if (part == name)
+				{
+					partialMatches.Add(type);
+				}
+				
+				if (full == name)
+				{
+					fullMatches.Add(type);
+				}
+			}
+			
+			if (fullMatches.Count > 1 || (fullMatches.Count == 0 && partialMatches.Count > 1))
+			{
+				throw new Exception(String.Format("Found more than one match for optimizers: {0}", OptimizerNames(fullMatches)));
+			}
+			else if (fullMatches.Count == 1)
+			{
+				return fullMatches[0];
+			}
+			else if (partialMatches.Count == 1)
+			{
+				return partialMatches[0];
+			}
+			else
+			{
+				throw new Exception(String.Format("Could not find optimizer {0}", name));
+			}
 		}
 		
 		private static void Scan(Assembly asm)
@@ -34,19 +105,19 @@ namespace Optimization
 			{
 				if (type.IsSubclassOf(typeof(Optimization.Optimizer)))
 				{
-					Add(type);
+					s_types.Add(type);
 				}
 			}
 		}
 		
 		private static void Scan()
 		{
-			if (s_optimizers != null)
+			if (s_types != null)
 			{
 				return;
 			}
 			
-			s_optimizers = new Dictionary<string, Type>();
+			s_types = new List<Type>();
 
 			foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
 			{
