@@ -37,7 +37,6 @@ namespace Optimization
 		{
 			d_variables = new Dictionary<string, Expression>();
 			d_values = new Dictionary<string, double>();
-			
 			d_expression = new Expression();
 		}
 		
@@ -90,9 +89,9 @@ namespace Optimization
 		
 		private double SingleFitness()
 		{
-			if (d_values.Count != 0)
+			foreach (KeyValuePair<string, double> pair in d_values)
 			{
-				return d_values.GetEnumerator().Current.Value;
+				return pair.Value;
 			}
 			
 			return 0;
@@ -123,7 +122,7 @@ namespace Optimization
 				{
 					return Convert.ToDouble(d_value);
 				}
-				else if (d_expression == null)
+				else if (d_expression == null || !d_expression)
 				{
 					return SingleFitness();
 				}

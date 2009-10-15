@@ -47,6 +47,11 @@ namespace Optimization.Math
 			return false;
 		}
 		
+		public static implicit operator bool(Expression expr)
+		{
+			return expr.d_instructions.Count != 0;
+		}
+		
 		public string Text
 		{
 			get
