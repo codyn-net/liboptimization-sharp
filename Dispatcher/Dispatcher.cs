@@ -83,6 +83,18 @@ namespace Optimization.Dispatcher
 			return d_settings.ContainsKey(str);
 		}
 		
+		public T Setting<T>(string name)
+		{
+			string val = this[name];
+			
+			if (val == null)
+			{
+				return default (T);
+			}
+			
+			return (T)Convert.ChangeType(val, typeof(T));
+		}
+		
 		public string this [string key]
 		{
 			get
