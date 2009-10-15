@@ -59,7 +59,7 @@ namespace Optimization
 			d_fitness = new Fitness();
 
 			d_settings = CreateSettings();
-			d_state = new State(d_settings);
+			d_state = CreateState();
 			
 			d_population = new List<Solution>();
 
@@ -128,6 +128,19 @@ namespace Optimization
 			}
 			
 			return new Settings();
+		}
+		
+		protected virtual State CreateState()
+		{
+			Type type = FindTypeClass(typeof(State));
+			
+			if (type != null)
+			{
+				object ret = type.GetConstructor(new Type[] {typeof(Optimizer.Settings)}).Invoke(new object[] {d_settings});
+				return ret as State;
+			}
+			
+			return new State(d_settings);
 		}
 		
 		protected virtual Storage.Storage CreateStorage()
