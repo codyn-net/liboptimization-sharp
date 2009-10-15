@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Net;
 using System.IO;
+using Mono.Unix;
 
 namespace Optimization.Dispatcher
 {
 	public class Webots : Dispatcher
 	{
 		private static Webots s_instance;
-		private Socket d_socket;
+		private UnixClient d_client;
 		
 		public static Webots Instance()
 		{
@@ -103,7 +102,7 @@ namespace Optimization.Dispatcher
 			
 			if (serialized != null)
 			{
-				d_socket.Send(serialized);
+				d_client.Client.Send(serialized);
 			}
 		}
 		
@@ -116,17 +115,17 @@ namespace Optimization.Dispatcher
 				return null;
 			}
 			
-			if (d_socket != null)
+			if (d_client != null)
 			{
 				return null;
 			}
 			
 			// Open unix socket...
-			d_socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+			d_client = new UnixClient();
 			
 			try
 			{
-				d_socket.Connect(filename, 0);
+				d_client.Connect(filename);
 			}
 			catch (Exception e)
 			{
@@ -136,14 +135,14 @@ namespace Optimization.Dispatcher
 			
 			byte[] all = new byte[] {};
 			
-			while (true)
+			while (d_client.GetStream().DataAvailable)
 			{
 				byte[] buffer = new byte[1024];
 				int ret;
 				
 				try
 				{
-					ret = d_socket.Receive(buffer, buffer.Length, SocketFlags.None);
+					ret = d_client.GetStream().Read(buffer, 0, buffer.Length);
 				}
 				catch (Exception e)
 				{

@@ -91,6 +91,7 @@ EXTRAS = \
 
 REFERENCES =  \
 	Mono.Data.SqliteClient \
+	Mono.Posix \
 	System.Data \
 	System \
 	System.Xml
