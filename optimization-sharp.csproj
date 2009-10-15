@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{2271FB19-6282-412F-829C-502609B99FCC}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AssemblyName>optimization-sharp</AssemblyName>
+    <AssemblyName>Optimization</AssemblyName>
     <RootNamespace>Optimization</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -28,39 +28,39 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Compile Include="Application.cs" />
-    <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Boundary.cs" />
-    <Compile Include="Connection.cs" />
-    <Compile Include="Constants.cs" />
-    <Compile Include="Fitness.cs" />
-    <Compile Include="Job.cs" />
-    <Compile Include="Optimizer.cs" />
-    <Compile Include="Parameter.cs" />
-    <Compile Include="Random.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="Solution.cs" />
-    <Compile Include="State.cs" />
-    <Compile Include="Visual.cs" />
-    <Compile Include="Math\Expression.cs" />
-    <Compile Include="Math\Instruction.cs" />
-    <Compile Include="Math\Operations.cs" />
-    <Compile Include="Math\Tokenizer.cs" />
-    <Compile Include="Messages\Batch.cs" />
-    <Compile Include="Messages\Cancel.cs" />
-    <Compile Include="Messages\Communication.cs" />
-    <Compile Include="Messages\Response.cs" />
-    <Compile Include="Messages\Task.cs" />
-    <Compile Include="Messages\Token.cs" />
-    <Compile Include="Storage\SQLite.cs" />
-    <Compile Include="Storage\Storage.cs" />
-    <Compile Include="Registry.cs" />
-    <Compile Include="Attributes.cs" />
-    <Compile Include="Directories.cs" />
-    <Compile Include="Options.cs" />
-    <Compile Include="Dispatcher\Dispatcher.cs" />
-    <Compile Include="Messages\Messages.cs" />
-    <Compile Include="Dispatcher\Webots.cs" />
+    <Compile Include="Optimization\Application.cs" />
+    <Compile Include="Optimization\AssemblyInfo.cs" />
+    <Compile Include="Optimization\Boundary.cs" />
+    <Compile Include="Optimization\Connection.cs" />
+    <Compile Include="Optimization\Constants.cs" />
+    <Compile Include="Optimization\Fitness.cs" />
+    <Compile Include="Optimization\Job.cs" />
+    <Compile Include="Optimization\Optimizer.cs" />
+    <Compile Include="Optimization\Parameter.cs" />
+    <Compile Include="Optimization\Random.cs" />
+    <Compile Include="Optimization\Settings.cs" />
+    <Compile Include="Optimization\Solution.cs" />
+    <Compile Include="Optimization\State.cs" />
+    <Compile Include="Optimization\Visual.cs" />
+    <Compile Include="Optimization.Math\Expression.cs" />
+    <Compile Include="Optimization.Math\Instruction.cs" />
+    <Compile Include="Optimization.Math\Operations.cs" />
+    <Compile Include="Optimization.Math\Tokenizer.cs" />
+    <Compile Include="Optimization.Messages\Batch.cs" />
+    <Compile Include="Optimization.Messages\Cancel.cs" />
+    <Compile Include="Optimization.Messages\Communication.cs" />
+    <Compile Include="Optimization.Messages\Response.cs" />
+    <Compile Include="Optimization.Messages\Task.cs" />
+    <Compile Include="Optimization.Messages\Token.cs" />
+    <Compile Include="Optimization.Storage\SQLite.cs" />
+    <Compile Include="Optimization.Storage\Storage.cs" />
+    <Compile Include="Optimization\Registry.cs" />
+    <Compile Include="Optimization\Attributes.cs" />
+    <Compile Include="Optimization\Directories.cs" />
+    <Compile Include="Optimization\Options.cs" />
+    <Compile Include="Optimization.Dispatcher\Dispatcher.cs" />
+    <Compile Include="Optimization.Messages\Messages.cs" />
+    <Compile Include="Optimization.Dispatcher\Webots.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
@@ -73,6 +73,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Dispatcher\" />
+    <Folder Include="Optimization\" />
+    <Folder Include="Optimization.Dispatcher\" />
+    <Folder Include="Optimization.Math\" />
+    <Folder Include="Optimization.Messages\" />
+    <Folder Include="Optimization.Storage\" />
   </ItemGroup>
 </Project>

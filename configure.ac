@@ -53,7 +53,7 @@ dnl package checks, per config
 AC_CONFIG_FILES([
 optimization-sharp.pc
 Makefile
-Directories.cs
+Optimization/Directories.cs
 ])
 
 AC_OUTPUT

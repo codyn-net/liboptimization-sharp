@@ -5,22 +5,22 @@
 if ENABLE_DEBUG
 ASSEMBLY_COMPILER_COMMAND = gmcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize- -debug "-define:DEBUG"
-ASSEMBLY = bin/Debug/optimization-sharp.dll
+ASSEMBLY = bin/Debug/Optimization.dll
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = library
 PROJECT_REFERENCES = 
 BUILD_DIR = bin/Debug
 
 PROTOBUF_NET_DLL_SOURCE=protobuf-net.dll
-OPTIMIZATION_SHARP_DLL_MDB_SOURCE=bin/Debug/optimization-sharp.dll.mdb
-OPTIMIZATION_SHARP_DLL_MDB=$(BUILD_DIR)/optimization-sharp.dll.mdb
+OPTIMIZATION_SHARP_DLL_MDB_SOURCE=bin/Debug/Optimization.dll.mdb
+OPTIMIZATION_SHARP_DLL_MDB=$(BUILD_DIR)/Optimization.dll.mdb
 
 endif
 
 if ENABLE_RELEASE
 ASSEMBLY_COMPILER_COMMAND = gmcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize-
-ASSEMBLY = bin/Release/optimization-sharp.dll
+ASSEMBLY = bin/Release/Optimization.dll
 ASSEMBLY_MDB = 
 COMPILE_TARGET = library
 PROJECT_REFERENCES = 
@@ -47,39 +47,39 @@ RESGEN=resgen2
 all: $(ASSEMBLY) $(PROGRAMFILES) $(LINUX_PKGCONFIG) 
 
 FILES = \
-	Application.cs \
-	AssemblyInfo.cs \
-	Attributes.cs \
-	Boundary.cs \
-	Connection.cs \
-	Constants.cs \
-	Directories.cs \
-	Fitness.cs \
-	Job.cs \
-	Optimizer.cs \
-	Parameter.cs \
-	Random.cs \
-	Registry.cs \
-	Settings.cs \
-	Solution.cs \
-	State.cs \
-	Visual.cs \
-	Math/Expression.cs \
-	Math/Instruction.cs \
-	Math/Operations.cs \
-	Math/Tokenizer.cs \
-	Messages/Batch.cs \
-	Messages/Cancel.cs \
-	Messages/Communication.cs \
-	Messages/Response.cs \
-	Messages/Task.cs \
-	Messages/Token.cs \
-	Messages/Messages.cs \
-	Storage/SQLite.cs \
-	Storage/Storage.cs \
-	Options.cs \
-	Dispatcher/Dispatcher.cs \
-	Dispatcher/Webots.cs
+	Optimization/Application.cs \
+	Optimization/AssemblyInfo.cs \
+	Optimization/Attributes.cs \
+	Optimization/Boundary.cs \
+	Optimization/Connection.cs \
+	Optimization/Constants.cs \
+	Optimization/Directories.cs \
+	Optimization/Fitness.cs \
+	Optimization/Job.cs \
+	Optimization/Optimizer.cs \
+	Optimization/Options.cs \
+	Optimization/Parameter.cs \
+	Optimization/Random.cs \
+	Optimization/Registry.cs \
+	Optimization/Settings.cs \
+	Optimization/Solution.cs \
+	Optimization/State.cs \
+	Optimization/Visual.cs \
+	Optimization.Math/Expression.cs \
+	Optimization.Math/Instruction.cs \
+	Optimization.Math/Operations.cs \
+	Optimization.Math/Tokenizer.cs \
+	Optimization.Messages/Batch.cs \
+	Optimization.Messages/Cancel.cs \
+	Optimization.Messages/Communication.cs \
+	Optimization.Messages/Response.cs \
+	Optimization.Messages/Task.cs \
+	Optimization.Messages/Token.cs \
+	Optimization.Messages/Messages.cs \
+	Optimization.Storage/SQLite.cs \
+	Optimization.Storage/Storage.cs \
+	Optimization.Dispatcher/Dispatcher.cs \
+	Optimization.Dispatcher/Webots.cs
 
 DATA_FILES = 
 
