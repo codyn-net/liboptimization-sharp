@@ -37,6 +37,11 @@ namespace Optimization.Dispatcher
 			}
 		}
 		
+		public static implicit operator bool(Dispatcher dispatcher)
+		{
+			return dispatcher.RequestAvailable;
+		}
+		
 		public List<Parameter> Parameters
 		{
 			get
