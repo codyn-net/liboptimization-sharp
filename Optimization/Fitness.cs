@@ -112,7 +112,7 @@ namespace Optimization
 				context[pair.Key] = pair.Value;
 			}
 			
-			return d_expression.Evaluate(context);
+			return d_expression.Evaluate(Optimization.Math.Constants.Context, context);
 		}
 		
 		public double Value

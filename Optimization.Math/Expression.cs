@@ -387,7 +387,7 @@ namespace Optimization.Math
 			return true;
 		}
 		
-		public double Evaluate(Dictionary<string, object> context)
+		public double Evaluate(params Dictionary<string, object>[] context)
 		{
 			if (d_instructions.Count == 0)
 			{
@@ -395,10 +395,19 @@ namespace Optimization.Math
 			}
 			
 			Stack<double> stack = new Stack<double>();
+			Dictionary<string, object> all = new Dictionary<string, object>();
+			
+			foreach (Dictionary<string, object> dic in context)
+			{
+				foreach (KeyValuePair<string, object> pair in dic)
+				{
+					all[pair.Key] = pair.Value;
+				}
+			}
 			
 			foreach (Instruction inst in d_instructions)
 			{
-				inst.Execute(stack, context);
+				inst.Execute(stack, all);
 			}
 			
 			if (stack.Count != 1)

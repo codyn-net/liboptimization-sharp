@@ -69,6 +69,7 @@ FILES = \
 	Optimization.Math/Instruction.cs \
 	Optimization.Math/Operations.cs \
 	Optimization.Math/Tokenizer.cs \
+	Optimization.Math/Constants.cs \
 	Optimization.Messages/Batch.cs \
 	Optimization.Messages/Cancel.cs \
 	Optimization.Messages/Communication.cs \

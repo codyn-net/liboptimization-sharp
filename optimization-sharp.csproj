@@ -61,6 +61,7 @@
     <Compile Include="Optimization.Dispatcher\Dispatcher.cs" />
     <Compile Include="Optimization.Messages\Messages.cs" />
     <Compile Include="Optimization.Dispatcher\Webots.cs" />
+    <Compile Include="Optimization.Math\Constants.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">

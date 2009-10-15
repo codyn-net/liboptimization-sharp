@@ -85,6 +85,8 @@ namespace Optimization
 			d_connection.OnClosed += HandleOnClosed;
 			d_connection.OnCommunicationReceived += HandleOnCommunicationReceived;
 			
+			Initialize();
+			
 			ParseArguments(ref args);
 			
 			if (String.IsNullOrEmpty(d_masterAddress))
@@ -94,6 +96,10 @@ namespace Optimization
 
 			d_waitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
+		}
+		
+		protected virtual void Initialize()
+		{
 		}
 
 		public EventWaitHandle WaitHandle
