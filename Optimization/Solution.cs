@@ -38,7 +38,7 @@ namespace Optimization
 			d_data = new Dictionary<string, object>();
 			
 			d_id = id;
-			d_fitness = fitness;
+			d_fitness = fitness.Clone() as Fitness;
 			d_state = state;
 		}
 		
