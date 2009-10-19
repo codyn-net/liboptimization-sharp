@@ -276,10 +276,12 @@ namespace Optimization
 			
 			// Create fitness dictionary from response
 			Dictionary<string, double> fitness = new Dictionary<string, double>();
+			List<string> vals = new List<string>();
 			
 			foreach (Response.FitnessType item in response.Fitness)
 			{
 				fitness.Add(item.Name, item.Value);
+				vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
 			}
 			
 			// Update the solution fitness			
@@ -287,7 +289,7 @@ namespace Optimization
 			
 			try
 			{
-				OnStatus(this, "Solution " + solution.Id + " finished successfully");
+				OnStatus(this, "Solution " + solution.Id + " finished successfully (" + String.Join(", ", vals.ToArray()) + " : " + solution.Fitness.Value + ")");
 			}
 			catch (Exception e)
 			{
