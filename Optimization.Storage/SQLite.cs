@@ -152,8 +152,8 @@ namespace Optimization.Storage
 			Query("INSERT INTO `solution` (`index`, `iteration`, `values`, `value_names`, `fitness`) VALUES (@0, @1, @2, @3, @4)",
 			      solution.Id,
 			      Optimizer.CurrentIteration,
-			      Serialize(solution.Parameters, delegate (Parameter param) { return param.Name; }),
 			      Serialize(solution.Parameters, delegate (Parameter param) { return param.Value; }),
+			      Serialize(solution.Parameters, delegate (Parameter param) { return param.Name; }),
 			      solution.Fitness.Value);
 			
 			StringBuilder builder = new StringBuilder();
