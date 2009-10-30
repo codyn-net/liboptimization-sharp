@@ -11,38 +11,60 @@ namespace Optimization.Messages
 		{
 			StringBuilder builder = new StringBuilder();
 			
-			while (ms.Position < ms.Length)
+			while (true)
 			{
-				char b = (char)ms.ReadByte();
-				
-				if (b == ' ')
+				int b = ms.ReadByte();
+
+				if (b == -1)
+				{
+					throw new IOException("End of stream");
+				}
+
+				if ((char)b == ' ')
 				{
 					return int.Parse(builder.ToString());
 				}
-				
-				builder.Append(b);
+
+				builder.Append((char)b);
 			}
-			
-			return 1;
 		}
 
 		public static T[] Extract<T>(Stream stream)
 		{
 			List<T> ret = new List<T>();
+			
+			if (!stream.CanRead)
+			{
+				return new T[] {};
+			}
 
-			while (stream.Position < stream.Length)
+			while (true)
 			{
 				// First read the '<size> ' header
-				int num = ReadMessageSize(stream);
+				int num;
 				
-				// Check if we received the full message
-				if (num > (stream.Length - stream.Position))
+				try
+				{
+					num = ReadMessageSize(stream);
+				}
+				catch (IOException)
 				{
 					break;
 				}
 				
 				byte[] msg = new byte[num];
-				stream.Read(msg, 0, num);
+				
+				try
+				{
+					if (stream.Read(msg, 0, num) != num)
+					{
+						break;
+					}
+				}
+				catch (IOException)
+				{
+					break;
+				}
 
 				MemoryStream ss = new MemoryStream(msg, 0, num);
 				ret.Add(ProtoBuf.Serializer.Deserialize<T>(ss));

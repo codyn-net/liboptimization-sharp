@@ -133,8 +133,14 @@ namespace Optimization.Dispatcher
 				return null;
 			}
 			
-			// FIXME: this should not be needed
-			System.Threading.Thread.Sleep(200);
+			int ctx = 0;
+			
+			while (!d_client.GetStream().DataAvailable && ctx < 10)
+			{
+				System.Threading.Thread.Sleep(100);
+				++ctx;
+			}
+
 			byte[] all = new byte[] {};
 			
 			while (d_client.GetStream().DataAvailable)

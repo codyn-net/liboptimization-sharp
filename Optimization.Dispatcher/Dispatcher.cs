@@ -122,7 +122,7 @@ namespace Optimization.Dispatcher
 		
 		protected virtual Stream RequestStream()
 		{
-			return Console.OpenStandardInput();
+			return new BufferedStream(Console.OpenStandardInput());
 		}
 		
 		private bool ReadRequest()
@@ -154,17 +154,23 @@ namespace Optimization.Dispatcher
 		
 		private void ParseRequest()
 		{
-			foreach (Messages.Task.DescriptionType.KeyValueType kv in d_request.Settings)
+			if (d_request.Settings != null)
 			{
-				d_settings[kv.Key] = kv.Value;
+				foreach (Messages.Task.DescriptionType.KeyValueType kv in d_request.Settings)
+				{
+					d_settings[kv.Key] = kv.Value;
+				}
 			}
 			
-			foreach (Messages.Task.DescriptionType.ParameterType param in d_request.Parameters)
+			if (d_request.Parameters != null)
 			{
-				Parameter parameter = new Parameter(param.Name, param.Value, new Boundary(param.Min, param.Max));
+				foreach (Messages.Task.DescriptionType.ParameterType param in d_request.Parameters)
+				{
+					Parameter parameter = new Parameter(param.Name, param.Value, new Boundary(param.Min, param.Max));
 				
-				d_parameters.Add(parameter);
-				d_parameterMap[parameter.Name] = parameter;
+					d_parameters.Add(parameter);
+					d_parameterMap[parameter.Name] = parameter;
+				}
 			}
 		}
 		
