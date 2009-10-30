@@ -65,8 +65,6 @@ namespace Optimization
 
 			d_parameters = new List<Parameter>();
 			d_boundaries = new List<Boundary>();
-			
-			d_storage = CreateStorage();
 		}
 		
 		public virtual void Initialize()
@@ -141,11 +139,6 @@ namespace Optimization
 			}
 			
 			return new State(d_settings);
-		}
-		
-		protected virtual Storage.Storage CreateStorage()
-		{
-			return new Storage.SQLite(this);
 		}
 		
 		protected virtual Solution CreateSolution(uint idx)

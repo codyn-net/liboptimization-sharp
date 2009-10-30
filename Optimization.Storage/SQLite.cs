@@ -35,8 +35,16 @@ namespace Optimization.Storage
 		private delegate bool RowCallback(IDataReader reader);
 		private SqliteConnection d_connection;
 		
-		public SQLite(Optimizer optimizer) : base(optimizer)
+		public SQLite(Job job) : base(job)
 		{
+		}
+		
+		private Optimizer Optimizer
+		{
+			get
+			{
+				return Job.Optimizer;
+			}
 		}
 		
 		public override void Begin()
@@ -234,6 +242,10 @@ namespace Optimization.Storage
 				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", pair.Key, pair.Value.ToString());
 			}
 			
+			Query("INSERT INTO `settings` (`name`, `value`) VALUES('job', @0)", Job.Name);
+			Query("INSERT INTO `settings` (`name`, `value`) VALUES('optimizer', @0)", Optimizer.Name);
+			Query("INSERT INTO `settings` (`name`, `value`) VALUES('priority', @0)", Job.Priority);
+			
 			Query("CREATE TABLE IF NOT EXISTS `fitness_settings` (`name` TEXT, `value` TEXT)");
 			
 			Query("INSERT INTO `fitness_settings` (`name`, `value`) VALUES (@0, @1)", "expression", Optimizer.Fitness.Expression.Text);
@@ -268,6 +280,17 @@ namespace Optimization.Storage
 			
 			Query("CREATE TABLE IF NOT EXISTS `log` (`time` INT, `type` TEXT, `message` TEXT)");
 			Query("DELETE FROM `log`");
+			
+			Query("CREATE TABLE IF NOT EXISTS `dispatcher` (`name` TEXT, `value` TEXT)");
+			Query("DELETE FROM `dispatcher`");
+			
+			Query("INSERT INTO `dispatcher` (`name`, `value`) VALUES ('name', @0)", Job.Dispatcher.Name);
+			
+			foreach (KeyValuePair<string, string> disp in Job.Dispatcher.Settings)
+			{
+				Query("INSERT INTO `dispatcher` (`name`, `value`) VALUES (@0, @1)", disp.Key, disp.Value);
+			}
+			
 			Query("COMMIT");
 		}
 		

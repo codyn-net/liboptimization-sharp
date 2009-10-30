@@ -64,12 +64,18 @@ namespace Optimization
 		private Dispatch d_dispatcher;
 		private int d_priority;
 		private string d_token;
+		private Storage.Storage d_storage;
 		
 		public Job()
 		{
 			d_dispatcher = new Dispatch();
 			d_name = "";
 			d_token = "";
+		}
+		
+		virtual protected Storage.Storage CreateStorage()
+		{
+			return new Storage.SQLite(this);
 		}
 		
 		public Job(string filename) : this()
@@ -132,8 +138,20 @@ namespace Optimization
 			return ret;
 		}
 		
+		private void EnsureStorage()
+		{
+			if (d_optimizer == null || d_optimizer.Storage != null)
+			{
+				return;
+			}
+
+			d_storage = CreateStorage();
+			d_optimizer.Storage = d_storage;
+		}
+		
 		public void Initialize()
 		{
+			EnsureStorage();
 			d_optimizer.Initialize();
 		}
 		
@@ -161,6 +179,7 @@ namespace Optimization
 			}
 			
 			d_optimizer.FromXml(node);
+			EnsureStorage();
 		}
 		
 		private void LoadDispatcher(XmlDocument doc)

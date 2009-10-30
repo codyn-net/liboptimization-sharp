@@ -25,11 +25,11 @@ namespace Optimization.Storage
 	public class Storage
 	{
 		private string d_uri;
-		private Optimizer d_optimizer;
+		private Job d_job;
 		
-		public Storage(Optimizer optimizer)
+		public Storage(Job job)
 		{
-			d_optimizer = optimizer;
+			d_job = job;
 		}
 
 		public string Uri
@@ -44,11 +44,11 @@ namespace Optimization.Storage
 			}
 		}
 		
-		public Optimizer Optimizer
+		public Job Job
 		{
 			get
 			{
-				return d_optimizer;
+				return d_job;
 			}
 		}
 		
