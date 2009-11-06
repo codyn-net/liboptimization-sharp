@@ -31,5 +31,8 @@ namespace Optimization.Messages
 		
 		[ProtoMember(2)]
 		public Task[] Tasks;
+		
+		[ProtoMember(3, IsRequired=false)]
+		public double Timeout;
 	}
 }

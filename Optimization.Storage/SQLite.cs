@@ -65,16 +65,19 @@ namespace Optimization.Storage
 		private string UniqueFile(string filename)
 		{
 			string orig = Path.GetFullPath(filename);
-			string unique = orig;
 			int i = 1;
 			
-			while (File.Exists(unique))
+			while (true)
 			{
-				unique = orig + "." + i;
+				string unique = orig + "." + i;
+
+				if (!File.Exists(unique))
+				{
+					return unique;
+				}
+				
 				++i;
 			}
-			
-			return unique;
 		}
 		
 		public override void End()
@@ -116,6 +119,7 @@ namespace Optimization.Storage
 
 			Query("CREATE INDEX fitness_index ON fitness(`index`)");
 			Query("CREATE INDEX fitness_iteration ON fitness(`iteration`)");
+			Query("CREATE INDEX IF NOT EXISTS solution_fitness ON solution(`fitness`)");
 		}
 		
 		private void InitializeSolutionData()
@@ -245,6 +249,7 @@ namespace Optimization.Storage
 			Query("INSERT INTO `settings` (`name`, `value`) VALUES('job', @0)", Job.Name);
 			Query("INSERT INTO `settings` (`name`, `value`) VALUES('optimizer', @0)", Optimizer.Name);
 			Query("INSERT INTO `settings` (`name`, `value`) VALUES('priority', @0)", Job.Priority);
+			Query("INSERT INTO `settings` (`name`, `value`) VALUES('timeout', @0)", Job.Timeout);
 			
 			Query("CREATE TABLE IF NOT EXISTS `fitness_settings` (`name` TEXT, `value` TEXT)");
 			

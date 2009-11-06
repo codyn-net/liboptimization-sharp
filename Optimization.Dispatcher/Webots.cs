@@ -102,7 +102,7 @@ namespace Optimization.Dispatcher
 			
 			if (serialized != null)
 			{
-				d_client.Client.Send(serialized);
+				d_client.GetStream().Write(serialized, 0, serialized.Length);
 			}
 		}
 		

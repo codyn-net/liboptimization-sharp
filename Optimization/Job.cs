@@ -62,7 +62,8 @@ namespace Optimization
 		private string d_name;
 		private Optimizer d_optimizer;
 		private Dispatch d_dispatcher;
-		private int d_priority;
+		private double d_priority;
+		private double d_timeout;
 		private string d_token;
 		private Storage.Storage d_storage;
 		
@@ -71,6 +72,7 @@ namespace Optimization
 			d_dispatcher = new Dispatch();
 			d_name = "";
 			d_token = "";
+			d_timeout = -1;
 		}
 		
 		virtual protected Storage.Storage CreateStorage()
@@ -124,6 +126,13 @@ namespace Optimization
 			if (node != null)
 			{
 				d_priority = int.Parse(node.InnerText);
+			}
+			
+			node = doc.SelectSingleNode("/job/timeout");
+			
+			if (node != null)
+			{
+				d_timeout = int.Parse(node.InnerText);
 			}
 		}
 		
@@ -251,7 +260,7 @@ namespace Optimization
 			}
 		}
 		
-		public int Priority
+		public double Priority
 		{
 			get
 			{
@@ -260,6 +269,18 @@ namespace Optimization
 			set
 			{
 				d_priority = value;
+			}
+		}
+		
+		public double Timeout
+		{
+			get
+			{
+				return d_timeout;
+			}
+			set
+			{
+				d_timeout = value;
 			}
 		}
 	}
