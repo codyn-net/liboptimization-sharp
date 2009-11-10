@@ -337,7 +337,7 @@ namespace Optimization
 			byte[] bytes = Encoding.ASCII.GetBytes(d_job.Token + response.Challenge);
 			byte[] encoded = d_sha1Provider.ComputeHash(bytes);
 			
-			string ashex = BitConverter.ToString(encoded).Replace("-", "");
+			string ashex = BitConverter.ToString(encoded).Replace("-", "").ToLower();
 			
 			Communication res = new Communication();
 
