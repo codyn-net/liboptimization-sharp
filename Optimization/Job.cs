@@ -134,6 +134,13 @@ namespace Optimization
 			{
 				d_timeout = int.Parse(node.InnerText);
 			}
+			
+			node = doc.SelectSingleNode("/job/token");
+			
+			if (node != null)
+			{
+				d_token = node.InnerText;
+			}
 		}
 		
 		public static Job FromXml(string xml)
