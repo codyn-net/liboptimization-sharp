@@ -97,7 +97,7 @@ REFERENCES =  \
 	System.Xml
 
 DLL_REFERENCES =  \
-	protobuf-net.dll
+	$(BUILD_DIR)/protobuf-net.dll
 
 CLEANFILES = $(PROGRAMFILES) $(LINUX_PKGCONFIG) 
 
