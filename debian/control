@@ -1,0 +1,20 @@
+Source: liboptimization-sharp
+Priority: extra
+Maintainer: Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>
+Build-Depends: debhelper (>= 7),
+               autotools-dev,
+			   cdbs,
+			   pkg-config,
+			   mono-devel | mono-gmcs,
+               libmono-sqlite2.0-cil,
+			   libmono2.0-cil
+Standards-Version: 3.8.0
+Section: libs
+Homepage: http://birg.epfl.ch
+
+Package: liboptimization-sharp1
+Section: libs
+Architecture: any
+Depends: mono-runtime, libmono-system2.0-cil, libmono-corlib2.0-cil, libmono-sqlite2.0-cil, libmono2.0-cil
+Description: Optimization framework C# bindings
+ C# bindings for the optimization framework
