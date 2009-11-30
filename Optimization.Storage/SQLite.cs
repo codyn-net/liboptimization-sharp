@@ -378,7 +378,7 @@ namespace Optimization.Storage
 		
 		public override void Log(string type, string str)
 		{
-			Query("INSERT INTO `log` (`time`, `type`, `message`) VALUES (@0, @1)", UnixTimeStamp, type, str);
+			Query("INSERT INTO `log` (`time`, `type`, `message`) VALUES (@0, @1, @2)", UnixTimeStamp, type, str);
 		}
 	}
 }
