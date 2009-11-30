@@ -126,7 +126,17 @@ namespace Optimization
 			
 			// Scan in libdir thing
 			string dirpath = Path.Combine(Path.Combine(Directories.Lib, "liboptimization-sharp"), "optimizers");
-			string[] files = Directory.GetFiles(dirpath);
+			string[] files;
+			
+			try
+			{
+				files = Directory.GetFiles(dirpath);
+			}
+			catch (Exception e)
+			{
+				// Directory probably doesn't exist...
+				return;
+			}
 			
 			foreach (string file in files)
 			{
