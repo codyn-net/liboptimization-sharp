@@ -93,6 +93,11 @@ namespace Optimization
 			{
 				d_masterAddress = "localhost:" + (int)Constants.MasterPort;
 			}
+			
+			if (d_masterAddress.IndexOf(':') == -1)
+			{
+				d_masterAddress += ":" + (int)Constants.MasterPort;
+			}
 
 			d_waitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
