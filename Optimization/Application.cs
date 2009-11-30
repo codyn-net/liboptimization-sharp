@@ -218,7 +218,7 @@ namespace Optimization
 			{
 				try
 				{
-					OnStatus(this, "Finished optimization");
+					Status("Finished optimization");
 					OnProgress(this, d_job.Optimizer.CurrentIteration / (double)d_job.Optimizer.Configuration.MaxIterations);
 				}
 				catch (Exception e)
@@ -258,6 +258,17 @@ namespace Optimization
 			}
 		}
 		
+		protected void Status(string format, params object[] args)
+		{
+			Status(String.Format(format, args));
+		}
+		
+		protected virtual void Status(string str)
+		{
+			OnStatus(this, str);
+			d_job.Optimizer.Log("status", str);
+		}
+		
 		protected void Error(string format, params object[] args)
 		{
 			Error(String.Format(format, args));
@@ -268,6 +279,7 @@ namespace Optimization
 			try
 			{
 				OnError(this, str);
+				d_job.Optimizer.Log("error", str);
 			}
 			catch (Exception e)
 			{
@@ -294,7 +306,7 @@ namespace Optimization
 			
 			try
 			{
-				OnStatus(this, "Solution " + solution.Id + " finished successfully (" + String.Join(", ", vals.ToArray()) + " : " + solution.Fitness.Value + ")");
+				Status("Solution {0} finished successfully ({1} : {2})", solution.Id, String.Join(", ", vals.ToArray()), solution.Fitness.Value);
 			}
 			catch (Exception e)
 			{
@@ -417,7 +429,7 @@ namespace Optimization
 				d_running[solution.Id] = solution;
 			}
 			
-			OnStatus(this, "Sending new iteration " + d_job.Optimizer.CurrentIteration + " => " + d_job.Optimizer.Population.Count);
+			Status("Sending new iteration {0} => {1}", d_job.Optimizer.CurrentIteration, d_job.Optimizer.Population.Count);
 			return d_connection.Send(d_job);
 		}
 		
