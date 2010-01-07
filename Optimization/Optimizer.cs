@@ -424,6 +424,10 @@ namespace Optimization
 				{
 					d_settings[attr.Value] = node.InnerText;
 				}
+				else
+				{
+					throw new Exception("XML: Optimizer setting has no name");
+				}
 			}
 		}
 		
@@ -437,9 +441,44 @@ namespace Optimization
 				XmlAttribute min = node.Attributes["min"];
 				XmlAttribute max = node.Attributes["max"];
 				
-				if (nm != null && min != null && max != null)
+				if (nm == null)
 				{
-					d_boundaries.Add(new Boundary(nm.Value, Double.Parse(min.Value), Double.Parse(max.Value)));
+					throw new Exception("XML: No name specified for boundary");
+				}
+				else if (min == null)
+				{
+					throw new Exception(String.Format("XML: No minimum value specified for boundary {0}", nm.Value));
+				}
+				else if (max == null)
+				{
+					throw new Exception(String.Format("XML: No maximum value specified for boundary {0}", nm.Value));
+				}
+				else
+				{
+					Optimization.Math.Expression expr = new Optimization.Math.Expression();
+					double minVal;
+					double maxVal;
+					
+					if (!expr.Parse(min.Value))
+					{
+						throw new Exception(String.Format("XML: Could not parse minimum boundary value {0} ({1})", nm.Value, min.Value));
+					}
+					
+					minVal = expr.Evaluate();
+					
+					if (!expr.Parse(max.Value))
+					{
+						throw new Exception(String.Format("XML: Could not parse maximum boundary value {0} ({1})", nm.Value, max.Value));
+					}
+					
+					maxVal = expr.Evaluate();
+					
+					if (maxVal < minVal)
+					{
+						throw new Exception(String.Format("XML: Maximum boundary value is smaller than minimum value {0} => [{1}, {2}]", nm.Value, minVal, maxVal));
+					}
+
+					d_boundaries.Add(new Boundary(nm.Value, minVal, maxVal));
 				}
 			}
 		}
@@ -453,13 +492,25 @@ namespace Optimization
 				XmlAttribute nm = node.Attributes["name"];
 				XmlAttribute bound = node.Attributes["boundary"];
 				
-				if (nm != null && bound != null)
+				if (nm == null)
+				{
+					throw new Exception("XML: Invalid parameter specification, has no name");		
+				}
+				else if (bound == null)
+				{
+					throw new Exception(String.Format("XML: Invalid parameter specification {0}, no boundary specified", nm.Value));
+				}
+				else
 				{
 					Boundary boundary = Boundary(bound.Value);
 					
 					if (boundary != null)
 					{
 						d_parameters.Add(new Parameter(nm.Value, boundary));
+					}
+					else
+					{
+						throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm, bound.Value));
 					}
 				}
 			}
@@ -477,8 +528,7 @@ namespace Optimization
 			
 			if (!d_fitness.Expression.Parse(expression.InnerText))
 			{
-				Console.Error.WriteLine("Could not parse fitness");
-				return;
+				throw new Exception("XML: Could not parse fitness");
 			}
 			
 			XmlNodeList nodes = root.SelectNodes("fitness/variable");
@@ -489,7 +539,7 @@ namespace Optimization
 				
 				if (nm == null)
 				{
-					continue;
+					throw new Exception("XML: Fitness variable has no name");
 				}
 				
 				d_fitness.AddVariable(nm.Value, node.InnerText);
