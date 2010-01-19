@@ -104,6 +104,23 @@ namespace Optimization
 			Setting item = d_settings[name];
 			return item.Attribute != null ? item.Attribute.Description : null;
 		}
+		
+		public void Clear()
+		{
+			d_settings.Clear();
+		}
+		
+		public Dictionary<string, object> All()
+		{
+			Dictionary<string, object> ret = new Dictionary<string, object>();
+			
+			foreach (KeyValuePair<string, Setting> pair in d_settings)
+			{
+				ret[pair.Key] = pair.Value.Info.GetValue(this);
+			}
+			
+			return ret;
+		}
 
 		public object this[string name]
 		{

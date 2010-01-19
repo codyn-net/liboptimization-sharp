@@ -40,6 +40,14 @@ namespace Optimization
 			d_expression = new Expression();
 		}
 		
+		public void Clear()
+		{
+			d_variables.Clear();
+			d_values.Clear();
+			
+			d_expression.Parse("0");
+		}
+		
 		public double this [string key]
 		{
 			get

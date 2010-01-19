@@ -49,6 +49,10 @@ namespace Optimization
 			{
 				return d_random;
 			}
+			set
+			{
+				d_random = value;
+			}
 		}
 		
 		public Settings Settings

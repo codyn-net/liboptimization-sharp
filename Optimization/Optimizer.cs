@@ -45,6 +45,8 @@ namespace Optimization
 		
 		private List<Parameter> d_parameters;
 		private List<Boundary> d_boundaries;
+		private Dictionary<string, Boundary> d_boundaryHash;
+		private Dictionary<string, Parameter> d_parameterHash;
 		
 		private List<Solution> d_population;
 		private Solution d_best;
@@ -65,6 +67,9 @@ namespace Optimization
 
 			d_parameters = new List<Parameter>();
 			d_boundaries = new List<Boundary>();
+			
+			d_boundaryHash = new Dictionary<string, Boundary>();
+			d_parameterHash = new Dictionary<string, Parameter>();
 		}
 		
 		public virtual void Initialize()
@@ -285,17 +290,26 @@ namespace Optimization
 			}
 		}
 		
+		protected void AddBoundary(Boundary boundary)
+		{
+			d_boundaries.Add(boundary);
+			d_boundaryHash.Add(boundary.Name, boundary);
+		}
+		
 		public Boundary Boundary(string name)
 		{
-			foreach (Boundary boundary in d_boundaries)
-			{
-				if (boundary.Name == name)
-				{
-					return boundary;
-				}
-			}
-			
-			return null;
+			return d_boundaryHash[name];
+		}
+		
+		protected void AddParameter(Parameter parameter)
+		{
+			d_parameters.Add(parameter);
+			d_parameterHash.Add(parameter.Name, parameter);
+		}
+		
+		public Parameter Parameter(string name)
+		{
+			return d_parameterHash[name];
 		}
 		
 		public static string GetDescription(Type type)
@@ -403,6 +417,95 @@ namespace Optimization
 		public virtual void Log(string type, string str)
 		{
 			d_storage.Log(type, str);
+		}
+		
+		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer)
+		{
+			d_storage = storage;
+			
+			/* Settings */
+			d_settings.Clear();
+			
+			foreach (KeyValuePair<string, string> pair in optimizer.Settings)
+			{
+				d_settings[pair.Key] = pair.Value;
+			}
+			
+			/* Boundaries */
+			d_boundaries.Clear();
+			d_boundaryHash.Clear();
+
+			foreach (Storage.Records.Boundary boundary in optimizer.Boundaries)
+			{
+				AddBoundary(new Boundary(boundary.Name, boundary.Min, boundary.Max));
+			}
+			
+			/* Parameters */
+			d_parameters.Clear();
+			
+			foreach (Storage.Records.Parameter parameter in optimizer.Parameters)
+			{
+				AddParameter(new Parameter(parameter.Name, 0, Boundary(parameter.Boundary.Name)));
+			}
+			
+			/* Fitness */
+			d_fitness.Clear();
+			
+			d_fitness.Expression.Parse(optimizer.Fitness.Expression);
+			
+			foreach (KeyValuePair<string, string> pair in optimizer.Fitness.Variables)
+			{
+				d_fitness.AddVariable(pair.Key, pair.Value);
+			}
+			
+			/* Restore iteration, state */
+			d_currentIteration = (uint)d_storage.ReadIterations();
+			
+			d_state.Settings.Clear();
+			
+			foreach (KeyValuePair<string, string> pair in optimizer.State.Settings)
+			{
+				d_state.Settings[pair.Key] = pair.Value;
+			}
+			
+			d_state.Random = optimizer.State.Random;
+			
+			/* Restore population */
+			d_population.Clear();
+			
+			if (d_currentIteration > 0)
+			{
+				Storage.Records.Iteration iteration = storage.ReadIteration((int)d_currentIteration - 1);
+				
+				foreach (Storage.Records.Solution solution in iteration.Solutions)
+				{
+					Solution sol = CreateSolution((uint)solution.Index);
+					sol.Parameters.Clear();
+					
+					foreach (KeyValuePair<string, double> parameter in solution.Parameters)
+					{
+						sol.Parameters.Add(new Parameter(parameter.Key, parameter.Value, Parameter(parameter.Key).Boundary));
+					}
+					
+					sol.Data.Clear();
+					
+					foreach (KeyValuePair<string, string> data in solution.Data)
+					{
+						sol.Data[data.Key] = data.Value;
+					}
+					
+					sol.Fitness.Reset();
+					
+					foreach (KeyValuePair<string, double> fit in solution.Fitness)
+					{
+						sol.Fitness.Values[fit.Key] = fit.Value;
+					}
+				}
+			}
+			else
+			{
+				InitializePopulation();
+			}
 		}
 		
 		public virtual void FromXml(XmlNode node)
@@ -528,7 +631,7 @@ namespace Optimization
 						throw new Exception(String.Format("XML: Maximum initial value is smaller than minimum initial value {0}", nm.Value));
 					}
 
-					d_boundaries.Add(new Boundary(nm.Value, minVal, maxVal, minInitialVal, maxInitialVal));
+					AddBoundary(new Boundary(nm.Value, minVal, maxVal, minInitialVal, maxInitialVal));
 				}
 			}
 		}
@@ -556,7 +659,7 @@ namespace Optimization
 					
 					if (boundary != null)
 					{
-						d_parameters.Add(new Parameter(nm.Value, boundary));
+						AddParameter(new Parameter(nm.Value, boundary));
 					}
 					else
 					{

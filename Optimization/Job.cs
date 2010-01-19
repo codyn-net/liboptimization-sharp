@@ -81,14 +81,52 @@ namespace Optimization
 			return new Storage.SQLite(this);
 		}
 		
-		public Job(string filename) : this()
+		public static Job NewFromXml(string filename)
 		{
-			d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
+			Job job = new Job();
 			
+			job.d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
 			XmlDocument doc = new XmlDocument();	
 			doc.Load(filename);
 			
-			Load(doc);
+			job.Load(doc);
+			
+			return job;
+		}
+		
+		public void LoadFromStorage(string filename)
+		{
+			Storage.Storage storage = CreateStorage();
+			storage.Uri = filename;
+			
+			storage.Open();
+			
+			Load(storage);
+		}
+		
+		private void Load(Storage.Storage storage)
+		{
+			Storage.Records.Job job = storage.ReadJob();
+
+			d_name = job.Name;
+			d_priority = job.Priority;
+			d_token = job.Token;
+			d_timeout = job.Timeout;
+			
+			d_optimizer = Registry.Create(job.Optimizer.Name);
+			
+			if (d_optimizer == null)
+			{
+				throw new Exception("Could not find optimizer");
+			}
+
+			d_optimizer.FromStorage(d_storage, job.Optimizer);
+			d_dispatcher.Name = job.Dispatcher.Name;
+			
+			foreach (KeyValuePair<string, string> pair in job.Dispatcher.Settings)
+			{
+				d_dispatcher.Settings[pair.Key] = pair.Value;
+			}
 		}
 		
 		private void Load(XmlDocument doc)

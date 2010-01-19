@@ -19,10 +19,12 @@
  */
 
 using System;
+using System.Data;
+using System.Collections.Generic;
 
 namespace Optimization.Storage
 {
-	public class Storage
+	public abstract class Storage
 	{
 		private string d_uri;
 		private Job d_job;
@@ -52,6 +54,8 @@ namespace Optimization.Storage
 			}
 		}
 		
+		public abstract void Open();
+		
 		public virtual void Begin()
 		{
 		}
@@ -67,5 +71,16 @@ namespace Optimization.Storage
 		public virtual void Log(string type, string str)
 		{
 		}
+		
+		/* Need to be implemented to retrieve back information from the storage */
+		public abstract Records.Solution ReadSolution(int iteration, int id);
+		public abstract Records.Iteration ReadIteration(int iteration);
+
+		public abstract Records.Job ReadJob();
+		
+		public abstract int ReadIterations();
+		public abstract int ReadSolutions(int iteration);
+		
+		public abstract List<Records.Log> ReadLog();
 	}
 }

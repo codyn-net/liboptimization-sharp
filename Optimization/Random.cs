@@ -31,6 +31,11 @@ namespace Optimization
 			d_random = new System.Random();
 		}
 		
+		public Random(System.Random rnd)
+		{
+			d_random = rnd;
+		}
+		
 		public Random(int seed)
 		{
 			Seed(seed);
