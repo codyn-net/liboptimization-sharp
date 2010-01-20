@@ -79,6 +79,7 @@ FILES = \
 	Optimization.Messages/Messages.cs \
 	Optimization.Storage/SQLite.cs \
 	Optimization.Storage/Storage.cs \
+	Optimization.Storage/Records.cs \
 	Optimization.Dispatcher/Dispatcher.cs \
 	Optimization.Dispatcher/Webots.cs \
 	Optimization.Dispatcher.Internal/Dispatcher.cs \
