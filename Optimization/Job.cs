@@ -94,14 +94,20 @@ namespace Optimization
 			return job;
 		}
 		
-		public void LoadFromStorage(string filename)
+		public bool LoadFromStorage(string filename)
 		{
 			Storage.Storage storage = CreateStorage();
 			storage.Uri = filename;
 			
-			storage.Open();
-			
-			Load(storage);
+			if (storage.Open())
+			{			
+				Load(storage);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 		
 		private void Load(Storage.Storage storage)
@@ -120,7 +126,8 @@ namespace Optimization
 				throw new Exception("Could not find optimizer");
 			}
 
-			d_optimizer.FromStorage(d_storage, job.Optimizer);
+			d_storage = storage;
+			d_optimizer.FromStorage(storage, job.Optimizer);
 			d_dispatcher.Name = job.Dispatcher.Name;
 			
 			foreach (KeyValuePair<string, string> pair in job.Dispatcher.Settings)
