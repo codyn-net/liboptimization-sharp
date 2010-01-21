@@ -53,13 +53,30 @@ namespace Optimization.Storage
 			CreateTables();
 		}
 		
-		public override void Open()
+		public override bool Open()
 		{
+			bool exists = File.Exists(Uri);
+
 			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3");
 			d_connection.Open();
 
 			Query("PRAGMA synchronous = OFF");
 			CreateTables();
+
+			/* Check if it's valid */
+			bool ret = !exists || QueryFirst("pragma table_info(job)") != null;
+			
+			if (!ret)
+			{
+				d_connection.Close();
+			}
+			
+			return ret;
+		}
+		
+		public static implicit operator bool(SQLite s)
+		{
+			return s.d_connection.State != ConnectionState.Closed;
 		}
 		
 		private string UniqueFile(string filename)
