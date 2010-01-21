@@ -698,43 +698,48 @@ namespace Optimization.Storage
 			});
 			
 			/* State stuff */
-			Query("SELECT `random`, * FROM `state` ORDER BY iteration DESC LIMIT 1", delegate (IDataReader reader) {
-				byte[] longEnough = new byte[1024];
-				long read = reader.GetBytes(0, 0, longEnough, 0, longEnough.Length);
-				
-				System.Runtime.Serialization.Formatters.Binary.BinaryFormatter formatter;
-				formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-			
-				MemoryStream stream = new MemoryStream();
-				stream.Write(longEnough, 0, (int)read);
+			Int64 iteration = (Int64)QueryValue("SELECT COUNT(iteration) FROM iteration");
 
-				job.Optimizer.State.Random = new Optimization.Random((System.Random)formatter.Deserialize(stream));
-				stream.Close();
+			if (iteration > 0)
+			{
+				Query("SELECT `random`, * FROM `state` ORDER BY iteration DESC LIMIT 1", delegate (IDataReader reader) {
+					byte[] longEnough = new byte[1024];
+					long read = reader.GetBytes(0, 0, longEnough, 0, longEnough.Length);
+					
+					System.Runtime.Serialization.Formatters.Binary.BinaryFormatter formatter;
+					formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
 				
-				for (int i = 0; i < reader.FieldCount; ++i)
-				{
-					string name = reader.GetName(i);
-
-					if (name.StartsWith("_s_"))
+					MemoryStream stream = new MemoryStream();
+					stream.Write(longEnough, 0, (int)read);
+	
+					job.Optimizer.State.Random = new Optimization.Random((System.Random)formatter.Deserialize(stream));
+					stream.Close();
+					
+					for (int i = 0; i < reader.FieldCount; ++i)
 					{
-						job.Optimizer.State.Settings.Add(name.Substring(3), reader.GetString(i));
+						string name = reader.GetName(i);
+	
+						if (name.StartsWith("_s_"))
+						{
+							job.Optimizer.State.Settings.Add(name.Substring(3), reader.GetString(i));
+						}
 					}
-				}
-
-				return false;
-			});
+	
+					return false;
+				});
+			}
 			
-			return null;
+			return job;
 		}
 		
-		public override int ReadIterations()
+		public override long ReadIterations()
 		{
-			return (int)QueryValue("SELECT COUNT(`iteration`) FROM iteration");
+			return (long)QueryValue("SELECT COUNT(`iteration`) FROM iteration");
 		}
 		
-		public override int ReadSolutions(int iteration)
+		public override long ReadSolutions(long iteration)
 		{
-			return (int)QueryValue("SELECT COUNT(*) FROM solution WHERE iteration = @0", iteration);
+			return (long)QueryValue("SELECT COUNT(*) FROM solution WHERE iteration = @0", iteration);
 		}
 		
 		private DateTime FromUnixTimestamp(int seconds)
