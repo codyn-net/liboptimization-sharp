@@ -386,10 +386,10 @@ namespace Optimization.Storage
 		{
 			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
 
-			Query("CREATE TABLE IF NOT EXISTS `job` (`name` TEXT, `optimizer` TEXT, `dispatcher` TEXT, `priority` DOUBLE, `timeout` DOUBLE, `token` STRING");
+			Query("CREATE TABLE IF NOT EXISTS `job` (`name` TEXT, `optimizer` TEXT, `dispatcher` TEXT, `priority` DOUBLE, `timeout` DOUBLE, `token` TEXT)");
 			Query("DELETE FROM `job`");
 
-			Query("INSERT INTO `job` (`name`, `optimizer`, `dispatcher`, `priority`, `timeout`, `token`) VALUES(@0, @1, @2, @3, @4)", Job.Name, Job.Optimizer.Name, Job.Dispatcher.Name, Job.Priority, Job.Timeout, Job.Token);
+			Query("INSERT INTO `job` (`name`, `optimizer`, `dispatcher`, `priority`, `timeout`, `token`) VALUES(@0, @1, @2, @3, @4, @5)", Job.Name, Job.Optimizer.Name, Job.Dispatcher.Name, Job.Priority, Job.Timeout, Job.Token);
 
 			Query("CREATE TABLE IF NOT EXISTS `settings` (`name` TEXT, `value` TEXT)");
 			Query("DELETE FROM `settings`");
