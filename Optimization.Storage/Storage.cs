@@ -54,7 +54,7 @@ namespace Optimization.Storage
 			}
 		}
 		
-		public abstract void Open();
+		public abstract bool Open();
 		
 		public virtual void Begin()
 		{
@@ -78,8 +78,8 @@ namespace Optimization.Storage
 
 		public abstract Records.Job ReadJob();
 		
-		public abstract int ReadIterations();
-		public abstract int ReadSolutions(int iteration);
+		public abstract long ReadIterations();
+		public abstract long ReadSolutions(long iteration);
 		
 		public abstract List<Records.Log> ReadLog();
 	}
