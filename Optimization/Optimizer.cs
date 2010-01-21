@@ -459,7 +459,7 @@ namespace Optimization
 			}
 			
 			/* Restore iteration, state */
-			d_currentIteration = (uint)d_storage.ReadIterations();
+			d_currentIteration = (uint)storage.ReadIterations();
 			
 			d_state.Settings.Clear();
 			
