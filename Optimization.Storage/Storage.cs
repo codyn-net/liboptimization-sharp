@@ -55,6 +55,7 @@ namespace Optimization.Storage
 		}
 		
 		public abstract bool Open();
+		public abstract void Close();
 		
 		public virtual void Begin()
 		{

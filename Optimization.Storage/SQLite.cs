@@ -53,6 +53,11 @@ namespace Optimization.Storage
 			CreateTables();
 		}
 		
+		public override void Close()
+		{
+			d_connection.Close();
+		}
+		
 		public override bool Open()
 		{
 			bool exists = File.Exists(Uri);
