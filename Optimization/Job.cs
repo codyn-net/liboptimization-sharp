@@ -316,6 +316,13 @@ namespace Optimization
 			{
 				return d_optimizer;
 			}
+			set
+			{
+				d_optimizer = value;
+				d_storage.SaveSettings();
+				
+				d_optimizer.FromStorage(d_storage, null);
+			}
 		}
 		
 		public double Priority
