@@ -423,6 +423,11 @@ namespace Optimization
 		{
 			d_storage = storage;
 			
+			if (optimizer == null)
+			{
+				optimizer = d_storage.ReadJob().Optimizer;
+			}
+			
 			/* Settings */
 			d_settings.Clear();
 			
