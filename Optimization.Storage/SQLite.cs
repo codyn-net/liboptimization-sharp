@@ -382,7 +382,8 @@ namespace Optimization.Storage
 			transaction.Commit();
 		}
 		
-		private void CreateTables()
+				
+		public override void SaveSettings()
 		{
 			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
 
@@ -403,20 +404,14 @@ namespace Optimization.Storage
 			}
 			
 			Query("CREATE TABLE IF NOT EXISTS `fitness_settings` (`name` TEXT, `value` TEXT)");
-			
+
+			Query("DELETE FROM `fitness_settings`");
 			Query("INSERT INTO `fitness_settings` (`name`, `value`) VALUES (@0, @1)", "expression", Job.Optimizer.Fitness.Expression.Text);
 			
 			foreach (KeyValuePair<string, Expression> var in Job.Optimizer.Fitness.Variables)
 			{
 				Query("INSERT INTO `fitness_settings` (`name`, `value`) VALUES(@0, @1)", var.Key, var.Value.Text);
 			}
-			
-			Query("CREATE TABLE IF NOT EXISTS `iteration` (`iteration` INT PRIMARY KEY, `best_id` INT, `best_fitness` DOUBLE, `time` INT)");
-			Query("CREATE INDEX IF NOT EXISTS iteration_iteration ON iteration(`iteration`)");
-			
-			Query("CREATE TABLE IF NOT EXISTS `solution` (`index` INT, `iteration` INT REFERENCES `iteration` (`iteration`), `values` TEXT, `value_names` TEXT, `fitness` DOUBLE)");
-			Query("CREATE INDEX IF NOT EXISTS solution_index ON solution(`index`)");
-			Query("CREATE INDEX IF NOT EXISTS solution_iteration ON solution(`iteration`)");
 			
 			Query("CREATE TABLE IF NOT EXISTS `boundaries` (`name` TEXT, `min` DOUBLE, `max` DOUBLE)");
 			Query("DELETE FROM `boundaries`");
@@ -434,9 +429,6 @@ namespace Optimization.Storage
 				Query("INSERT INTO `parameters` (`name`, `boundary`) VALUES (@0, @1)", parameter.Name, parameter.Boundary.Name);
 			}
 			
-			Query("CREATE TABLE IF NOT EXISTS `log` (`time` INT, `type` TEXT, `message` TEXT)");
-			Query("DELETE FROM `log`");
-			
 			Query("CREATE TABLE IF NOT EXISTS `dispatcher` (`name` TEXT, `value` TEXT)");
 			Query("DELETE FROM `dispatcher`");
 			
@@ -446,6 +438,25 @@ namespace Optimization.Storage
 			}
 			
 			transaction.Commit();
+		}
+		
+		private void CreateTables()
+		{
+			Query("BEGIN TRANSACTION");
+
+			Query("CREATE TABLE IF NOT EXISTS `iteration` (`iteration` INT PRIMARY KEY, `best_id` INT, `best_fitness` DOUBLE, `time` INT)");
+			Query("CREATE INDEX IF NOT EXISTS iteration_iteration ON iteration(`iteration`)");
+			
+			Query("CREATE TABLE IF NOT EXISTS `solution` (`index` INT, `iteration` INT REFERENCES `iteration` (`iteration`), `values` TEXT, `value_names` TEXT, `fitness` DOUBLE)");
+			Query("CREATE INDEX IF NOT EXISTS solution_index ON solution(`index`)");
+			Query("CREATE INDEX IF NOT EXISTS solution_iteration ON solution(`iteration`)");
+			
+			Query("CREATE TABLE IF NOT EXISTS `log` (`time` INT, `type` TEXT, `message` TEXT)");
+			Query("DELETE FROM `log`");
+			
+			Query("COMMIT");
+			
+			SaveSettings();
 		}
 		
 		private bool Query(string s, RowCallback cb, params object[] parameters)

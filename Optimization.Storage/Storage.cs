@@ -72,6 +72,8 @@ namespace Optimization.Storage
 		{
 		}
 		
+		public abstract void SaveSettings();
+		
 		/* Need to be implemented to retrieve back information from the storage */
 		public abstract Records.Solution ReadSolution(int iteration, int id);
 		public abstract Records.Iteration ReadIteration(int iteration);
