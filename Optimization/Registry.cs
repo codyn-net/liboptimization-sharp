@@ -12,14 +12,18 @@ namespace Optimization
 		public static Optimizer Create(string name)
 		{
 			Scan();
-			
-			Type type = Find(name);
 
-			if (type == null)
+			return Create(Find(name));
+		}
+		
+		public static Optimizer Create(Type type)
+		{
+			if (type == null || !type.IsSubclassOf(typeof(Optimization.Optimizer)))
 			{
 				return null;
 			}
-			return type.GetConstructor(new Type[] {}).Invoke(new object[] {}) as Optimizer;
+			
+			return (Optimizer)type.GetConstructor(new Type[] {}).Invoke(new object[] {});
 		}
 		
 		public static List<Type> Optimizers
