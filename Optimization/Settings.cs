@@ -108,6 +108,7 @@ namespace Optimization
 		public void Clear()
 		{
 			d_settings.Clear();
+			Scan();
 		}
 		
 		public Dictionary<string, object> All()
