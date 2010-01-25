@@ -218,7 +218,6 @@ namespace Optimization
 			{
 				try
 				{
-					Status("Finished optimization");
 					OnProgress(this, d_job.Optimizer.CurrentIteration / (double)d_job.Optimizer.Configuration.MaxIterations);
 				}
 				catch (Exception e)

@@ -371,6 +371,7 @@ namespace Optimization
 			// Check if the optimization is finished
 			if (Finished())
 			{
+				Log("status", "Finished optimization");
 				d_storage.End();
 				return false;
 			}
