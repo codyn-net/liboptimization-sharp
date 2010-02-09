@@ -132,7 +132,7 @@ namespace Optimization
 			{
 				files = Directory.GetFiles(dirpath);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				// Directory probably doesn't exist...
 				return;

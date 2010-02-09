@@ -73,6 +73,7 @@ namespace Optimization
 			d_name = "";
 			d_token = "";
 			d_timeout = -1;
+			d_priority = 1;
 		}
 		
 		virtual protected Storage.Storage CreateStorage()
@@ -98,12 +99,12 @@ namespace Optimization
 			
 			if (String.IsNullOrEmpty(d_name))
 			{
-				throw new Exception("No job name provided");
+				throw new Exception("XML: No job name provided");
 			}
 			
 			if (String.IsNullOrEmpty(d_dispatcher.Name))
 			{
-				throw new Exception("No dispatcher name provided");
+				throw new Exception("XML: No dispatcher name provided");
 			}
 		}
 		
@@ -118,6 +119,10 @@ namespace Optimization
 				if (attr != null)
 				{
 					d_name = attr.Value;
+				}
+				else
+				{
+					throw new Exception("XML: No name specified for job");
 				}
 			}
 			
@@ -177,21 +182,21 @@ namespace Optimization
 			
 			if (node == null)
 			{
-				throw new Exception("No optimizer found in XML");
+				throw new Exception("XML: No optimizer found");
 			}
 			
 			XmlAttribute attr = node.Attributes["name"];
 			
 			if (attr == null)
 			{
-				throw new Exception("Optimizer name not specified");
+				throw new Exception("XML: Optimizer name not specified");
 			}
 			
 			d_optimizer = Registry.Create(attr.Value);
 			
 			if (d_optimizer == null)
 			{
-				throw new Exception(String.Format("Optimizer {0} could not be found", attr.Value));
+				throw new Exception(String.Format("XML: Optimizer {0} could not be found", attr.Value));
 			}
 			
 			d_optimizer.FromXml(node);
@@ -204,14 +209,14 @@ namespace Optimization
 			
 			if (dispatcher == null)
 			{
-				return;
+				throw new Exception("XML: No dispatcher node specified");
 			}
 			
 			XmlAttribute nm = dispatcher.Attributes["name"];
 			
 			if (nm == null)
 			{
-				return;
+				throw new Exception("XML: No name specified for dispatcher");
 			}
 			
 			d_dispatcher.Name = nm.Value;
@@ -224,7 +229,8 @@ namespace Optimization
 				
 				if (nm == null)
 				{
-					continue;
+					d_dispatcher = null;
+					throw new Exception(String.Format("XML: No name specified for dispatcher setting {0}", nm.Value));
 				}
 				
 				d_dispatcher.Settings[nm.Value] = node.InnerText;

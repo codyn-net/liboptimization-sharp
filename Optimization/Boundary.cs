@@ -27,12 +27,21 @@ namespace Optimization
 		private string d_name;
 		private double d_min;
 		private double d_max;
+		private double d_minInitial;
+		private double d_maxInitial;
 		
-		public Boundary(string name, double min, double max)
+		public Boundary(string name, double min, double max, double minInitial, double maxInitial)
 		{
 			d_name = name;
 			d_min = min;
 			d_max = max;
+
+			d_minInitial = minInitial;
+			d_maxInitial = maxInitial;
+		}
+		
+		public Boundary(string name, double min, double max) : this(name, min, max, min, max)
+		{
 		}
 		
 		public Boundary(string name) : this(name, 0, 0)
@@ -80,6 +89,30 @@ namespace Optimization
 			set
 			{
 				d_max = value;
+			}
+		}
+		
+		public double MinInitial
+		{
+			get
+			{
+				return d_minInitial;
+			}
+			set
+			{
+				d_minInitial = value;
+			}
+		}
+		
+		public double MaxInitial
+		{
+			get
+			{
+				return d_maxInitial;
+			}
+			set
+			{
+				d_maxInitial = value;
 			}
 		}
 	}

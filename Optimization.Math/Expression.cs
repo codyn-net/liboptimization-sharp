@@ -25,14 +25,32 @@ namespace Optimization.Math
 {
 	public class Expression
 	{
+		public class ContextException : Exception
+		{
+		}
+
 		string d_text;
 		string d_error;
+		bool d_checkVariables;
 
 		List<Instruction> d_instructions;
 		
 		public Expression()
 		{
 			d_instructions = new List<Instruction>();
+			d_checkVariables = false;
+		}
+		
+		public bool CheckVariables
+		{
+			get
+			{
+				return d_checkVariables;
+			}
+			set
+			{
+				d_checkVariables = value;
+			}
 		}
 		
 		private bool Error(string text, Tokenizer tokenizer)
@@ -392,11 +410,58 @@ namespace Optimization.Math
 			return true;
 		}
 		
+		private bool ValidateVariables(Expression expr, Dictionary<string, object>[] context)
+		{
+			foreach (Instruction instruction in expr.d_instructions)
+			{
+				InstructionIdentifier id = instruction as InstructionIdentifier;
+
+				if (id == null)
+				{
+					continue;
+				}
+				
+				bool isvalid = false;
+				
+				foreach (Dictionary<string, object> ctx in context)
+				{
+					object obj;
+					if (ctx.TryGetValue(id.Identifier, out obj))
+					{
+						Expression other = obj as Expression;
+						
+						if (other != null)
+						{
+							if (!ValidateVariables(other, context))
+							{
+								return false;
+							}
+						}
+
+						isvalid = true;
+						break;
+					}
+				}
+				
+				if (!isvalid)
+				{
+					return false;
+				}
+			}
+			
+			return true;
+		}
+		
 		public double Evaluate(params Dictionary<string, object>[] context)
 		{
 			if (d_instructions.Count == 0)
 			{
 				return 0;
+			}
+			
+			if (d_checkVariables && !ValidateVariables(this, context))
+			{
+				throw new ContextException();
 			}
 			
 			Stack<double> stack = new Stack<double>();
