@@ -140,10 +140,12 @@ namespace Optimization.Storage
 		
 		private void InitializeFirst()
 		{
-			Query("BEGIN TRANSACTION");
+			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+
 			InitializeFitnessTable();
 			InitializeSolutionData();
-			Query("COMMIT");
+
+			transaction.Commit();
 		}
 		
 		delegate object ParameterValueFunc(Parameter parameter);
@@ -210,9 +212,9 @@ namespace Optimization.Storage
 			{
 				InitializeFirst();
 			}
-
-			Query("BEGIN TRANSACTION");
 			
+			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+
 			int bestid = -1;
 			double bestfitness = 0;
 
@@ -230,12 +232,13 @@ namespace Optimization.Storage
 				Save(solution);
 			}
 
-			Query("COMMIT");
+			transaction.Commit();
 		}
 		
 		private void CreateTables()
 		{
-			Query("BEGIN TRANSACTION");
+			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+
 			Query("CREATE TABLE IF NOT EXISTS `settings` (`name` TEXT, `value` TEXT)");
 			Query("DELETE FROM `settings`");
 			
@@ -297,7 +300,7 @@ namespace Optimization.Storage
 				Query("INSERT INTO `dispatcher` (`name`, `value`) VALUES (@0, @1)", disp.Key, disp.Value);
 			}
 			
-			Query("COMMIT");
+			transaction.Commit();
 		}
 		
 		private bool Query(string s, RowCallback cb, params object[] parameters)
