@@ -73,6 +73,7 @@ namespace Optimization
 			d_name = "";
 			d_token = "";
 			d_timeout = -1;
+			d_priority = 1;
 		}
 		
 		virtual protected Storage.Storage CreateStorage()
