@@ -59,6 +59,7 @@ namespace Optimization.Storage
 			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3");
 			d_connection.Open();
 			
+			Query("PRAGMA synchronous = OFF");
 			CreateTables();
 		}
 		
