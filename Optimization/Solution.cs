@@ -125,13 +125,13 @@ namespace Optimization
 		{
 			foreach (Parameter parameter in d_parameters)
 			{
-				parameter.Value = d_state.Random.Range(parameter.Boundary.Min, parameter.Boundary.Max);
+				parameter.Value = d_state.Random.Range(parameter.Boundary.MinInitial, parameter.Boundary.MaxInitial);
 			}
 		}
 		
 		public override string ToString ()
 		{
-			return String.Format("[Solution: Id={1}, Parameters={2}]", d_id, d_parameters.ToString());
+			return String.Format("[Solution: Id={0}, Parameters={1}]", d_id, d_parameters.ToString());
 		}
 		
 		public uint Id

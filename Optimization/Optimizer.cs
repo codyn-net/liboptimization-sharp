@@ -441,6 +441,8 @@ namespace Optimization
 				XmlAttribute nm = node.Attributes["name"];
 				XmlAttribute min = node.Attributes["min"];
 				XmlAttribute max = node.Attributes["max"];
+				XmlAttribute minInitial = node.Attributes["min-initial"];
+				XmlAttribute maxInitial = node.Attributes["max-initial"];
 				
 				if (nm == null)
 				{
@@ -459,7 +461,10 @@ namespace Optimization
 					Optimization.Math.Expression expr = new Optimization.Math.Expression();
 					double minVal;
 					double maxVal;
+					double maxInitialVal;
+					double minInitialVal;
 					
+					// Min value					
 					if (!expr.Parse(min.Value))
 					{
 						throw new Exception(String.Format("XML: Could not parse minimum boundary value {0} ({1})", nm.Value, min.Value));
@@ -467,6 +472,7 @@ namespace Optimization
 					
 					minVal = expr.Evaluate();
 					
+					// Max value
 					if (!expr.Parse(max.Value))
 					{
 						throw new Exception(String.Format("XML: Could not parse maximum boundary value {0} ({1})", nm.Value, max.Value));
@@ -478,8 +484,51 @@ namespace Optimization
 					{
 						throw new Exception(String.Format("XML: Maximum boundary value is smaller than minimum value {0} => [{1}, {2}]", nm.Value, minVal, maxVal));
 					}
+					
+					// Max initial
+					if (maxInitial == null)
+					{
+						maxInitialVal = maxVal;
+					}
+					else if (expr.Parse(maxInitial.Value))
+					{
+						maxInitialVal = expr.Evaluate();
+					}
+					else
+					{
+						throw new Exception(String.Format("XML: Could not parse maximum initial boundary value {0} ({1})", nm.Value, maxInitial.Value));
+					}
+					
+					if (maxInitialVal > maxVal)
+					{
+						throw new Exception(String.Format("XML: Maximum initial value is larger than maximum value {0}", nm.Value));
+					}
+					
+					// Min initial
+					if (minInitial == null)
+					{
+						minInitialVal = minVal;
+					}
+					else if (expr.Parse(minInitial.Value))
+					{
+						minInitialVal = expr.Evaluate();
+					}
+					else
+					{
+						throw new Exception(String.Format("XML: Could not parse minimum initial boundary value {0} ({1})", nm.Value, minInitial.Value));
+					}
+					
+					if (minInitialVal > minVal)
+					{
+						throw new Exception(String.Format("XML: Minimum initial value is smaller than minimum value {0}", nm.Value));
+					}
+					
+					if (maxInitialVal < minInitialVal)
+					{
+						throw new Exception(String.Format("XML: Maximum initial value is smaller than minimum initial value {0}", nm.Value));
+					}
 
-					d_boundaries.Add(new Boundary(nm.Value, minVal, maxVal));
+					d_boundaries.Add(new Boundary(nm.Value, minVal, maxVal, minInitialVal, maxInitialVal));
 				}
 			}
 		}
