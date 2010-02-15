@@ -140,6 +140,12 @@ namespace Optimization.Math
 		}
 		
 		[Operation(Arity=1)]
+		public static void Exp(Stack<double> stack)
+		{
+			stack.Push(System.Math.Exp(stack.Pop()));
+		}
+		
+		[Operation(Arity=1)]
 		public static void Ln(Stack<double> stack)
 		{
 			stack.Push(System.Math.Log(stack.Pop()));
