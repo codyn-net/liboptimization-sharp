@@ -62,6 +62,9 @@
     <Compile Include="Optimization.Messages\Messages.cs" />
     <Compile Include="Optimization.Dispatcher\Webots.cs" />
     <Compile Include="Optimization.Math\Constants.cs" />
+    <Compile Include="Optimization.Dispatcher.Internal\Dispatcher.cs" />
+    <Compile Include="Optimization.Dispatcher.Internal\Internal.cs" />
+    <Compile Include="Optimization.Dispatcher.Internal\Registry.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
@@ -80,5 +83,6 @@
     <Folder Include="Optimization.Math\" />
     <Folder Include="Optimization.Messages\" />
     <Folder Include="Optimization.Storage\" />
+    <Folder Include="Optimization.Dispatcher.Internal\" />
   </ItemGroup>
 </Project>
