@@ -432,55 +432,17 @@ namespace Optimization
 			return d_connection.Send(d_job);
 		}
 		
-		private void RunInternal()
+		private void RunInternal(Optimization.Dispatcher.Internal.Dispatcher dispatcher)
 		{
-			Dictionary<string, Optimization.Math.Expression> fitnesses = new Dictionary<string, Optimization.Math.Expression>();
-			
-			foreach (KeyValuePair<string, string> pair in d_job.Dispatcher.Settings)
-			{
-				if (pair.Key.StartsWith("fitness"))
-				{
-					Optimization.Math.Expression expr = new Optimization.Math.Expression();
-					expr.Parse(pair.Value);
+			dispatcher.Initialize(d_job);
 
-					fitnesses.Add(pair.Key.Substring(7), expr);
-				}
-			}
-			
 			while (true)
 			{
 				foreach (Solution solution in d_job.Optimizer.Population)
 				{
-					Dictionary<string, object> variables = new Dictionary<string, object>();
+					Dictionary<string, double> fitness;
 
-					foreach (Parameter parameter in solution.Parameters)
-					{
-						variables[parameter.Name] = parameter.Value;
-					}
-					
-					Dictionary<string, double> fitness = new Dictionary<string, double>();
-					double maxit = 0;
-					fitness.Add("value", 0);
-
-					foreach (KeyValuePair<string, Optimization.Math.Expression> pair in fitnesses)
-					{
-						try
-						{
-							double val = pair.Value.Evaluate(variables);
-							fitness.Add(pair.Key, val);
-							
-							if (val > maxit)
-							{
-								maxit = val;
-							}
-						}
-						catch (Optimization.Math.Expression.ContextException)
-						{
-							fitness.Add(pair.Key, 0);
-						}
-					}
-					
-					fitness["value"] = maxit;
+					fitness = dispatcher.Evaluate(solution);
 					solution.Update(fitness);
 				}
 				
@@ -520,9 +482,21 @@ namespace Optimization
 			
 			OnJob(this, job);
 			
-			if (job.Dispatcher.Name == "internal")
+			// Check if we can handle the job internally
+			Optimization.Dispatcher.Internal.Dispatcher internalDispatcher;
+
+			try
 			{
-				RunInternal();
+				internalDispatcher = Optimization.Dispatcher.Internal.Registry.Create(job.Dispatcher.Name);
+			}
+			catch
+			{
+				internalDispatcher = null;
+			}
+			
+			if (internalDispatcher != null)
+			{
+				RunInternal(internalDispatcher);
 				return;
 			}
 			

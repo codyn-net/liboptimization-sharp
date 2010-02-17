@@ -80,7 +80,10 @@ FILES = \
 	Optimization.Storage/SQLite.cs \
 	Optimization.Storage/Storage.cs \
 	Optimization.Dispatcher/Dispatcher.cs \
-	Optimization.Dispatcher/Webots.cs
+	Optimization.Dispatcher/Webots.cs \
+	Optimization.Dispatcher.Internal/Dispatcher.cs \
+	Optimization.Dispatcher.Internal/Internal.cs \
+	Optimization.Dispatcher.Internal/Registry.cs
 
 DATA_FILES = 
 
