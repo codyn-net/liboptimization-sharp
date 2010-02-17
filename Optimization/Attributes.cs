@@ -40,4 +40,20 @@ namespace Optimization.Attributes
 			Name = name;
 		}		
 	}
+	
+	[AttributeUsage(AttributeTargets.Class)]
+	public class DispatcherAttribute : Attribute
+	{
+		public string Name;
+		public string Description;
+
+		public DispatcherAttribute()
+		{
+		}
+
+		public DispatcherAttribute(string name)
+		{
+			Name = name;
+		}		
+	}
 }
