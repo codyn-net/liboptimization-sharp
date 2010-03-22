@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 namespace Optimization.Dispatcher.Internal
-{	
+{
 	[Attributes.DispatcherAttribute("internal")]
 	public class Internal : Optimization.Dispatcher.Internal.Dispatcher
 	{
@@ -13,7 +13,7 @@ namespace Optimization.Dispatcher.Internal
 			base.Initialize(job);
 
 			d_fitnesses = new Dictionary<string, Optimization.Math.Expression>();
-			
+
 			foreach (KeyValuePair<string, string> pair in Job.Dispatcher.Settings)
 			{
 				if (pair.Key.StartsWith("fitness"))
@@ -25,7 +25,7 @@ namespace Optimization.Dispatcher.Internal
 				}
 			}
 		}
-		
+
 		public override Dictionary<string, double> Evaluate(Solution solution)
 		{
 			Dictionary<string, object> variables = new Dictionary<string, object>();
@@ -34,7 +34,7 @@ namespace Optimization.Dispatcher.Internal
 			{
 				variables[parameter.Name] = parameter.Value;
 			}
-			
+
 			Dictionary<string, double> fitness = new Dictionary<string, double>();
 			double maxit = 0;
 			fitness.Add("value", 0);
@@ -45,7 +45,7 @@ namespace Optimization.Dispatcher.Internal
 				{
 					double val = pair.Value.Evaluate(variables);
 					fitness.Add(pair.Key, val);
-					
+
 					if (val > maxit)
 					{
 						maxit = val;
@@ -56,7 +56,7 @@ namespace Optimization.Dispatcher.Internal
 					fitness.Add(pair.Key, 0);
 				}
 			}
-			
+
 			fitness["value"] = maxit;
 			return fitness;
 		}

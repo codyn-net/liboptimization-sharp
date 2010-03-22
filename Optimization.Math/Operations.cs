@@ -3,19 +3,19 @@
  *
  *  Copyright (C) 2009 - Jesse van den Kieboom
  *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by the 
- * Free Software Foundation; either version 2.1 of the License, or (at your 
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation; either version 2.1 of the License, or (at your
  * option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
  * for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License 
+ *
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 using System;
@@ -42,7 +42,7 @@ namespace Optimization.Math
 					d_arity = value;
 				}
 			}
-			
+
 			public string Name
 			{
 				get
@@ -55,32 +55,32 @@ namespace Optimization.Math
 				}
 			}
 		}
-		
+
 		public class Function
 		{
 			public delegate void Operation(Stack<double> stack);
-			
+
 			private int d_arity;
 			private Operation d_operation;
-			
+
 			public Function(Operation operation)
 			{
 				d_operation = operation;
 
 				ExtractArity();
 			}
-			
+
 			public Function(Operation operation, int arity)
 			{
 				d_operation = operation;
 				d_arity = arity;
 			}
-			
+
 			public void Execute(Stack<double> stack)
 			{
 				d_operation(stack);
 			}
-			
+
 			private void ExtractArity()
 			{
 				object[] attrs = d_operation.GetType().GetCustomAttributes(typeof(Operations.Operation), false);
@@ -94,7 +94,7 @@ namespace Optimization.Math
 					d_arity = (attrs[0] as Operations.Operation).Arity;
 				}
 			}
-			
+
 			public int Arity
 			{
 				get
@@ -103,221 +103,221 @@ namespace Optimization.Math
 				}
 			}
 		}
-		
+
 		private delegate double BinaryFunction(double a, double b);
-		
+
 		private static void OperationBinary(Stack<double> stack, BinaryFunction func)
 		{
 			double second = stack.Pop();
 			double first = stack.Pop();
-			
+
 			stack.Push(func(first, second));
 		}
-		
+
 		// Normal functions
 		[Operation(Arity=2)]
 		public static void Pow(Stack<double> stack)
 		{
 			OperationBinary(stack, System.Math.Pow);
 		}
-		
+
 		[Operation(Arity=2)]
 		public static void Min(Stack<double> stack)
 		{
 			OperationBinary(stack, System.Math.Min);
 		}
-		
+
 		[Operation(Arity=2)]
 		public static void Max(Stack<double> stack)
 		{
 			OperationBinary(stack, System.Math.Max);
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Sqrt(Stack<double> stack)
 		{
 			stack.Push(System.Math.Sqrt(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Exp(Stack<double> stack)
 		{
 			stack.Push(System.Math.Exp(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Ln(Stack<double> stack)
 		{
 			stack.Push(System.Math.Log(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Sin(Stack<double> stack)
 		{
 			stack.Push(System.Math.Sin(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Cos(Stack<double> stack)
 		{
 			stack.Push(System.Math.Cos(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Tan(Stack<double> stack)
 		{
 			stack.Push(System.Math.Tan(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Abs(Stack<double> stack)
 		{
 			stack.Push(System.Math.Abs(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Asin(Stack<double> stack)
 		{
 			stack.Push(System.Math.Asin(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Acos(Stack<double> stack)
 		{
 			stack.Push(System.Math.Acos(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Atan(Stack<double> stack)
 		{
 			stack.Push(System.Math.Atan(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=2)]
 		public static void Atan2(Stack<double> stack)
 		{
 			OperationBinary(stack, System.Math.Atan2);
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Round(Stack<double> stack)
 		{
 			stack.Push(System.Math.Round(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Ceil(Stack<double> stack)
 		{
 			stack.Push(System.Math.Ceiling(stack.Pop()));
 		}
-		
+
 		[Operation(Arity=1)]
 		public static void Floor(Stack<double> stack)
 		{
 			stack.Push(System.Math.Floor(stack.Pop()));
 		}
-		
+
 		// Operators
 		[Operation(Arity=2)]
 		private static void Plus(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a + b; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Minus(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a - b; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Multiply(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a * b; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Divide(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a / b; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Modulo(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a % b; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Equal(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a == b ? 1 : 0; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Greater(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a > b ? 1 : 0; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Less(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a < b ? 1 : 0; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void GreaterOrEqual(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a >= b ? 1 : 0; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void LessOrEqual(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a <= b ? 1 : 0; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void And(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a == 0 && b == 0 ? 1 : 0; });
 		}
-		
+
 		[Operation(Arity=2)]
 		private static void Or(Stack<double> stack)
 		{
 			OperationBinary(stack, delegate (double a, double b) { return a == 0 || b == 0 ? 1 : 0; });
 		}
-		
+
 		[Operation(Arity=1)]
 		private static void Negate(Stack<double> stack)
 		{
 			stack.Push(stack.Pop() == 0 ? 1 : 0);
 		}
-		
+
 		[Operation(Arity=1)]
 		private static void UnaryPlus(Stack<double> stack)
 		{
 			// NOOP
 		}
-		
+
 		[Operation(Arity=1)]
 		private static void UnaryMinus(Stack<double> stack)
 		{
 			stack.Push(-stack.Pop());
 		}
-		
+
 		[Operation(Arity=3)]
 		private static void Ternary(Stack<double> stack)
 		{
 			double falsepart = stack.Pop();
 			double truepart = stack.Pop();
 			double condition = stack.Pop();
-			
+
 			stack.Push(condition != 0 ? truepart : falsepart);
 		}
-		
+
 		public static Function LookupOperator(TokenOperator.OperatorType type)
 		{
 			switch (type)
@@ -357,33 +357,33 @@ namespace Optimization.Math
 				case TokenOperator.OperatorType.Ternary:
 					return new Function(Ternary);
 			}
-			
+
 			return null;
 		}
-		
+
 		public static Function LookupFunction(string identifier)
 		{
 			// Iterate over all the functions, find the one with the right name
 			MethodInfo[] methods = typeof(Operations).GetMethods(BindingFlags.Static | BindingFlags.Public);
-			
+
 			foreach (MethodInfo method in methods)
 			{
 				object[] attrs = method.GetCustomAttributes(typeof(Operation), false);
-				
+
 				if (attrs.Length == 0)
 				{
 					continue;
 				}
-				
+
 				Operation op = attrs[0] as Operation;
-				
+
 				if (method.Name.ToLower() == identifier.ToLower() ||
 				    (op.Name != null && op.Name.ToLower() == identifier.ToLower()))
 				{
 					return new Function(delegate (Stack<double> s) { method.Invoke(null, new object[] {s}); }, op.Arity);
 				}
 			}
-			
+
 			return null;
 		}
 	}

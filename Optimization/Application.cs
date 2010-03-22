@@ -3,19 +3,19 @@
  *
  *  Copyright (C) 2009 - Jesse van den Kieboom
  *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by the 
- * Free Software Foundation; either version 2.1 of the License, or (at your 
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation; either version 2.1 of the License, or (at your
  * option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
  * for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License 
+ *
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 using System;
@@ -36,64 +36,64 @@ namespace Optimization
 
 		public event MessageHandler OnStatus = delegate {};
 		public event MessageHandler OnError = delegate {};
-		
+
 		public event ProgressHandler OnProgress = delegate {};
 		public event JobHandler OnJob = delegate {};
 		public event EventHandler OnIterate = delegate {};
 
 		private EventWaitHandle d_waitHandle;
 		private SHA1CryptoServiceProvider d_sha1Provider;
-		
+
 		class Message
 		{
 		}
-		
+
 		class MessageResponse : Message
 		{
 			public Response Response;
-			
+
 			public MessageResponse(Response response)
 			{
 				Response = response;
 			}
 		}
-		
+
 		class MessageClosed : Message
 		{
 		}
-		
+
 		Job d_job;
 		Connection d_connection;
-		
+
 		string d_masterAddress;
 		object d_messageLock;
 
 		Queue<Message> d_messages;
 		bool d_quitting;
-		
+
 		Dictionary<uint, Solution> d_running;
 
 		public Application(ref string[] args)
 		{
 			d_connection = new Connection();
 			d_quitting = false;
-			
+
 			d_messageLock = new object();
 			d_messages = new Queue<Message>();
 			d_running = new Dictionary<uint, Solution>();
 
 			d_connection.OnClosed += HandleOnClosed;
 			d_connection.OnCommunicationReceived += HandleOnCommunicationReceived;
-			
+
 			Initialize();
-			
+
 			ParseArguments(ref args);
-			
+
 			if (String.IsNullOrEmpty(d_masterAddress))
 			{
 				d_masterAddress = "localhost:" + (int)Constants.MasterPort;
 			}
-			
+
 			if (d_masterAddress.IndexOf(':') == -1)
 			{
 				d_masterAddress += ":" + (int)Constants.MasterPort;
@@ -102,7 +102,7 @@ namespace Optimization
 			d_waitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
 		}
-		
+
 		protected virtual void Initialize()
 		{
 		}
@@ -114,7 +114,7 @@ namespace Optimization
 				return d_waitHandle;
 			}
 		}
-		
+
 		private void AddMessage(params Message[] messages)
 		{
 			lock(d_messageLock)
@@ -125,7 +125,7 @@ namespace Optimization
 				}
 			}
 
-			d_waitHandle.Set();			
+			d_waitHandle.Set();
 		}
 
 		private void HandleOnCommunicationReceived(object source, Communication[] communication)
@@ -144,7 +144,7 @@ namespace Optimization
 					break;
 				}
 			}
-			
+
 			AddMessage(messages.ToArray());
 		}
 
@@ -152,32 +152,32 @@ namespace Optimization
 		{
 			AddMessage(new MessageClosed());
 		}
-		
+
 		private void ShowHelp(NDesk.Options.OptionSet optionSet)
 		{
 			System.Console.WriteLine("Usage: optijob [OPTIONS] <jobs>");
 			System.Console.WriteLine();
 			System.Console.WriteLine("Options:");
 			optionSet.WriteOptionDescriptions(System.Console.Out);
-			
+
 			Environment.Exit(0);
 		}
-		
+
 		protected virtual void AddOptions(NDesk.Options.OptionSet optionSet)
 		{
 			optionSet.Add("h|help", "Show this help message", delegate (string s) { ShowHelp(optionSet); });
 			optionSet.Add("m=|master=", "Specify master connection string", delegate (string s) { d_masterAddress = s; });
 		}
-		
+
 		protected virtual void ParseArguments(ref string[] args)
 		{
 			NDesk.Options.OptionSet optionSet = new NDesk.Options.OptionSet();
-			
+
 			AddOptions(optionSet);
-			
+
 			args = optionSet.Parse(args).ToArray();
 		}
-		
+
 		public Job Job
 		{
 			get
@@ -189,14 +189,14 @@ namespace Optimization
 				d_job = value;
 			}
 		}
-		
+
 		private bool Connect()
 		{
 			string host;
 			int port;
-			
+
 			string[] parts = d_masterAddress.Split(new char[] {':'}, 2);
-			
+
 			if (parts.Length == 1)
 			{
 				host = parts[0];
@@ -207,13 +207,13 @@ namespace Optimization
 				host = parts[0];
 				port = int.Parse(parts[1]);
 			}
-			
+
 			return d_connection.Connect(host, port);
 		}
 
 		protected virtual void NewIteration()
-		{			
-			// Next iteration for optimizer			
+		{
+			// Next iteration for optimizer
 			if (!d_job.Optimizer.Next())
 			{
 				try
@@ -238,7 +238,7 @@ namespace Optimization
 			{
 				System.Console.Error.WriteLine("Erreur: " + e);
 			}
-			
+
 			// Send optimizer population as batch to the master
 			if (!Send())
 			{
@@ -246,33 +246,33 @@ namespace Optimization
 				d_quitting = true;
 			}
 		}
-		
+
 		protected virtual void Done(Solution solution)
 		{
 			d_running.Remove(solution.Id);
-			
+
 			if (d_running.Count == 0)
 			{
 				NewIteration();
 			}
 		}
-		
+
 		protected void Status(string format, params object[] args)
 		{
 			Status(String.Format(format, args));
 		}
-		
+
 		protected virtual void Status(string str)
 		{
 			OnStatus(this, str);
 			d_job.Optimizer.Log("status", str);
 		}
-		
+
 		protected void Error(string format, params object[] args)
 		{
 			Error(String.Format(format, args));
 		}
-		
+
 		protected virtual void Error(string str)
 		{
 			try
@@ -285,24 +285,24 @@ namespace Optimization
 				System.Console.Error.WriteLine("Erreur: " + e);
 			}
 		}
-		
+
 		protected virtual void OnSuccess(Response response)
-		{			
+		{
 			Solution solution = d_running[response.Id];
-			
+
 			// Create fitness dictionary from response
 			Dictionary<string, double> fitness = new Dictionary<string, double>();
 			List<string> vals = new List<string>();
-			
+
 			foreach (Response.FitnessType item in response.Fitness)
 			{
 				fitness.Add(item.Name, item.Value);
 				vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
 			}
-			
-			// Update the solution fitness			
+
+			// Update the solution fitness
 			solution.Update(fitness);
-			
+
 			try
 			{
 				Status("Solution {0} finished successfully ({1} : {2})", solution.Id, String.Join(", ", vals.ToArray()), solution.Fitness.Value);
@@ -311,10 +311,10 @@ namespace Optimization
 			{
 				System.Console.Error.WriteLine("Erreur: " + e);
 			}
-			
+
 			Done(solution);
 		}
-		
+
 		protected string FailureToString(Response.FailureType failure)
 		{
 			switch (failure.Type)
@@ -335,36 +335,36 @@ namespace Optimization
 					return "Unknown";
 			}
 		}
-		
+
 		protected virtual void OnFailed(Response response)
 		{
 			Solution solution = d_running[response.Id];
 			Error("Solution {0} failed: {1} ({2})", solution.Id, FailureToString(response.Failure), response.Failure.Message);
-			
+
 			// Setting value directly will override expressions until Fitness.Clear()
 			solution.Fitness.Value = 0;
 			Done(solution);
 		}
-		
+
 		protected virtual void OnChallenge(Response response)
 		{
 			// Take the challenge and encrypt it with the job token.
 			// Then send it back to the master
 			byte[] bytes = Encoding.ASCII.GetBytes(d_job.Token + response.Challenge);
 			byte[] encoded = d_sha1Provider.ComputeHash(bytes);
-			
+
 			string ashex = BitConverter.ToString(encoded).Replace("-", "").ToLower();
-			
+
 			Communication res = new Communication();
 
 			res.Type = Communication.CommunicationType.Token;
 			res.Token = new Token();
 			res.Token.Id = response.Id;
 			res.Token.Response = ashex;
-			
+
 			d_connection.Send(res);
 		}
-		
+
 		private void HandleResponse(Response response)
 		{
 			if (!d_running.ContainsKey(response.Id))
@@ -372,7 +372,7 @@ namespace Optimization
 				Error("Received response for inactive solution: {0}", response.Id);
 				return;
 			}
-			
+
 			// Handle response by default handler
 			switch (response.Status)
 			{
@@ -387,12 +387,12 @@ namespace Optimization
 				break;
 			}
 		}
-		
+
 		protected virtual void Close()
 		{
 			d_quitting = true;
 		}
-		
+
 		private void HandleMessages()
 		{
 			lock (d_messageLock)
@@ -402,7 +402,7 @@ namespace Optimization
 					while (d_messages.Count != 0)
 					{
 						Message msg = d_messages.Dequeue();
-						
+
 						if (msg is MessageClosed)
 						{
 							Error("Connection closed");
@@ -418,20 +418,20 @@ namespace Optimization
 				{
 					System.Console.Error.WriteLine("Erreur: " + e);
 				}
-			}	
+			}
 		}
-		
+
 		protected virtual bool Send()
 		{
 			foreach (Solution solution in d_job.Optimizer.Population)
 			{
 				d_running[solution.Id] = solution;
 			}
-			
+
 			Status("Sending new iteration {0} => {1}", d_job.Optimizer.CurrentIteration, d_job.Optimizer.Population.Count);
 			return d_connection.Send(d_job);
 		}
-		
+
 		private void RunInternal(Optimization.Dispatcher.Internal.Dispatcher dispatcher)
 		{
 			dispatcher.Initialize(d_job);
@@ -445,7 +445,7 @@ namespace Optimization
 					fitness = dispatcher.Evaluate(solution);
 					solution.Update(fitness);
 				}
-				
+
 				if (!d_job.Optimizer.Next())
 				{
 					try
@@ -456,7 +456,7 @@ namespace Optimization
 					{
 						System.Console.Error.WriteLine("Erreur: " + e);
 					}
-	
+
 					// No more iterations, we're done
 					d_quitting = true;
 					break;
@@ -472,16 +472,16 @@ namespace Optimization
 				}
 			}
 		}
-		
+
 		public void Run(Job job)
 		{
 			d_quitting = false;
 
 			d_job = job;
 			d_job.Initialize();
-			
+
 			OnJob(this, job);
-			
+
 			// Check if we can handle the job internally
 			Optimization.Dispatcher.Internal.Dispatcher internalDispatcher;
 
@@ -493,32 +493,32 @@ namespace Optimization
 			{
 				internalDispatcher = null;
 			}
-			
+
 			if (internalDispatcher != null)
 			{
 				RunInternal(internalDispatcher);
 				return;
 			}
-			
+
 			if (!Connect())
 			{
 				Error("Could not connect to master");
 				return;
 			}
-			
+
 			// Send initial batch of solutions
 			if (!Send())
 			{
 				Error("Could not send first batch of solutions to master");
 				return;
 			}
-			
+
 			// Main loop
 			while (true)
 			{
 				d_waitHandle.WaitOne();
 				HandleMessages();
-				
+
 				try
 				{
 					OnIterate(this, new EventArgs());
@@ -534,7 +534,7 @@ namespace Optimization
 					break;
 				}
 			}
-			
+
 			d_connection.Disconnect();
 		}
 

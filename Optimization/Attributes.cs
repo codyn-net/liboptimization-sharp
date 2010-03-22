@@ -9,13 +9,13 @@ namespace Optimization.Attributes
 		public string Name;
 		public object Default;
 		public string Description;
-		
+
 		public SettingAttribute(string name, object def)
 		{
 			Name = name;
 			Default = def;
 		}
-		
+
 		public SettingAttribute(string name) : this(name, null)
 		{
 		}
@@ -38,9 +38,9 @@ namespace Optimization.Attributes
 		public OptimizerAttribute(string name)
 		{
 			Name = name;
-		}		
+		}
 	}
-	
+
 	[AttributeUsage(AttributeTargets.Class)]
 	public class DispatcherAttribute : Attribute
 	{
@@ -54,6 +54,6 @@ namespace Optimization.Attributes
 		public DispatcherAttribute(string name)
 		{
 			Name = name;
-		}		
+		}
 	}
 }

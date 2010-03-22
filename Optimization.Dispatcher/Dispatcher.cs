@@ -11,14 +11,14 @@ namespace Optimization.Dispatcher
 		Dictionary<string, string> d_settings;
 		List<Parameter> d_parameters;
 		Dictionary<string, Parameter> d_parameterMap;
-		
+
 		public Dispatcher()
 		{
 			d_settings = new Dictionary<string, string>();
 			d_parameterMap = new Dictionary<string, Parameter>();
 			d_parameters = new List<Parameter>();
 		}
-		
+
 		public Dictionary<string, string> Settings
 		{
 			get
@@ -27,7 +27,7 @@ namespace Optimization.Dispatcher
 				return d_settings;
 			}
 		}
-		
+
 		public bool RequestAvailable
 		{
 			get
@@ -36,12 +36,12 @@ namespace Optimization.Dispatcher
 				return d_request != null;
 			}
 		}
-		
+
 		public static implicit operator bool(Dispatcher dispatcher)
 		{
 			return dispatcher.RequestAvailable;
 		}
-		
+
 		public List<Parameter> Parameters
 		{
 			get
@@ -50,7 +50,7 @@ namespace Optimization.Dispatcher
 				return d_parameters;
 			}
 		}
-		
+
 		public Messages.Task.DescriptionType Request
 		{
 			get
@@ -58,13 +58,13 @@ namespace Optimization.Dispatcher
 				return d_request;
 			}
 		}
-		
+
 		public bool ContainsParameter(string name)
 		{
 			ReadRequest();
 			return d_parameterMap.ContainsKey(name);
 		}
-		
+
 		public Parameter ParameterByName(string name)
 		{
 			if (ContainsParameter(name))
@@ -76,25 +76,25 @@ namespace Optimization.Dispatcher
 				return null;
 			}
 		}
-		
+
 		public bool ContainsSetting(string str)
 		{
 			ReadRequest();
 			return d_settings.ContainsKey(str);
 		}
-		
+
 		public T Setting<T>(string name)
 		{
 			string val = this[name];
-			
+
 			if (val == null)
 			{
 				return default (T);
 			}
-			
+
 			return (T)Convert.ChangeType(val, typeof(T));
 		}
-		
+
 		public string this [string key]
 		{
 			get
@@ -103,7 +103,7 @@ namespace Optimization.Dispatcher
 				return d_settings.ContainsKey(key) ? d_settings[key] : null;
 			}
 		}
-		
+
 		public virtual bool Run()
 		{
 			if (!ReadRequest())
@@ -111,47 +111,47 @@ namespace Optimization.Dispatcher
 				Console.Error.WriteLine("Invalid dispatch request");
 				return false;
 			}
-			
+
 			if (!RunTask())
 			{
 				return false;
 			}
-			
+
 			return true;
 		}
-		
+
 		protected virtual Stream RequestStream()
 		{
 			return new BufferedStream(Console.OpenStandardInput());
 		}
-		
+
 		private bool ReadRequest()
 		{
 			if (d_request != null)
 			{
 				return true;
 			}
-			
+
 			Stream stream = RequestStream();
-			
+
 			if (stream == null)
 			{
 				return false;
 			}
-			
+
 			Messages.Task.DescriptionType[] requests = Messages.Messages.Extract<Messages.Task.DescriptionType>(stream);
-			
+
 			if (requests == null || requests.Length == 0)
 			{
 				return false;
 			}
-			
+
 			d_request = requests[requests.Length - 1];
 			ParseRequest();
 
 			return true;
 		}
-		
+
 		private void ParseRequest()
 		{
 			if (d_request.Settings != null)
@@ -161,32 +161,32 @@ namespace Optimization.Dispatcher
 					d_settings[kv.Key] = kv.Value;
 				}
 			}
-			
+
 			if (d_request.Parameters != null)
 			{
 				foreach (Messages.Task.DescriptionType.ParameterType param in d_request.Parameters)
 				{
 					Parameter parameter = new Parameter(param.Name, param.Value, new Boundary(param.Min, param.Max));
-				
+
 					d_parameters.Add(parameter);
 					d_parameterMap[parameter.Name] = parameter;
 				}
 			}
 		}
-		
+
 		protected bool WriteResponse(Optimization.Messages.Response response)
 		{
 			byte[] ret = Messages.Messages.Create(response);
-			
+
 			if (ret != null)
 			{
 				Console.OpenStandardOutput().Write(ret, 0, ret.Length);
 				return true;
 			}
-			
+
 			return false;
 		}
-		
+
 		protected abstract bool RunTask();
 	}
 }
