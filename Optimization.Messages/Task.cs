@@ -27,45 +27,29 @@ namespace Optimization.Messages
 	public class Task
 	{
 		[ProtoContract()]
-		public class DescriptionType
+		public class ParameterType
 		{
-			[ProtoContract()]
-			public class ParameterType
-			{
-				[ProtoMember(1, IsRequired=true)]
-				public string Name;
-
-				[ProtoMember(2, IsRequired=true)]
-				public double Value;
-
-				[ProtoMember(3, IsRequired=true)]
-				public double Min;
-
-				[ProtoMember(4, IsRequired=true)]
-				public double Max;
-			}
-
-			[ProtoContract()]
-			public class KeyValueType
-			{
-				[ProtoMember(1, IsRequired=true)]
-				public string Key;
-
-				[ProtoMember(2, IsRequired=true)]
-				public string Value;
-			}
-
 			[ProtoMember(1, IsRequired=true)]
-			public string Job;
+			public string Name;
 
 			[ProtoMember(2, IsRequired=true)]
-			public string Optimizer;
+			public double Value;
 
-			[ProtoMember(3)]
-			public ParameterType[] Parameters;
+			[ProtoMember(3, IsRequired=true)]
+			public double Min;
 
-			[ProtoMember(4)]
-			public KeyValueType[] Settings;
+			[ProtoMember(4, IsRequired=true)]
+			public double Max;
+		}
+
+		[ProtoContract()]
+		public class KeyValueType
+		{
+			[ProtoMember(1, IsRequired=true)]
+			public string Key;
+
+			[ProtoMember(2, IsRequired=true)]
+			public string Value;
 		}
 
 		[ProtoMember(1, IsRequired=true)]
@@ -75,6 +59,16 @@ namespace Optimization.Messages
 		public string Dispatcher;
 
 		[ProtoMember(3, IsRequired=true)]
-		public DescriptionType Description;
+		public string Job;
+
+		[ProtoMember(4, IsRequired=true)]
+		public string Optimizer;
+
+		[ProtoMember(5)]
+		public ParameterType[] Parameters;
+
+		[ProtoMember(6)]
+		public KeyValueType[] Settings;
+
 	}
 }

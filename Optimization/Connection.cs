@@ -183,18 +183,15 @@ namespace Optimization
 			task.Id = solution.Id;
 			task.Dispatcher = job.Dispatcher.Name;
 
-			// Create new description object
-			task.Description = new Task.DescriptionType();
-
 			// Set the job and optimizer name
-			task.Description.Job = job.Name;
-			task.Description.Optimizer = job.Optimizer.Name;
+			task.Job = job.Name;
+			task.Optimizer = job.Optimizer.Name;
 
 			// Add parameters to the description
-			List<Task.DescriptionType.ParameterType> parameters = new List<Task.DescriptionType.ParameterType>();
+			List<Task.ParameterType> parameters = new List<Task.ParameterType>();
 			foreach (Parameter parameter in solution.Parameters)
 			{
-				Task.DescriptionType.ParameterType par = new Task.DescriptionType.ParameterType();
+				Task.ParameterType par = new Task.ParameterType();
 
 				par.Name = parameter.Name;
 				par.Min = parameter.Boundary.Min;
@@ -204,13 +201,13 @@ namespace Optimization
 				parameters.Add(par);
 			}
 
-			task.Description.Parameters = parameters.ToArray();
+			task.Parameters = parameters.ToArray();
 
 			// Add dispatcher settings
-			List<Task.DescriptionType.KeyValueType> settings = new List<Task.DescriptionType.KeyValueType>();
+			List<Task.KeyValueType> settings = new List<Task.KeyValueType>();
 			foreach (KeyValuePair<string, string> pair in job.Dispatcher.Settings)
 			{
-				Task.DescriptionType.KeyValueType kv = new Task.DescriptionType.KeyValueType();
+				Task.KeyValueType kv = new Task.KeyValueType();
 
 				kv.Key = pair.Key;
 				kv.Value = pair.Value;
@@ -218,7 +215,7 @@ namespace Optimization
 				settings.Add(kv);
 			}
 
-			task.Description.Settings = settings.ToArray();
+			task.Settings = settings.ToArray();
 			return task;
 		}
 

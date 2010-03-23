@@ -7,7 +7,7 @@ namespace Optimization.Dispatcher
 {
 	public abstract class Dispatcher
 	{
-		Optimization.Messages.Task.DescriptionType d_request;
+		Optimization.Messages.Task d_task;
 		Dictionary<string, string> d_settings;
 		List<Parameter> d_parameters;
 		Dictionary<string, Parameter> d_parameterMap;
@@ -33,7 +33,7 @@ namespace Optimization.Dispatcher
 			get
 			{
 				ReadRequest();
-				return d_request != null;
+				return d_task != null;
 			}
 		}
 
@@ -51,11 +51,11 @@ namespace Optimization.Dispatcher
 			}
 		}
 
-		public Messages.Task.DescriptionType Request
+		public Messages.Task Task
 		{
 			get
 			{
-				return d_request;
+				return d_task;
 			}
 		}
 
@@ -127,7 +127,7 @@ namespace Optimization.Dispatcher
 
 		private bool ReadRequest()
 		{
-			if (d_request != null)
+			if (d_task != null)
 			{
 				return true;
 			}
@@ -139,14 +139,14 @@ namespace Optimization.Dispatcher
 				return false;
 			}
 
-			Messages.Task.DescriptionType[] requests = Messages.Messages.Extract<Messages.Task.DescriptionType>(stream);
+			Messages.Task[] tasks = Messages.Messages.Extract<Messages.Task>(stream);
 
-			if (requests == null || requests.Length == 0)
+			if (tasks == null || tasks.Length == 0)
 			{
 				return false;
 			}
 
-			d_request = requests[requests.Length - 1];
+			d_task = tasks[tasks.Length - 1];
 			ParseRequest();
 
 			return true;
@@ -154,17 +154,17 @@ namespace Optimization.Dispatcher
 
 		private void ParseRequest()
 		{
-			if (d_request.Settings != null)
+			if (d_task.Settings != null)
 			{
-				foreach (Messages.Task.DescriptionType.KeyValueType kv in d_request.Settings)
+				foreach (Messages.Task.KeyValueType kv in d_task.Settings)
 				{
 					d_settings[kv.Key] = kv.Value;
 				}
 			}
 
-			if (d_request.Parameters != null)
+			if (d_task.Parameters != null)
 			{
-				foreach (Messages.Task.DescriptionType.ParameterType param in d_request.Parameters)
+				foreach (Messages.Task.ParameterType param in d_task.Parameters)
 				{
 					Parameter parameter = new Parameter(param.Name, param.Value, new Boundary(param.Min, param.Max));
 
