@@ -27,8 +27,10 @@ namespace Optimization.Storage.Records
 	public class Boundary
 	{
 		public string Name;
-		public double Min;
-		public double Max;
+		public string Min;
+		public string Max;
+		public string MinInitial;
+		public string MaxInitial;
 
 		public Boundary()
 		{

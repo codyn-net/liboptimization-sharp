@@ -56,6 +56,7 @@ FILES = \
 	Optimization/Directories.cs \
 	Optimization/Fitness.cs \
 	Optimization/Job.cs \
+	Optimization/NumericSetting.cs \
 	Optimization/Optimizer.cs \
 	Optimization/Options.cs \
 	Optimization/Parameter.cs \
@@ -77,7 +78,6 @@ FILES = \
 	Optimization.Messages/Task.cs \
 	Optimization.Messages/Token.cs \
 	Optimization.Messages/Messages.cs \
-	Optimization.Storage/SQLite.cs \
 	Optimization.Storage/Storage.cs \
 	Optimization.Storage/Records.cs \
 	Optimization.Dispatcher/Dispatcher.cs \

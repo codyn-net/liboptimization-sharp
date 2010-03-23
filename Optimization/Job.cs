@@ -76,11 +76,6 @@ namespace Optimization
 			d_priority = 1;
 		}
 
-		virtual protected Storage.Storage CreateStorage()
-		{
-			return new Storage.SQLite(this);
-		}
-
 		public static Job NewFromXml(string filename)
 		{
 			Job job = new Job();
@@ -96,7 +91,7 @@ namespace Optimization
 
 		public bool LoadFromStorage(string filename)
 		{
-			Storage.Storage storage = CreateStorage();
+			Storage.Storage storage = new Storage.Storage(this);
 			storage.Uri = filename;
 
 			if (storage.Open())
@@ -211,7 +206,7 @@ namespace Optimization
 				return;
 			}
 
-			d_storage = CreateStorage();
+			d_storage = new Storage.Storage(this);
 			d_optimizer.Storage = d_storage;
 		}
 

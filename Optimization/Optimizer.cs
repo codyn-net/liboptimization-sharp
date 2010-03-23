@@ -418,6 +418,18 @@ namespace Optimization
 		{
 			d_storage.Log(type, str);
 		}
+		
+		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer, Storage.Records.Solution solution, Optimization.Solution sol)
+		{
+			sol.Parameters.Clear();
+
+			foreach (KeyValuePair<string, double> parameter in solution.Parameters)
+			{
+				sol.Parameters.Add(new Parameter(parameter.Key, parameter.Value, Parameter(parameter.Key).Boundary));
+			}
+			
+			sol.FromStorage(storage, optimizer, solution);
+		}
 
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer)
 		{
@@ -442,7 +454,14 @@ namespace Optimization
 
 			foreach (Storage.Records.Boundary boundary in optimizer.Boundaries)
 			{
-				AddBoundary(new Boundary(boundary.Name, boundary.Min, boundary.Max));
+				Boundary bound = new Boundary(boundary.Name);
+
+				bound.MinSetting.Representation = boundary.Min;
+				bound.MaxSetting.Representation = boundary.Max;
+				bound.MinInitialSetting.Representation = boundary.MinInitial;
+				bound.MaxInitialSetting.Representation = boundary.MaxInitial;
+
+				AddBoundary(bound);
 			}
 
 			/* Parameters */
@@ -485,31 +504,28 @@ namespace Optimization
 				foreach (Storage.Records.Solution solution in iteration.Solutions)
 				{
 					Solution sol = CreateSolution((uint)solution.Index);
-					sol.Parameters.Clear();
-
-					foreach (KeyValuePair<string, double> parameter in solution.Parameters)
-					{
-						sol.Parameters.Add(new Parameter(parameter.Key, parameter.Value, Parameter(parameter.Key).Boundary));
-					}
-
-					sol.Data.Clear();
-
-					foreach (KeyValuePair<string, string> data in solution.Data)
-					{
-						sol.Data[data.Key] = data.Value;
-					}
-
-					sol.Fitness.Reset();
-
-					foreach (KeyValuePair<string, double> fit in solution.Fitness)
-					{
-						sol.Fitness.Values[fit.Key] = fit.Value;
-					}
+					FromStorage(storage, optimizer, solution, sol);
+					
+					Add(sol);
+				}
+				
+				// Restore best solution
+				Storage.Records.Solution best = storage.ReadSolution(-1, -1);
+				
+				if (best != null)
+				{
+					d_best = CreateSolution((uint)best.Index);
+					FromStorage(storage, optimizer, best, d_best);
+				}
+				else
+				{
+					d_best = null;
 				}
 			}
 			else
 			{
 				InitializePopulation();
+				d_best = null;
 			}
 		}
 
@@ -539,6 +555,97 @@ namespace Optimization
 				}
 			}
 		}
+		
+		private Boundary CreateBoundary(string name, XmlNode node)
+		{
+			XmlAttribute min = node.Attributes["min"];
+			XmlAttribute max = node.Attributes["max"];
+			XmlAttribute minInitial = node.Attributes["min-initial"];
+			XmlAttribute maxInitial = node.Attributes["max-initial"];
+
+			if (min == null)
+			{
+				throw new Exception(String.Format("XML: No minimum value specified for boundary {0}", name));
+			}
+			else if (max == null)
+			{
+				throw new Exception(String.Format("XML: No maximum value specified for boundary {0}", name));
+			}
+			
+			Optimization.Boundary boundary = new Optimization.Boundary(name);
+					
+			try
+			{
+				boundary.MinSetting.Representation = min.Value;
+			}
+			catch
+			{
+				throw new Exception(String.Format("XML: Could not parse minimum boundary value {0} ({1})", name, min.Value));
+			}
+			
+			try
+			{
+				boundary.MaxSetting.Representation = max.Value;
+			}
+			catch
+			{
+				throw new Exception(String.Format("XML: Could not parse maximum boundary value {0} ({1})", name, max.Value));
+			}
+
+			if (boundary.Max < boundary.Min)
+			{
+				throw new Exception(String.Format("XML: Maximum boundary value is smaller than minimum value {0} => [{1}, {2}]", name, min.Value, max.Value));
+			}
+			
+			try
+			{
+				if (maxInitial != null)
+				{
+					boundary.MaxInitialSetting.Representation = maxInitial.Value;
+				}
+				else
+				{
+					boundary.MaxInitialSetting.Representation = boundary.MaxSetting.Representation;
+				}
+			}
+			catch
+			{
+				throw new Exception(String.Format("XML: Could not parse maximum initial boundary value {0} ({1})", name, maxInitial.Value));
+			}
+
+			if (boundary.MaxInitial > boundary.Max)
+			{
+				throw new Exception(String.Format("XML: Maximum initial value is larger than maximum value {0}", name));
+			}
+			
+			try
+			{
+				if (minInitial != null)
+				{
+					boundary.MinInitialSetting.Representation = minInitial.Value;
+				}
+				else
+				{
+					boundary.MinInitialSetting.Representation = boundary.MinSetting.Representation;
+				}
+			}
+			catch
+			{
+				throw new Exception(String.Format("XML: Could not parse minimum initial boundary value {0} ({1})", name, minInitial.Value));
+			}
+
+			if (boundary.MinInitial < boundary.Min)
+			{
+				throw new Exception(String.Format("XML: Minimum initial value is smaller than minimum value {0}", name));
+			}
+
+			if (boundary.MaxInitial < boundary.MinInitial)
+			{
+				throw new Exception(String.Format("XML: Maximum initial value is smaller than minimum initial value {0}", name));
+			}
+			
+			return boundary;
+		}
 
 		private void LoadBoundaries(XmlNode root)
 		{
@@ -547,97 +654,13 @@ namespace Optimization
 			foreach (XmlNode node in nodes)
 			{
 				XmlAttribute nm = node.Attributes["name"];
-				XmlAttribute min = node.Attributes["min"];
-				XmlAttribute max = node.Attributes["max"];
-				XmlAttribute minInitial = node.Attributes["min-initial"];
-				XmlAttribute maxInitial = node.Attributes["max-initial"];
 
 				if (nm == null)
 				{
 					throw new Exception("XML: No name specified for boundary");
 				}
-				else if (min == null)
-				{
-					throw new Exception(String.Format("XML: No minimum value specified for boundary {0}", nm.Value));
-				}
-				else if (max == null)
-				{
-					throw new Exception(String.Format("XML: No maximum value specified for boundary {0}", nm.Value));
-				}
-				else
-				{
-					Optimization.Math.Expression expr = new Optimization.Math.Expression();
-					double minVal;
-					double maxVal;
-					double maxInitialVal;
-					double minInitialVal;
-
-					// Min value
-					if (!expr.Parse(min.Value))
-					{
-						throw new Exception(String.Format("XML: Could not parse minimum boundary value {0} ({1})", nm.Value, min.Value));
-					}
-
-					minVal = expr.Evaluate();
-
-					// Max value
-					if (!expr.Parse(max.Value))
-					{
-						throw new Exception(String.Format("XML: Could not parse maximum boundary value {0} ({1})", nm.Value, max.Value));
-					}
-
-					maxVal = expr.Evaluate();
-
-					if (maxVal < minVal)
-					{
-						throw new Exception(String.Format("XML: Maximum boundary value is smaller than minimum value {0} => [{1}, {2}]", nm.Value, minVal, maxVal));
-					}
-
-					// Max initial
-					if (maxInitial == null)
-					{
-						maxInitialVal = maxVal;
-					}
-					else if (expr.Parse(maxInitial.Value))
-					{
-						maxInitialVal = expr.Evaluate();
-					}
-					else
-					{
-						throw new Exception(String.Format("XML: Could not parse maximum initial boundary value {0} ({1})", nm.Value, maxInitial.Value));
-					}
-
-					if (maxInitialVal > maxVal)
-					{
-						throw new Exception(String.Format("XML: Maximum initial value is larger than maximum value {0}", nm.Value));
-					}
-
-					// Min initial
-					if (minInitial == null)
-					{
-						minInitialVal = minVal;
-					}
-					else if (expr.Parse(minInitial.Value))
-					{
-						minInitialVal = expr.Evaluate();
-					}
-					else
-					{
-						throw new Exception(String.Format("XML: Could not parse minimum initial boundary value {0} ({1})", nm.Value, minInitial.Value));
-					}
-
-					if (minInitialVal > minVal)
-					{
-						throw new Exception(String.Format("XML: Minimum initial value is smaller than minimum value {0}", nm.Value));
-					}
-
-					if (maxInitialVal < minInitialVal)
-					{
-						throw new Exception(String.Format("XML: Maximum initial value is smaller than minimum initial value {0}", nm.Value));
-					}
-
-					AddBoundary(new Boundary(nm.Value, minVal, maxVal, minInitialVal, maxInitialVal));
-				}
+				
+				AddBoundary(CreateBoundary(nm.Value, node));
 			}
 		}
 
@@ -649,6 +672,8 @@ namespace Optimization
 			{
 				XmlAttribute nm = node.Attributes["name"];
 				XmlAttribute bound = node.Attributes["boundary"];
+				
+				Boundary boundary = null;
 
 				if (nm == null)
 				{
@@ -656,20 +681,27 @@ namespace Optimization
 				}
 				else if (bound == null)
 				{
-					throw new Exception(String.Format("XML: Invalid parameter specification {0}, no boundary specified", nm.Value));
-				}
-				else
-				{
-					Boundary boundary = Boundary(bound.Value);
-
-					if (boundary != null)
+					if (node.Attributes["min"] != null && node.Attributes["max"] != null)
 					{
-						AddParameter(new Parameter(nm.Value, boundary));
+						boundary = CreateBoundary(String.Format("_{0}", nm.Value), node);
 					}
 					else
 					{
-						throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm, bound.Value));
+						throw new Exception(String.Format("XML: Invalid parameter specification {0}, no boundary specified", nm.Value));
 					}
+				}
+				else
+				{
+					boundary = Boundary(bound.Value);
+				}
+
+				if (boundary != null)
+				{
+					AddParameter(new Parameter(nm.Value, boundary));
+				}
+				else
+				{
+					throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm, bound.Value));
 				}
 			}
 

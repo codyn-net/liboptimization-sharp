@@ -25,19 +25,19 @@ namespace Optimization
 	public class Boundary
 	{
 		private string d_name;
-		private double d_min;
-		private double d_max;
-		private double d_minInitial;
-		private double d_maxInitial;
+		private NumericSetting d_min;
+		private NumericSetting d_max;
+		private NumericSetting d_minInitial;
+		private NumericSetting d_maxInitial;
 
 		public Boundary(string name, double min, double max, double minInitial, double maxInitial)
 		{
 			d_name = name;
-			d_min = min;
-			d_max = max;
+			d_min = new NumericSetting(min);
+			d_max = new NumericSetting(max);
 
-			d_minInitial = minInitial;
-			d_maxInitial = maxInitial;
+			d_minInitial = new NumericSetting(minInitial);
+			d_maxInitial = new NumericSetting(maxInitial);
 		}
 
 		public Boundary(string name, double min, double max) : this(name, min, max, min, max)
@@ -72,11 +72,11 @@ namespace Optimization
 		{
 			get
 			{
-				return d_min;
+				return d_min.Value;
 			}
 			set
 			{
-				d_min = value;
+				d_min.Value = value;
 			}
 		}
 
@@ -84,11 +84,11 @@ namespace Optimization
 		{
 			get
 			{
-				return d_max;
+				return d_max.Value;
 			}
 			set
 			{
-				d_max = value;
+				d_max.Value = value;
 			}
 		}
 
@@ -96,11 +96,11 @@ namespace Optimization
 		{
 			get
 			{
-				return d_minInitial;
+				return d_minInitial.Value;
 			}
 			set
 			{
-				d_minInitial = value;
+				d_minInitial.Value = value;
 			}
 		}
 
@@ -108,11 +108,43 @@ namespace Optimization
 		{
 			get
 			{
-				return d_maxInitial;
+				return d_maxInitial.Value;
 			}
 			set
 			{
-				d_maxInitial = value;
+				d_maxInitial.Value = value;
+			}
+		}
+		
+		public NumericSetting MinSetting
+		{
+			get
+			{
+				return d_min;
+			}
+		}
+		
+		public NumericSetting MaxSetting
+		{
+			get
+			{
+				return d_max;
+			}
+		}
+		
+		public NumericSetting MinInitialSetting
+		{
+			get
+			{
+				return d_minInitial;
+			}
+		}
+		
+		public NumericSetting MaxInitialSetting
+		{
+			get
+			{
+				return d_maxInitial;
 			}
 		}
 	}

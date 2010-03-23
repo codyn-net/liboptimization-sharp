@@ -52,7 +52,6 @@
     <Compile Include="Optimization.Messages\Response.cs" />
     <Compile Include="Optimization.Messages\Task.cs" />
     <Compile Include="Optimization.Messages\Token.cs" />
-    <Compile Include="Optimization.Storage\SQLite.cs" />
     <Compile Include="Optimization.Storage\Storage.cs" />
     <Compile Include="Optimization\Registry.cs" />
     <Compile Include="Optimization\Attributes.cs" />
@@ -66,6 +65,7 @@
     <Compile Include="Optimization.Dispatcher.Internal\Internal.cs" />
     <Compile Include="Optimization.Dispatcher.Internal\Registry.cs" />
     <Compile Include="Optimization.Storage\Records.cs" />
+    <Compile Include="Optimization\NumericSetting.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">

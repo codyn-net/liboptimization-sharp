@@ -163,5 +163,22 @@ namespace Optimization
 				d_fitness.Values[pair.Key] = pair.Value;
 			}
 		}
+		
+		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer, Storage.Records.Solution solution)
+		{
+			Data.Clear();
+
+			foreach (KeyValuePair<string, string> data in solution.Data)
+			{
+				Data[data.Key] = data.Value;
+			}
+
+			Fitness.Reset();
+
+			foreach (KeyValuePair<string, double> fit in solution.Fitness)
+			{
+				Fitness.Values[fit.Key] = fit.Value;
+			}
+		}
 	}
 }
