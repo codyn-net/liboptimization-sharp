@@ -42,7 +42,10 @@ namespace Optimization.Messages
 			Token = 3,
 
 			[ProtoEnum()]
-			Cancel = 4
+			Cancel = 4,
+			
+			[ProtoEnum()]
+			Identify = 5
 		}
 
 		[ProtoMember(1, IsRequired=true)]
@@ -62,5 +65,8 @@ namespace Optimization.Messages
 
 		[ProtoMember(6, IsRequired=false)]
 		public Cancel Cancel;
+		
+		[ProtoMember(7, IsRequired=false)]
+		public Identify Identifiy;
 	}
 }

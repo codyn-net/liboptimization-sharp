@@ -1,5 +1,5 @@
 /*
- *  Batch.cs - This file is part of optimization-sharp
+ *  Identify.cs - This file is part of optimization-sharp
  *
  *  Copyright (C) 2009 - Jesse van den Kieboom
  *
@@ -24,9 +24,15 @@ using ProtoBuf;
 namespace Optimization.Messages
 {
 	[ProtoContract()]
-	public class Batch
+	public class Identify
 	{
-		[ProtoMember(1)]
-		public Task[] Tasks;
+		[ProtoMember(1, IsRequired=true)]
+		public string User;
+
+		[ProtoMember(2, IsRequired=true)]
+		public double Priority;
+		
+		[ProtoMember(3, IsRequired=false)]
+		public double Timeout;
 	}
 }

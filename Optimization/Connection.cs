@@ -222,9 +222,6 @@ namespace Optimization
 		private Communication Construct(Job job)
 		{
 			Batch batch = new Batch();
-			batch.Priority = job.Priority;
-			batch.Timeout = job.Timeout;
-			batch.User = job.User;
 
 			List<Task> tasks = new List<Task>();
 
@@ -292,6 +289,26 @@ namespace Optimization
 			}
 
 			return Send(Construct(job));
+		}
+		
+		public bool Identify(Job job)
+		{
+			if (!d_client.Connected)
+			{
+				return false;
+			}
+			
+			Communication communication = new Communication();
+			communication.Type = Communication.CommunicationType.Identify;
+			
+			Identify identify = new Identify();
+			identify.User = job.User;
+			identify.Priority = job.Priority;
+			identify.Timeout = job.Timeout;
+
+			communication.Identifiy = identify;
+			
+			return Send(communication);
 		}
 	}
 }

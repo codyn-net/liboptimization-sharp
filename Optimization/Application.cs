@@ -505,6 +505,12 @@ namespace Optimization
 				Error("Could not connect to master");
 				return;
 			}
+			
+			if (!d_connection.Identify(d_job))
+			{
+				Error("Could not identify to master");
+				return;
+			}
 
 			// Send initial batch of solutions
 			if (!Send())
