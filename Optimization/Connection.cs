@@ -311,6 +311,8 @@ namespace Optimization
 			communication.Type = Communication.CommunicationType.Identify;
 			
 			Identify identify = new Identify();
+			
+			identify.Name = job.Name;
 			identify.User = job.User;
 			identify.Priority = job.Priority;
 			identify.Timeout = job.Timeout;
