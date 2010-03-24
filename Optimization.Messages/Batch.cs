@@ -28,5 +28,8 @@ namespace Optimization.Messages
 	{
 		[ProtoMember(1)]
 		public Task[] Tasks;
+		
+		[ProtoMember(2, IsRequired=true)]
+		public double Progress;
 	}
 }
