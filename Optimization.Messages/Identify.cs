@@ -27,12 +27,15 @@ namespace Optimization.Messages
 	public class Identify
 	{
 		[ProtoMember(1, IsRequired=true)]
-		public string User;
+		public string Name;
 
 		[ProtoMember(2, IsRequired=true)]
+		public string User;
+
+		[ProtoMember(3, IsRequired=true)]
 		public double Priority;
 		
-		[ProtoMember(3, IsRequired=false)]
+		[ProtoMember(4, IsRequired=false)]
 		public double Timeout;
 	}
 }
