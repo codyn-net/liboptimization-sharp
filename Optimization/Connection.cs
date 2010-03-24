@@ -231,6 +231,15 @@ namespace Optimization
 			}
 
 			batch.Tasks = tasks.ToArray();
+			
+			if (job.Optimizer.Configuration.MaxIterations != 0)
+			{
+				batch.Progress = (job.Optimizer.CurrentIteration / (double)job.Optimizer.Configuration.MaxIterations);
+			}
+			else
+			{
+				batch.Progress = 0;
+			}
 
 			Communication communication = new Communication();
 			communication.Type = Communication.CommunicationType.Batch;
