@@ -65,6 +65,7 @@ namespace Optimization
 		private double d_priority;
 		private double d_timeout;
 		private string d_token;
+		private string d_user;
 		private Storage.Storage d_storage;
 
 		public Job()
@@ -72,6 +73,7 @@ namespace Optimization
 			d_dispatcher = new Dispatch();
 			d_name = "";
 			d_token = "";
+			d_user = Environment.UserName;
 			d_timeout = -1;
 			d_priority = 1;
 		}
@@ -294,6 +296,14 @@ namespace Optimization
 			set
 			{
 				d_token = value;
+			}
+		}
+		
+		public string User
+		{
+			get
+			{
+				return d_user;
 			}
 		}
 

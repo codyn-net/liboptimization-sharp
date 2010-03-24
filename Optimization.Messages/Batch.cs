@@ -29,10 +29,13 @@ namespace Optimization.Messages
 		[ProtoMember(1, IsRequired=true)]
 		public double Priority;
 
-		[ProtoMember(2)]
+		[ProtoMember(2, IsRequired=true)]
+		public string User;
+
+		[ProtoMember(3)]
 		public Task[] Tasks;
 
-		[ProtoMember(3, IsRequired=false)]
+		[ProtoMember(4, IsRequired=false)]
 		public double Timeout;
 	}
 }

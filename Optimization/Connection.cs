@@ -224,6 +224,7 @@ namespace Optimization
 			Batch batch = new Batch();
 			batch.Priority = job.Priority;
 			batch.Timeout = job.Timeout;
+			batch.User = job.User;
 
 			List<Task> tasks = new List<Task>();
 
