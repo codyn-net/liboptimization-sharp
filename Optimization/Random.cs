@@ -22,6 +22,7 @@ using System;
 
 namespace Optimization
 {
+	[Serializable]
 	public class Random
 	{
 		System.Random d_random;
