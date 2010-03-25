@@ -33,6 +33,7 @@ namespace Optimization
 			}
 			
 			d_value = expr.Evaluate(Optimization.Math.Constants.Context);
+			d_representation = val;
 		}
 		
 		public double Value
