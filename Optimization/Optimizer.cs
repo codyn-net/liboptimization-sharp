@@ -565,11 +565,11 @@ namespace Optimization
 
 			if (min == null)
 			{
-				throw new Exception(String.Format("XML: No minimum value specified for boundary {0}", name));
+				throw new Exception(String.Format("XML: No minimum value specified for boundary: {0}", name));
 			}
 			else if (max == null)
 			{
-				throw new Exception(String.Format("XML: No maximum value specified for boundary {0}", name));
+				throw new Exception(String.Format("XML: No maximum value specified for boundary: {0}", name));
 			}
 			
 			Optimization.Boundary boundary = new Optimization.Boundary(name);
@@ -580,7 +580,7 @@ namespace Optimization
 			}
 			catch
 			{
-				throw new Exception(String.Format("XML: Could not parse minimum boundary value {0} ({1})", name, min.Value));
+				throw new Exception(String.Format("XML: Could not parse minimum boundary value: {0} ({1})", name, min.Value));
 			}
 			
 			try
@@ -589,12 +589,12 @@ namespace Optimization
 			}
 			catch
 			{
-				throw new Exception(String.Format("XML: Could not parse maximum boundary value {0} ({1})", name, max.Value));
+				throw new Exception(String.Format("XML: Could not parse maximum boundary value: {0} ({1})", name, max.Value));
 			}
 
 			if (boundary.Max < boundary.Min)
 			{
-				throw new Exception(String.Format("XML: Maximum boundary value is smaller than minimum value {0} => [{1}, {2}]", name, min.Value, max.Value));
+				throw new Exception(String.Format("XML: Maximum boundary value is smaller than minimum value: {0} => [{1}, {2}]", name, min.Value, max.Value));
 			}
 			
 			try
@@ -610,12 +610,12 @@ namespace Optimization
 			}
 			catch
 			{
-				throw new Exception(String.Format("XML: Could not parse maximum initial boundary value {0} ({1})", name, maxInitial.Value));
+				throw new Exception(String.Format("XML: Could not parse maximum initial boundary value: {0} ({1})", name, maxInitial.Value));
 			}
 
 			if (boundary.MaxInitial > boundary.Max)
 			{
-				throw new Exception(String.Format("XML: Maximum initial value is larger than maximum value {0}", name));
+				throw new Exception(String.Format("XML: Maximum initial value is larger than maximum value: {0}", name));
 			}
 			
 			try
@@ -631,17 +631,17 @@ namespace Optimization
 			}
 			catch
 			{
-				throw new Exception(String.Format("XML: Could not parse minimum initial boundary value {0} ({1})", name, minInitial.Value));
+				throw new Exception(String.Format("XML: Could not parse minimum initial boundary value: {0} ({1})", name, minInitial.Value));
 			}
 
 			if (boundary.MinInitial < boundary.Min)
 			{
-				throw new Exception(String.Format("XML: Minimum initial value is smaller than minimum value {0}", name));
+				throw new Exception(String.Format("XML: Minimum initial value is smaller than minimum value: {0}, {1} < {2}", name, boundary.MinInitial, boundary.Min));
 			}
 
 			if (boundary.MaxInitial < boundary.MinInitial)
 			{
-				throw new Exception(String.Format("XML: Maximum initial value is smaller than minimum initial value {0}", name));
+				throw new Exception(String.Format("XML: Maximum initial value is smaller than minimum initial value: {0}", name));
 			}
 			
 			return boundary;
