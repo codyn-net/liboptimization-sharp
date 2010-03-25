@@ -36,6 +36,7 @@ namespace Optimization
 
 		public event MessageHandler OnStatus = delegate {};
 		public event MessageHandler OnError = delegate {};
+		public event MessageHandler OnMessage = delegate {};
 
 		public event ProgressHandler OnProgress = delegate {};
 		public event JobHandler OnJob = delegate {};
@@ -70,6 +71,9 @@ namespace Optimization
 
 		Queue<Message> d_messages;
 		bool d_quitting;
+		bool d_reconnect;
+		int[] d_reconnectTimeout;
+		int d_reconnectTimeoutIndex;
 
 		Dictionary<uint, Solution> d_running;
 
@@ -77,6 +81,9 @@ namespace Optimization
 		{
 			d_connection = new Connection();
 			d_quitting = false;
+			d_reconnect = true;
+			
+			d_reconnectTimeout = new int[] {5, 10, 30, 60, 600, 3600};
 
 			d_messageLock = new object();
 			d_messages = new Queue<Message>();
@@ -256,6 +263,17 @@ namespace Optimization
 				NewIteration();
 			}
 		}
+		
+		protected void ShowMessage(string format, params object[] args)
+		{
+			ShowMessage(String.Format(format, args));
+		}
+
+		protected virtual void ShowMessage(string str)
+		{
+			OnMessage(this, str);
+			d_job.Optimizer.Log("message", str);
+		}
 
 		protected void Status(string format, params object[] args)
 		{
@@ -406,7 +424,7 @@ namespace Optimization
 						if (msg is MessageClosed)
 						{
 							Error("Connection closed");
-							Close();
+							d_reconnect = true;
 						}
 						else if (msg is MessageResponse)
 						{
@@ -423,6 +441,8 @@ namespace Optimization
 
 		protected virtual bool Send()
 		{
+			d_running.Clear();
+
 			foreach (Solution solution in d_job.Optimizer.Population)
 			{
 				d_running[solution.Id] = solution;
@@ -472,10 +492,54 @@ namespace Optimization
 				}
 			}
 		}
+		
+		private void Reconnect()
+		{
+			if (!Connect())
+			{
+				int secs = d_reconnectTimeout[d_reconnectTimeoutIndex];
+				int val = secs >= 60 ? (secs / 60) : secs;
+
+				Error("Could not connect to master, retrying in {0} {1}{2}...", val, secs >= 60 ? "minute" : "second", val != 1 ? "s" : "");;
+				Thread.Sleep(secs * 1000);
+				
+				if (d_reconnectTimeoutIndex < d_reconnectTimeout.Length - 1)
+				{
+					++d_reconnectTimeoutIndex;
+				}
+
+				return;
+			}
+			else if (d_reconnectTimeoutIndex > 0)
+			{
+				ShowMessage("Connected to master...");
+			}
+			
+			d_reconnect = false;
+			d_reconnectTimeoutIndex = 0;
+			
+			if (!d_connection.Identify(d_job))
+			{
+				Error("Could not identify to master");
+				d_quitting = true;
+
+				return;
+			}
+
+			// Send initial batch of solutions
+			if (!Send())
+			{
+				Error("Could not send first batch of solutions to master");
+				d_quitting = true;
+				return;
+			}
+		}
 
 		public void Run(Job job)
 		{
 			d_quitting = false;
+			d_reconnect = true;
+			d_reconnectTimeoutIndex = 0;
 
 			d_job = job;
 			d_job.Initialize();
@@ -500,31 +564,17 @@ namespace Optimization
 				return;
 			}
 
-			if (!Connect())
-			{
-				Error("Could not connect to master");
-				return;
-			}
-			
-			if (!d_connection.Identify(d_job))
-			{
-				Error("Could not identify to master");
-				return;
-			}
-
-			// Send initial batch of solutions
-			if (!Send())
-			{
-				Error("Could not send first batch of solutions to master");
-				return;
-			}
-
 			// Main loop
 			while (true)
 			{
+				while (d_reconnect)
+				{
+					Reconnect();
+				}
+
 				d_waitHandle.WaitOne();
 				HandleMessages();
-
+	
 				try
 				{
 					OnIterate(this, new EventArgs());

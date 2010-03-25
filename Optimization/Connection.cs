@@ -41,15 +41,15 @@ namespace Optimization
 
 		public Connection()
 		{
-			d_client = new TcpClient();
 			d_readBuffer = new byte[4096];
 			d_buffer = new byte[0];
-
-			d_client.NoDelay = true;
 		}
 
 		public bool Connect(string host, int port)
 		{
+			d_client = new TcpClient();
+			d_client.NoDelay = true;
+
 			try
 			{
 				d_client.Connect(host, port);
