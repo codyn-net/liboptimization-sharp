@@ -542,9 +542,9 @@ namespace Optimization
 			d_reconnectTimeoutIndex = 0;
 
 			d_job = job;
-			d_job.Initialize();
 
 			OnJob(this, job);
+			OnProgress(this, d_job.Optimizer.CurrentIteration / (double)d_job.Optimizer.Configuration.MaxIterations);
 
 			// Check if we can handle the job internally
 			Optimization.Dispatcher.Internal.Dispatcher internalDispatcher;

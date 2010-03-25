@@ -90,7 +90,11 @@ namespace Optimization.Storage
 			d_connection.Open();
 
 			Query("PRAGMA synchronous = OFF");
-			CreateTables();
+			
+			if (!exists)
+			{
+				CreateTables();
+			}
 
 			/* Check if it's valid */
 			bool ret = !exists || QueryFirst("pragma table_info(job)") != null;
@@ -112,10 +116,13 @@ namespace Optimization.Storage
 		{
 			string orig = Path.GetFullPath(filename);
 			int i = 1;
+			
+			string ext = Path.GetExtension(orig);
+			orig = orig.Substring(0, orig.Length - ext.Length);
 
 			while (true)
 			{
-				string unique = orig + "." + i;
+				string unique = orig + "." + i + ext;
 
 				if (!File.Exists(unique))
 				{
@@ -309,6 +316,9 @@ namespace Optimization.Storage
 					++i;
 				}
 			}
+			
+			builder.Append(") ").Append(values).Append(")");
+			Query(builder.ToString(), vals.ToArray());
 		}
 
 		private void SaveFitness(Solution solution)
@@ -489,7 +499,7 @@ namespace Optimization.Storage
 			Query("CREATE TABLE IF NOT EXISTS `iteration` (`iteration` INT PRIMARY KEY, `best_id` INT, `best_fitness` DOUBLE, `time` INT)");
 			Query("CREATE INDEX IF NOT EXISTS iteration_iteration ON iteration(`iteration`)");
 
-			Query("CREATE TABLE IF NOT EXISTS `solution` (`index` INT, `iteration` INT REFERENCES `iteration` (`iteration`), `values` TEXT, `value_names` TEXT, `fitness` DOUBLE)");
+			Query("CREATE TABLE IF NOT EXISTS `solution` (`index` INT, `iteration` INT REFERENCES `iteration` (`iteration`), `fitness` DOUBLE)");
 			Query("CREATE INDEX IF NOT EXISTS solution_index ON solution(`index`)");
 			Query("CREATE INDEX IF NOT EXISTS solution_iteration ON solution(`iteration`)");
 
@@ -650,14 +660,14 @@ namespace Optimization.Storage
 			ret.Index = iteration;
 			ret.Time = FromUnixTimestamp((int)vals[1]);
 
-			Query(@"SELECT solution.*, fitness.*, parameters.*, data.* FROM solution
+			Query(@"SELECT solution.*, fitness.*, parameter_values.*, data.* FROM solution
                     LEFT JOIN fitness ON (fitness.`index` = solution.`index` AND
                                           fitness.`iteration` = solution.`iteration`)
-                    LEFT JOIN parameters ON (parameters.`index` = solution.`index` AND
-                                             parameters.`iteration` = solution.`iteration`)
+                    LEFT JOIN parameter_values ON (`parameter_values`.`index` = solution.`index` AND
+                                            `parameter_values`.`iteration` = solution.`iteration`)
                     LEFT JOIN data ON (data.`index` = solution.`index` AND
                                        data.`iteration` = solution.`iteration`)
-                    WHERE `iteration` = @0", delegate (IDataReader reader) {
+                    WHERE `solution`.`iteration` = @0", delegate (IDataReader reader) {
 
 				ret.Solutions.Add(CreateSolution(reader));
 				return true;
@@ -674,26 +684,31 @@ namespace Optimization.Storage
 			
 			if (iteration >= 0 && id >= 0)
 			{
-				condition = "`iteration` = @0 AND `index` = @1";
+				condition = "`solution`.`iteration` = @0 AND `solution`.`index` = @1";
 			}
 			else if (iteration >= 0)
 			{
-				condition = "`iteration` = @0";
+				condition = "`solution`.`iteration` = @0";
 			}
 			else if (id >= 0)
 			{
-				condition = "`index` = @0";
+				condition = "`solution`.`index` = @0";
 				iteration = id;
 			}
 			
-			string q = String.Format(@"SELECT solution.*, fitness.*, parameters.*, data.* FROM solution
+			if (condition != "")
+			{
+				condition = "WHERE " + condition;
+			}
+			
+			string q = String.Format(@"SELECT solution.*, fitness.*, parameter_values.*, data.* FROM solution
                     LEFT JOIN fitness ON (fitness.`index` = solution.`index` AND
                                           fitness.`iteration` = solution.`iteration`)
-                    LEFT JOIN parameters ON (parameters.`index` = solution.`index` AND
-                                             parameters.`iteration` = solution.`iteration`)
+                    LEFT JOIN parameter_values ON (parameter_values.`index` = solution.`index` AND
+                                             parameter_values.`iteration` = solution.`iteration`)
                     LEFT JOIN data ON (data.`index` = solution.`index` AND
                                        data.`iteration` = solution.`iteration`)
-                    WHERE #{0} ORDER BY solution.fitness DESC LIMIT 1", condition);
+                    {0} ORDER BY solution.fitness DESC LIMIT 1", condition);
 
 			Query(q, delegate (IDataReader reader) {
 				solution = CreateSolution(reader);
@@ -776,17 +791,17 @@ namespace Optimization.Storage
 
 			if (iteration > 0)
 			{
-				Query("SELECT `random`, * FROM `state` ORDER BY iteration DESC LIMIT 1", delegate (IDataReader reader) {
-					byte[] longEnough = new byte[1024];
-					long read = reader.GetBytes(0, 0, longEnough, 0, longEnough.Length);
+				Query("SELECT * FROM `state` ORDER BY iteration DESC LIMIT 1", delegate (IDataReader reader) {
+					byte[] random = (byte[])reader["random"];
 
 					System.Runtime.Serialization.Formatters.Binary.BinaryFormatter formatter;
 					formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
 
 					MemoryStream stream = new MemoryStream();
-					stream.Write(longEnough, 0, (int)read);
+					stream.Write(random, 0, random.Length);
+					stream.Seek(0, SeekOrigin.Begin);
 
-					job.Optimizer.State.Random = new Optimization.Random((System.Random)formatter.Deserialize(stream));
+					job.Optimizer.State.Random = (Optimization.Random)formatter.Deserialize(stream);
 					stream.Close();
 
 					for (int i = 0; i < reader.FieldCount; ++i)
