@@ -74,6 +74,7 @@ FILES = \
 	Optimization.Messages/Batch.cs \
 	Optimization.Messages/Cancel.cs \
 	Optimization.Messages/Communication.cs \
+	Optimization.Messages/Identify.cs \
 	Optimization.Messages/Response.cs \
 	Optimization.Messages/Task.cs \
 	Optimization.Messages/Token.cs \
