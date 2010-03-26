@@ -214,8 +214,22 @@ namespace Optimization
 
 				settings.Add(kv);
 			}
+			
+			// Add solution data
+			List<Task.KeyValueType> data = new List<Task.KeyValueType>();
+			foreach (KeyValuePair<string, object> pair in solution.Data)
+			{
+				Task.KeyValueType kv = new Task.KeyValueType();
+				
+				kv.Key = pair.Key;
+				kv.Value = pair.Value.ToString();
+				
+				data.Add(kv);
+			}
 
 			task.Settings = settings.ToArray();
+			task.Data = data.ToArray();
+
 			return task;
 		}
 
