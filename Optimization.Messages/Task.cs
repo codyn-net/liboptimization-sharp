@@ -69,6 +69,8 @@ namespace Optimization.Messages
 
 		[ProtoMember(6)]
 		public KeyValueType[] Settings;
-
+		
+		[ProtoMember(7, IsRequired=false)]
+		public string Data;
 	}
 }
