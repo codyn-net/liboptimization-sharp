@@ -76,6 +76,7 @@ namespace Optimization
 		int d_reconnectTimeoutIndex;
 
 		Dictionary<uint, Solution> d_running;
+		Thread d_signalThread;
 
 		public Application(ref string[] args)
 		{
@@ -108,6 +109,21 @@ namespace Optimization
 
 			d_waitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
+			
+			
+			Console.ResetColor();
+
+			d_signalThread = new Thread(SignalThread);
+			d_signalThread.Start();
+		}
+		
+		private void SignalThread()
+		{
+			Mono.Unix.UnixSignal signal = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGINT);
+			signal.WaitOne();
+			
+			d_quitting = true;
+			d_waitHandle.Set();
 		}
 
 		protected virtual void Initialize()
