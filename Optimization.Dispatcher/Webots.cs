@@ -98,7 +98,12 @@ namespace Optimization.Dispatcher
 
 		public void Response(Messages.Response response)
 		{
-			byte[] serialized = Messages.Messages.Create(response);
+			Messages.Communication comm = new Messages.Communication();
+
+			comm.Type = Messages.Communication.CommunicationType.Response;
+			comm.Response = response;
+
+			byte[] serialized = Messages.Messages.Create(comm);
 
 			if (serialized != null)
 			{
@@ -106,7 +111,7 @@ namespace Optimization.Dispatcher
 			}
 		}
 
-		protected override Stream RequestStream ()
+		protected override Stream RequestStream()
 		{
 			string filename = Environment.GetEnvironmentVariable("OPTIMIZATION_UNIX_SOCKET");
 

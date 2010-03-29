@@ -139,17 +139,24 @@ namespace Optimization.Dispatcher
 				return false;
 			}
 
-			Messages.Task[] tasks = Messages.Messages.Extract<Messages.Task>(stream);
+			Messages.Communication[] comms = Messages.Messages.Extract<Messages.Communication>(stream);
 
-			if (tasks == null || tasks.Length == 0)
+			if (comms == null || comms.Length == 0)
 			{
 				return false;
 			}
+			
+			foreach (Messages.Communication comm in comms)
+			{
+				if (comm.Type == Messages.Communication.CommunicationType.Task)
+				{
+					d_task = comm.Task;
+					ParseRequest();
+					return true;
+				}
+			}
 
-			d_task = tasks[tasks.Length - 1];
-			ParseRequest();
-
-			return true;
+			return false;
 		}
 
 		private void ParseRequest()
@@ -176,7 +183,12 @@ namespace Optimization.Dispatcher
 
 		protected bool WriteResponse(Optimization.Messages.Response response)
 		{
-			byte[] ret = Messages.Messages.Create(response);
+			Messages.Communication comm = new Messages.Communication();
+			
+			comm.Type = Messages.Communication.CommunicationType.Response;
+			comm.Response = response;
+
+			byte[] ret = Messages.Messages.Create(comm);
 
 			if (ret != null)
 			{
