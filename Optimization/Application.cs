@@ -26,6 +26,9 @@ using Optimization.Messages;
 using System.Threading;
 using System.Security.Cryptography;
 
+using System.Net;
+using System.Net.Sockets;
+
 namespace Optimization
 {
 	public class Application
@@ -107,9 +110,8 @@ namespace Optimization
 				d_masterAddress += ":" + (int)Constants.MasterPort;
 			}
 
-			d_waitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
+			d_waitHandle = new AutoResetEvent(false);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
-			
 			
 			Console.ResetColor();
 
@@ -379,15 +381,20 @@ namespace Optimization
 			solution.Fitness.Value = 0;
 			Done(solution);
 		}
+		
+		private string EncodeTokenResponse(string token, string challenge)
+		{
+			byte[] bytes = Encoding.ASCII.GetBytes(token + challenge);
+			byte[] encoded = d_sha1Provider.ComputeHash(bytes);
+
+			return BitConverter.ToString(encoded).Replace("-", "").ToLower();
+		}
 
 		protected virtual void OnChallenge(Response response)
 		{
 			// Take the challenge and encrypt it with the job token.
 			// Then send it back to the master
-			byte[] bytes = Encoding.ASCII.GetBytes(d_job.Token + response.Challenge);
-			byte[] encoded = d_sha1Provider.ComputeHash(bytes);
-
-			string ashex = BitConverter.ToString(encoded).Replace("-", "").ToLower();
+			string ashex = EncodeTokenResponse(d_job.Token, response.Challenge);
 
 			Communication res = new Communication();
 
@@ -517,7 +524,8 @@ namespace Optimization
 				int val = secs >= 60 ? (secs / 60) : secs;
 
 				Error("Could not connect to master, retrying in {0} {1}{2}...", val, secs >= 60 ? "minute" : "second", val != 1 ? "s" : "");;
-				Thread.Sleep(secs * 1000);
+				
+				d_waitHandle.WaitOne(secs * 1000);
 				
 				if (d_reconnectTimeoutIndex < d_reconnectTimeout.Length - 1)
 				{
@@ -550,6 +558,76 @@ namespace Optimization
 				return;
 			}
 		}
+		
+		private string ReadLine(Stream stream)
+		{
+			string ret = "";
+
+			while (true)
+			{
+				byte[] buffer = new byte[1024];
+				int size = stream.Read(buffer, 0, 1024);
+				
+				ret += Encoding.UTF8.GetString(buffer, 0, size);
+				
+				if (ret.EndsWith("\n") || ret.EndsWith("\r"))
+				{
+					ret = ret.TrimEnd('\n', '\r');
+					break;
+				}
+			}
+			
+			return ret;
+		}
+		
+		private bool CheckToken()
+		{
+			ShowMessage("Validating token, standby...");
+
+			TcpClient client = new TcpClient();
+			EventWaitHandle signaller = new AutoResetEvent(false);
+
+			client.BeginConnect("eniac", 8128, delegate (IAsyncResult result) {
+				try
+				{
+					client.EndConnect(result);
+				}
+				catch  (Exception e)
+				{
+					Console.WriteLine(e);
+				}
+
+				signaller.Set();
+			}, null);
+			
+			signaller.WaitOne(1000);
+			
+			if (!client.Connected)
+			{
+				Error("Could not connect to token server");
+				return false;
+			}
+			
+			string line = ReadLine(client.GetStream());
+			
+			if (!line.StartsWith("220"))
+			{
+				client.Close();
+				return false;
+			}
+			
+			int pos = line.LastIndexOf('<');
+			string challenge = line.Substring(pos + 1, line.Length - pos - 2);
+			
+			byte[] data = Encoding.UTF8.GetBytes("CHECK " + EncodeTokenResponse(d_job.Token, challenge) + "\n");
+			
+			client.GetStream().Write(data, 0, data.Length);
+		
+			line = ReadLine(client.GetStream());
+			client.Close();
+			
+			return line.StartsWith("2");
+		}
 
 		public void Run(Job job)
 		{
@@ -558,6 +636,17 @@ namespace Optimization
 			d_reconnectTimeoutIndex = 0;
 
 			d_job = job;
+
+			if (job.Token != "")
+			{
+				// Check token first
+				if (!CheckToken())
+				{
+					Error("Invalid token specified");
+					Stop();
+					return;
+				}
+			}
 
 			OnJob(this, job);
 			OnProgress(this, d_job.Optimizer.CurrentIteration / (double)d_job.Optimizer.Configuration.MaxIterations);
@@ -579,13 +668,18 @@ namespace Optimization
 				RunInternal(internalDispatcher);
 				return;
 			}
-
+			
 			// Main loop
 			while (true)
 			{
-				while (d_reconnect)
+				while (d_reconnect && !d_quitting)
 				{
 					Reconnect();
+				}
+				
+				if (d_quitting)
+				{
+					break;
 				}
 
 				d_waitHandle.WaitOne();
@@ -598,12 +692,6 @@ namespace Optimization
 				catch (Exception e)
 				{
 					System.Console.Error.WriteLine("Erreur: " + e);
-				}
-
-				// Usually means the connection with the master was broken
-				if (d_quitting)
-				{
-					break;
 				}
 			}
 
