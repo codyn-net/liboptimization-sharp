@@ -1,4 +1,4 @@
-Source: liboptimization-sharp
+Source: liboptimization2-sharp
 Priority: extra
 Maintainer: Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>
 Build-Depends: debhelper (>= 7),
@@ -12,7 +12,7 @@ Standards-Version: 3.8.0
 Section: libs
 Homepage: http://birg.epfl.ch
 
-Package: liboptimization-sharp1
+Package: liboptimization2-sharp
 Section: libs
 Architecture: any
 Depends: mono-runtime, libmono-system2.0-cil, libmono-corlib2.0-cil, libmono-sqlite2.0-cil, libmono2.0-cil
