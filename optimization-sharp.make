@@ -116,11 +116,14 @@ CLEANFILES = $(PROGRAMFILES) $(LINUX_PKGCONFIG)
 include $(top_srcdir)/Makefile.include
 
 PROTOBUF_NET_DLL = $(BUILD_DIR)/protobuf-net.dll
-OPTIMIZATION_SHARP_PC = $(BUILD_DIR)/optimization-sharp.pc
+OPTIMIZATION_SHARP_PC = $(BUILD_DIR)/optimization-sharp-@LIBOPTIMIZATION_SHARP_API_VERSION@.pc
+OPTIMIZATION_SHARP_API_PC = optimization-sharp-@LIBOPTIMIZATION_SHARP_API_VERSION@.pc
 
 $(eval $(call emit-deploy-target,PROTOBUF_NET_DLL))
-$(eval $(call emit-deploy-wrapper,OPTIMIZATION_SHARP_PC,optimization-sharp.pc))
+$(eval $(call emit-deploy-wrapper,OPTIMIZATION_SHARP_PC,$(OPTIMIZATION_SHARP_API_PC)))
 
+$(OPTIMIZATION_SHARP_API_PC): optimization-sharp.pc
+	cp $< $@
 
 $(eval $(call emit_resgen_targets))
 $(build_xamlg_list): %.xaml.g.cs: %.xaml
