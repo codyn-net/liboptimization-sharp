@@ -117,11 +117,6 @@ namespace Optimization
 			d_sha1Provider = new SHA1CryptoServiceProvider();
 			
 			Console.ResetColor();
-
-#if USE_UNIXSIGNAL
-			d_signalThread = new Thread(SignalThread);
-			d_signalThread.Start();
-#endif
 		}
 
 #if USE_UNIXSIGNAL
@@ -641,6 +636,14 @@ namespace Optimization
 			d_quitting = false;
 			d_reconnect = true;
 			d_reconnectTimeoutIndex = 0;
+			
+#if USE_UNIXSIGNAL
+			if (d_signalThread == null)
+			{
+				d_signalThread = new Thread(SignalThread);
+				d_signalThread.Start();
+			}
+#endif
 
 			d_job = job;
 
@@ -703,6 +706,14 @@ namespace Optimization
 			}
 
 			d_connection.Disconnect();
+			
+#if USE_UNIXSIGNAL
+			if (d_signalThread != null)
+			{
+				d_signalThread.Abort();
+				d_signalThread = null;
+			}
+#endif
 		}
 
 		public void Stop()
