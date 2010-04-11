@@ -129,7 +129,7 @@ namespace Optimization
 			}
 
 			// Scan in libdir thing
-			string dirpath = Path.Combine(Path.Combine(Directories.Lib, "liboptimization-sharp"), "optimizers");
+			string dirpath = Directories.Optimizers;
 			string[] files;
 
 			try
