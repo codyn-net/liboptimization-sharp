@@ -10,7 +10,7 @@ namespace Optimization.Dispatcher.Internal
 		public Dispatcher()
 		{
 		}
-		
+
 		public virtual void Initialize(Job job)
 		{
 			d_job = job;
@@ -19,33 +19,33 @@ namespace Optimization.Dispatcher.Internal
 		public static string GetDescription(Type type)
 		{
 			object[] attr = type.GetCustomAttributes(typeof(Attributes.DispatcherAttribute), false);
-			
+
 			if (attr.Length != 0)
 			{
 				return (attr[0] as Attributes.DispatcherAttribute).Description;
 			}
-			
+
 			return null;
 		}
-		
+
 		public static string GetName(Type type)
 		{
 			object[] attr = type.GetCustomAttributes(typeof(Attributes.DispatcherAttribute), false);
 			string name = null;
-			
+
 			if (attr.Length != 0)
 			{
 				name = (attr[0] as Attributes.DispatcherAttribute).Name;
 			}
-			
+
 			if (name == null)
 			{
 				name = type.Name;
 			}
-			
+
 			return name;
 		}
-		
+
 		public abstract Dictionary<string, double> Evaluate(Solution solution);
 
 		public Job Job

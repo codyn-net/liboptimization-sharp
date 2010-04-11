@@ -2,9 +2,11 @@
 
 # Warning: This is an automatically generated file, do not edit!
 
+ASSEMBLY_COMPILER_FLAGS =
+
 if ENABLE_DEBUG
 ASSEMBLY_COMPILER_COMMAND = gmcs
-ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize- -debug "-define:DEBUG"
+ASSEMBLY_COMPILER_FLAGS +=  -noconfig -codepage:utf8 -warn:4 -optimize- -debug "-define:DEBUG"
 ASSEMBLY = bin/Debug/Optimization.dll
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = library
@@ -19,7 +21,7 @@ endif
 
 if ENABLE_RELEASE
 ASSEMBLY_COMPILER_COMMAND = gmcs
-ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize-
+ASSEMBLY_COMPILER_FLAGS +=  -noconfig -codepage:utf8 -warn:4 -optimize-
 ASSEMBLY = bin/Release/Optimization.dll
 ASSEMBLY_MDB = 
 COMPILE_TARGET = library
@@ -29,6 +31,10 @@ BUILD_DIR = bin/Release
 PROTOBUF_NET_DLL_SOURCE=protobuf-net.dll
 OPTIMIZATION_SHARP_DLL_MDB=
 
+endif
+
+if USE_UNIXSIGNAL
+ASSEMBLY_COMPILER_FLAGS += -d:USE_UNIXSIGNAL
 endif
 
 AL=al2
@@ -56,6 +62,7 @@ FILES = \
 	Optimization/Directories.cs \
 	Optimization/Fitness.cs \
 	Optimization/Job.cs \
+	Optimization/NumericSetting.cs \
 	Optimization/Optimizer.cs \
 	Optimization/Options.cs \
 	Optimization/Parameter.cs \
@@ -73,12 +80,14 @@ FILES = \
 	Optimization.Messages/Batch.cs \
 	Optimization.Messages/Cancel.cs \
 	Optimization.Messages/Communication.cs \
+	Optimization.Messages/Identify.cs \
+	Optimization.Messages/Ping.cs \
 	Optimization.Messages/Response.cs \
 	Optimization.Messages/Task.cs \
 	Optimization.Messages/Token.cs \
 	Optimization.Messages/Messages.cs \
-	Optimization.Storage/SQLite.cs \
 	Optimization.Storage/Storage.cs \
+	Optimization.Storage/Records.cs \
 	Optimization.Dispatcher/Dispatcher.cs \
 	Optimization.Dispatcher/Webots.cs \
 	Optimization.Dispatcher.Internal/Dispatcher.cs \
@@ -104,14 +113,19 @@ DLL_REFERENCES =  \
 
 CLEANFILES = $(PROGRAMFILES) $(LINUX_PKGCONFIG) 
 
+PROTOBUF_NET_DLL = $(BUILD_DIR)/protobuf-net.dll
+OPTIMIZATION_SHARP_PC = $(BUILD_DIR)/optimization-sharp-@LIBOPTIMIZATION_SHARP_API_VERSION@.pc
+OPTIMIZATION_SHARP_API_PC = optimization-sharp-@LIBOPTIMIZATION_SHARP_API_VERSION@.pc
+
+pc_files = $(OPTIMIZATION_SHARP_API_PC)
+
 include $(top_srcdir)/Makefile.include
 
-PROTOBUF_NET_DLL = $(BUILD_DIR)/protobuf-net.dll
-OPTIMIZATION_SHARP_PC = $(BUILD_DIR)/optimization-sharp.pc
-
 $(eval $(call emit-deploy-target,PROTOBUF_NET_DLL))
-$(eval $(call emit-deploy-wrapper,OPTIMIZATION_SHARP_PC,optimization-sharp.pc))
+$(eval $(call emit-deploy-wrapper,OPTIMIZATION_SHARP_PC,$(OPTIMIZATION_SHARP_API_PC)))
 
+$(OPTIMIZATION_SHARP_API_PC): optimization-sharp.pc
+	cp $< $@
 
 $(eval $(call emit_resgen_targets))
 $(build_xamlg_list): %.xaml.g.cs: %.xaml

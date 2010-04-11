@@ -5,16 +5,17 @@ namespace Optimization
 	public class Visual
 	{
 		private Application d_application;
-		
+
 		public Visual(Application application)
 		{
 			d_application = application;
-			
+
 			application.OnError += OnError;
 			application.OnStatus += OnStatus;
 			application.OnJob += OnJob;
 			application.OnProgress += OnProgress;
 			application.OnIterate += OnIterate;
+			application.OnMessage += OnMessage;
 		}
 
 		protected virtual void OnIterate(object sender, EventArgs e)
@@ -37,11 +38,16 @@ namespace Optimization
 			// NOOP
 		}
 		
+		protected virtual void OnMessage(object source, string message)
+		{
+			// NOOP
+		}
+
 		protected virtual void OnStatus(object source, string message)
 		{
 			// NOOP
 		}
-		
+
 		protected Application Application
 		{
 			get
@@ -49,7 +55,7 @@ namespace Optimization
 				return d_application;
 			}
 		}
-		
+
 		public virtual void Run()
 		{
 		}

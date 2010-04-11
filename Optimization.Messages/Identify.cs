@@ -1,5 +1,5 @@
 /*
- *  Task.cs - This file is part of optimization-sharp
+ *  Identify.cs - This file is part of optimization-sharp
  *
  *  Copyright (C) 2009 - Jesse van den Kieboom
  *
@@ -24,53 +24,18 @@ using ProtoBuf;
 namespace Optimization.Messages
 {
 	[ProtoContract()]
-	public class Task
+	public class Identify
 	{
-		[ProtoContract()]
-		public class ParameterType
-		{
-			[ProtoMember(1, IsRequired=true)]
-			public string Name;
-
-			[ProtoMember(2, IsRequired=true)]
-			public double Value;
-
-			[ProtoMember(3, IsRequired=true)]
-			public double Min;
-
-			[ProtoMember(4, IsRequired=true)]
-			public double Max;
-		}
-
-		[ProtoContract()]
-		public class KeyValueType
-		{
-			[ProtoMember(1, IsRequired=true)]
-			public string Key;
-
-			[ProtoMember(2, IsRequired=true)]
-			public string Value;
-		}
-
 		[ProtoMember(1, IsRequired=true)]
-		public UInt32 Id;
+		public string Name;
 
 		[ProtoMember(2, IsRequired=true)]
-		public string Dispatcher;
+		public string User;
 
 		[ProtoMember(3, IsRequired=true)]
-		public string Job;
-
-		[ProtoMember(4, IsRequired=true)]
-		public string Optimizer;
-
-		[ProtoMember(5)]
-		public ParameterType[] Parameters;
-
-		[ProtoMember(6)]
-		public KeyValueType[] Settings;
+		public double Priority;
 		
-		[ProtoMember(7)]
-		public KeyValueType[] Data;
+		[ProtoMember(4, IsRequired=false)]
+		public double Timeout;
 	}
 }

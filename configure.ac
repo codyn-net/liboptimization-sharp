@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT(liboptimization-sharp, 1.5)
+AC_INIT(liboptimization2-sharp, 2.0)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
@@ -10,6 +10,9 @@ AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 if test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
 fi
+
+LIBOPTIMIZATION_SHARP_API_VERSION=2.0
+AC_SUBST(LIBOPTIMIZATION_SHARP_API_VERSION)
 
 SHAMROCK_EXPAND_LIBDIR
 SHAMROCK_EXPAND_BINDIR
@@ -44,6 +47,8 @@ if test -z "$CONFIG_REQUESTED" ; then
 	enable_release=yes
 fi
 
+mono_version=`$GMCS --version | sed 's/.*\([[0-9]]\.[[0-9]]\).*/\1/g'`
+AM_CONDITIONAL(USE_UNIXSIGNAL, test "x$mono_version" = "x2.3")
 
 dnl package checks, common for all configs
 
