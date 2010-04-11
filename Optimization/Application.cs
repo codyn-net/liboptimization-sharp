@@ -79,7 +79,10 @@ namespace Optimization
 		int d_reconnectTimeoutIndex;
 
 		Dictionary<uint, Solution> d_running;
+
+#if USE_UNIXSIGNAL
 		Thread d_signalThread;
+#endif
 
 		public Application(ref string[] args)
 		{
@@ -115,10 +118,13 @@ namespace Optimization
 			
 			Console.ResetColor();
 
+#if USE_UNIXSIGNAL
 			d_signalThread = new Thread(SignalThread);
 			d_signalThread.Start();
+#endif
 		}
-		
+
+#if USE_UNIXSIGNAL
 		private void SignalThread()
 		{
 			Mono.Unix.UnixSignal signal = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGINT);
@@ -127,6 +133,7 @@ namespace Optimization
 			d_quitting = true;
 			d_waitHandle.Set();
 		}
+#endif
 
 		protected virtual void Initialize()
 		{
@@ -525,7 +532,7 @@ namespace Optimization
 
 				Error("Could not connect to master, retrying in {0} {1}{2}...", val, secs >= 60 ? "minute" : "second", val != 1 ? "s" : "");;
 				
-				d_waitHandle.WaitOne(secs * 1000);
+				d_waitHandle.WaitOne(secs * 1000, false);
 				
 				if (d_reconnectTimeoutIndex < d_reconnectTimeout.Length - 1)
 				{
@@ -600,7 +607,7 @@ namespace Optimization
 				signaller.Set();
 			}, null);
 			
-			signaller.WaitOne(1000);
+			signaller.WaitOne(1000, false);
 			
 			if (!client.Connected)
 			{

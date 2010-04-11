@@ -44,6 +44,8 @@ if test -z "$CONFIG_REQUESTED" ; then
 	enable_release=yes
 fi
 
+mono_version=`$GMCS --version | sed 's/.*\([[0-9]]\.[[0-9]]\).*/\1/g'`
+AM_CONDITIONAL(USE_UNIXSIGNAL, test "x$mono_version" = "x2.3")
 
 dnl package checks, common for all configs
 

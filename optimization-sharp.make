@@ -2,9 +2,11 @@
 
 # Warning: This is an automatically generated file, do not edit!
 
+ASSEMBLY_COMPILER_FLAGS =
+
 if ENABLE_DEBUG
 ASSEMBLY_COMPILER_COMMAND = gmcs
-ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize- -debug "-define:DEBUG"
+ASSEMBLY_COMPILER_FLAGS +=  -noconfig -codepage:utf8 -warn:4 -optimize- -debug "-define:DEBUG"
 ASSEMBLY = bin/Debug/Optimization.dll
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = library
@@ -19,7 +21,7 @@ endif
 
 if ENABLE_RELEASE
 ASSEMBLY_COMPILER_COMMAND = gmcs
-ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize-
+ASSEMBLY_COMPILER_FLAGS +=  -noconfig -codepage:utf8 -warn:4 -optimize-
 ASSEMBLY = bin/Release/Optimization.dll
 ASSEMBLY_MDB = 
 COMPILE_TARGET = library
@@ -29,6 +31,10 @@ BUILD_DIR = bin/Release
 PROTOBUF_NET_DLL_SOURCE=protobuf-net.dll
 OPTIMIZATION_SHARP_DLL_MDB=
 
+endif
+
+if USE_UNIXSIGNAL
+ASSEMBLY_COMPILER_FLAGS += -d:USE_UNIXSIGNAL
 endif
 
 AL=al2
