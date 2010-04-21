@@ -337,6 +337,11 @@ namespace Optimization
 				fitness.Add(item.Name, item.Value);
 				vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
 			}
+			
+			foreach (Response.KeyValueType item in response.Data)
+			{
+				solution.Data[item.Key] = item.Value;
+			}
 
 			// Update the solution fitness
 			solution.Update(fitness);
