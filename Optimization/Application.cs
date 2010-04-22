@@ -82,6 +82,7 @@ namespace Optimization
 
 #if USE_UNIXSIGNAL
 		Thread d_signalThread;
+		Mono.Unix.UnixSignal d_unixSignal;
 #endif
 
 		public Application(ref string[] args)
@@ -122,11 +123,14 @@ namespace Optimization
 #if USE_UNIXSIGNAL
 		private void SignalThread()
 		{
-			Mono.Unix.UnixSignal signal = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGINT);
-			signal.WaitOne();
+			d_unixSignal = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGINT);
+			d_unixSignal.WaitOne();
 			
-			d_quitting = true;
-			d_waitHandle.Set();
+			if (!d_quitting)
+			{
+				d_quitting = true;
+				d_waitHandle.Set();
+			}
 		}
 #endif
 
@@ -723,19 +727,18 @@ namespace Optimization
 			}
 
 			d_connection.Disconnect();
-			
-#if USE_UNIXSIGNAL
-			if (d_signalThread != null)
-			{
-				d_signalThread.Abort();
-				d_signalThread = null;
-			}
-#endif
 		}
 
 		public void Stop()
 		{
 			d_quitting = true;
+
+#if USE_UNIXSIGNAL
+			if (d_signalThread != null)
+			{
+				Mono.Unix.Native.Stdlib.raise(Mono.Unix.Native.Signum.SIGINT);
+			}
+#endif
 		}
 	}
 }
