@@ -82,6 +82,7 @@ namespace Optimization
 
 #if USE_UNIXSIGNAL
 		Thread d_signalThread;
+		Mono.Unix.UnixSignal d_unixSignal;
 #endif
 
 		public Application(ref string[] args)
@@ -122,11 +123,14 @@ namespace Optimization
 #if USE_UNIXSIGNAL
 		private void SignalThread()
 		{
-			Mono.Unix.UnixSignal signal = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGINT);
-			signal.WaitOne();
+			d_unixSignal = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGINT);
+			d_unixSignal.WaitOne();
 			
-			d_quitting = true;
-			d_waitHandle.Set();
+			if (!d_quitting)
+			{
+				d_quitting = true;
+				d_waitHandle.Set();
+			}
 		}
 #endif
 
@@ -331,16 +335,28 @@ namespace Optimization
 			// Create fitness dictionary from response
 			Dictionary<string, double> fitness = new Dictionary<string, double>();
 			List<string> vals = new List<string>();
-
-			foreach (Response.FitnessType item in response.Fitness)
+			
+			if (response.Fitness != null)
 			{
-				fitness.Add(item.Name, item.Value);
-				vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
+				foreach (Response.FitnessType item in response.Fitness)
+				{
+					fitness.Add(item.Name, item.Value);
+					vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
+				}
 			}
 			
-			foreach (Response.KeyValueType item in response.Data)
+			if (fitness.Count == 0)
 			{
-				solution.Data[item.Key] = item.Value;
+				Error("Did not receive any fitness!");
+				fitness["value"] = 0;
+			}
+			
+			if (response.Data != null)
+			{
+				foreach (Response.KeyValueType item in response.Data)
+				{
+					solution.Data[item.Key] = item.Value;
+				}
 			}
 
 			// Update the solution fitness
@@ -711,19 +727,18 @@ namespace Optimization
 			}
 
 			d_connection.Disconnect();
-			
-#if USE_UNIXSIGNAL
-			if (d_signalThread != null)
-			{
-				d_signalThread.Abort();
-				d_signalThread = null;
-			}
-#endif
 		}
 
 		public void Stop()
 		{
 			d_quitting = true;
+
+#if USE_UNIXSIGNAL
+			if (d_signalThread != null)
+			{
+				Mono.Unix.Native.Stdlib.raise(Mono.Unix.Native.Signum.SIGINT);
+			}
+#endif
 		}
 	}
 }
