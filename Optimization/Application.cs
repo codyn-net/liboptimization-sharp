@@ -331,16 +331,28 @@ namespace Optimization
 			// Create fitness dictionary from response
 			Dictionary<string, double> fitness = new Dictionary<string, double>();
 			List<string> vals = new List<string>();
-
-			foreach (Response.FitnessType item in response.Fitness)
+			
+			if (response.Fitness != null)
 			{
-				fitness.Add(item.Name, item.Value);
-				vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
+				foreach (Response.FitnessType item in response.Fitness)
+				{
+					fitness.Add(item.Name, item.Value);
+					vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
+				}
 			}
 			
-			foreach (Response.KeyValueType item in response.Data)
+			if (fitness.Count == 0)
 			{
-				solution.Data[item.Key] = item.Value;
+				Error("Did not receive any fitness!");
+				fitness["value"] = 0;
+			}
+			
+			if (response.Data != null)
+			{
+				foreach (Response.KeyValueType item in response.Data)
+				{
+					solution.Data[item.Key] = item.Value;
+				}
 			}
 
 			// Update the solution fitness
