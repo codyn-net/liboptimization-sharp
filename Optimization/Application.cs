@@ -70,6 +70,7 @@ namespace Optimization
 		Connection d_connection;
 
 		string d_masterAddress;
+		string d_tokenAddress;
 		object d_messageLock;
 
 		Queue<Message> d_messages;
@@ -112,6 +113,16 @@ namespace Optimization
 			if (d_masterAddress.IndexOf(':') == -1)
 			{
 				d_masterAddress += ":" + (int)Constants.MasterPort;
+			}
+
+			if (String.IsNullOrEmpty(d_tokenAddress))
+			{
+				d_tokenAddress = "eniac:8128";
+			}
+			
+			if (d_tokenAddress.IndexOf(":") == -1)
+			{
+				d_tokenAddress += ":8128";
 			}
 
 			d_waitHandle = new AutoResetEvent(false);
@@ -198,6 +209,7 @@ namespace Optimization
 		{
 			optionSet.Add("h|help", "Show this help message", delegate (string s) { ShowHelp(optionSet); });
 			optionSet.Add("m=|master=", "Specify master connection string", delegate (string s) { d_masterAddress = s; });
+			optionSet.Add("t=|tokensrv=", "Specify token server connection string", delegate (string s) { d_tokenAddress = s; });
 		}
 
 		protected virtual void ParseArguments(ref string[] args)
@@ -609,8 +621,16 @@ namespace Optimization
 
 			TcpClient client = new TcpClient();
 			EventWaitHandle signaller = new AutoResetEvent(false);
+			
+			string[] parts = d_tokenAddress.Split(new char[] {':'}, 2);
+			int port = 8128;
+			
+			if (parts.Length == 2)
+			{
+				port = Int16.Parse(parts[1]);
+			}
 
-			client.BeginConnect("eniac", 8128, delegate (IAsyncResult result) {
+			client.BeginConnect(parts[0], port, delegate (IAsyncResult result) {
 				try
 				{
 					client.EndConnect(result);
