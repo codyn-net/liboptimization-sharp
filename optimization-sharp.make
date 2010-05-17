@@ -71,6 +71,7 @@ FILES = \
 	Optimization/Settings.cs \
 	Optimization/Solution.cs \
 	Optimization/State.cs \
+	Optimization/Utils.cs \
 	Optimization/Visual.cs \
 	Optimization.Math/Expression.cs \
 	Optimization.Math/Instruction.cs \

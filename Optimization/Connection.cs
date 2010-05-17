@@ -210,7 +210,7 @@ namespace Optimization
 				Task.KeyValueType kv = new Task.KeyValueType();
 
 				kv.Key = pair.Key;
-				kv.Value = pair.Value;
+				kv.Value = Utils.SubstituteEnvironment(pair.Value);
 
 				settings.Add(kv);
 			}

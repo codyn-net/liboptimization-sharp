@@ -69,6 +69,7 @@
     <Compile Include="Optimization\NumericSetting.cs" />
     <Compile Include="Optimization.Messages\Identify.cs" />
     <Compile Include="Optimization.Messages\Ping.cs" />
+    <Compile Include="Optimization\Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
