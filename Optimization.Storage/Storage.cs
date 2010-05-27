@@ -659,6 +659,8 @@ namespace Optimization.Storage
 
 			ret.Index = iteration;
 			ret.Time = FromUnixTimestamp((int)vals[1]);
+			
+			Dictionary<int, Records.Solution> idmap = new Dictionary<int, Records.Solution>();
 
 			Query(@"SELECT solution.*, fitness.*, parameter_values.*, data.* FROM solution
                     LEFT JOIN fitness ON (fitness.`index` = solution.`index` AND
@@ -669,11 +671,18 @@ namespace Optimization.Storage
                                        data.`iteration` = solution.`iteration`)
                     WHERE `solution`.`iteration` = @0", delegate (IDataReader reader) {
 
-				ret.Solutions.Add(CreateSolution(reader));
+				Records.Solution sol = CreateSolution(reader);
+
+				idmap[sol.Index] = sol;
+				ret.Solutions.Add(sol);
 				return true;
 			}, iteration);
 
-			ret.Best = ret.Solutions[bestId];
+			if (idmap.ContainsKey(bestId))
+			{
+				ret.Best = idmap[bestId];
+			}
+
 			return ret;
 		}
 
