@@ -139,6 +139,8 @@ namespace Optimization
 			}
 
 			d_buffer = new byte[ms.Length - lastPos];
+
+			ms.Seek(lastPos, SeekOrigin.Begin);
 			ms.Read(d_buffer, 0, (int)(ms.Length - lastPos));
 		}
 
