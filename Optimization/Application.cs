@@ -197,7 +197,7 @@ namespace Optimization
 
 		private void ShowHelp(NDesk.Options.OptionSet optionSet)
 		{
-			System.Console.WriteLine("Usage: optijob [OPTIONS] <jobs>");
+			System.Console.WriteLine("Usage: optirunner [OPTIONS] <jobs>");
 			System.Console.WriteLine();
 			System.Console.WriteLine("Options:");
 			optionSet.WriteOptionDescriptions(System.Console.Out);
