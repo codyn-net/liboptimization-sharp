@@ -300,6 +300,11 @@ namespace Optimization
 		{
 			return d_boundaryHash[name];
 		}
+		
+		public bool HasBoundary(string name)
+		{
+			return d_boundaryHash.ContainsKey(name);
+		}
 
 		protected void AddParameter(Parameter parameter)
 		{
@@ -310,6 +315,11 @@ namespace Optimization
 		public Parameter Parameter(string name)
 		{
 			return d_parameterHash[name];
+		}
+		
+		public bool HasParameter(string name)
+		{
+			return d_parameterHash.ContainsKey(name);
 		}
 
 		public static string GetDescription(Type type)
@@ -683,7 +693,16 @@ namespace Optimization
 				{
 					if (node.Attributes["min"] != null && node.Attributes["max"] != null)
 					{
-						boundary = CreateBoundary(String.Format("_{0}", nm.Value), node);
+						string boundaryName = nm.Value;
+						int cnt = 0;
+
+						while (HasBoundary(boundaryName))
+						{
+							boundaryName = (new String('_', ++cnt)) + nm.Value;
+						}
+
+						boundary = CreateBoundary(boundaryName, node);
+						AddBoundary(boundary);
 					}
 					else
 					{
@@ -692,17 +711,15 @@ namespace Optimization
 				}
 				else
 				{
+					if (!HasBoundary(bound.Value))
+					{
+						throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm, bound.Value));
+					}
+
 					boundary = Boundary(bound.Value);
 				}
 
-				if (boundary != null)
-				{
-					AddParameter(new Parameter(nm.Value, boundary));
-				}
-				else
-				{
-					throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm, bound.Value));
-				}
+				AddParameter(new Parameter(nm.Value, boundary));
 			}
 
 		}
