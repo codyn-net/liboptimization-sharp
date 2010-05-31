@@ -623,14 +623,14 @@ namespace Optimization.Storage
 		private Records.Solution CreateSolution(IDataReader reader)
 		{
 			Records.Solution solution = new Records.Solution();
-
-			solution.Index = (int)reader["index"];
-			solution.Iteration = (int)reader["iteration"];
+			
+			solution.Index = (int)reader["the_index"];
+			solution.Iteration = (int)reader["the_iteration"];
 
 			for (int i = 0; i < reader.FieldCount; ++i)
 			{
 				string name = reader.GetName(i);
-
+				
 				if (name.StartsWith("_f_"))
 				{
 					solution.Fitness.Add(name.Substring(3), reader.GetDouble(i));
@@ -662,7 +662,7 @@ namespace Optimization.Storage
 			
 			Dictionary<int, Records.Solution> idmap = new Dictionary<int, Records.Solution>();
 
-			Query(@"SELECT solution.*, fitness.*, parameter_values.*, data.* FROM solution
+			Query(@"SELECT solution.iteration AS `the_iteration`, solution.`index` AS `the_index`, solution.*, fitness.*, parameter_values.*, data.* FROM solution
                     LEFT JOIN fitness ON (fitness.`index` = solution.`index` AND
                                           fitness.`iteration` = solution.`iteration`)
                     LEFT JOIN parameter_values ON (`parameter_values`.`index` = solution.`index` AND
@@ -710,7 +710,7 @@ namespace Optimization.Storage
 				condition = "WHERE " + condition;
 			}
 			
-			string q = String.Format(@"SELECT solution.*, fitness.*, parameter_values.*, data.* FROM solution
+			string q = String.Format(@"SELECT solution.iteration AS the_iteration, solution.`index` AS the_index, solution.*, fitness.*, parameter_values.*, data.* FROM solution
                     LEFT JOIN fitness ON (fitness.`index` = solution.`index` AND
                                           fitness.`iteration` = solution.`iteration`)
                     LEFT JOIN parameter_values ON (parameter_values.`index` = solution.`index` AND
