@@ -422,7 +422,16 @@ namespace Optimization.Storage
 
 			transaction.Commit();
 		}
-
+		
+		public void SaveToken()
+		{
+			if (!this)
+			{
+				return;
+			}
+			
+			Query("UPDATE job SET token = @0", Job.Token);
+		}
 
 		public void SaveSettings()
 		{

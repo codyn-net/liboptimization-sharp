@@ -296,6 +296,11 @@ namespace Optimization
 			set
 			{
 				d_token = value;
+				
+				if (d_storage != null && d_storage)
+				{
+					d_storage.SaveToken();
+				}
 			}
 		}
 		
