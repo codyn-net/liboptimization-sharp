@@ -78,6 +78,8 @@ namespace Optimization
 		bool d_reconnect;
 		int[] d_reconnectTimeout;
 		int d_reconnectTimeoutIndex;
+		string d_token;
+		object d_lastRevalidate;
 
 		Dictionary<uint, Solution> d_running;
 
@@ -210,6 +212,7 @@ namespace Optimization
 			optionSet.Add("h|help", "Show this help message", delegate (string s) { ShowHelp(optionSet); });
 			optionSet.Add("m=|master=", "Specify master connection string", delegate (string s) { d_masterAddress = s; });
 			optionSet.Add("t=|tokensrv=", "Specify token server connection string", delegate (string s) { d_tokenAddress = s; });
+			optionSet.Add("token=", "Specify token string", delegate (string s) { d_token = s; });
 		}
 
 		protected virtual void ParseArguments(ref string[] args)
@@ -615,12 +618,11 @@ namespace Optimization
 			return ret;
 		}
 		
-		private bool CheckToken()
+		delegate bool TokenAsyncCallback(TcpClient client, IAsyncResult result);
+		
+		private TcpClient ConnectTokenServer(TokenAsyncCallback callback)
 		{
-			ShowMessage("Validating token, standby...");
-
 			TcpClient client = new TcpClient();
-			EventWaitHandle signaller = new AutoResetEvent(false);
 			
 			string[] parts = d_tokenAddress.Split(new char[] {':'}, 2);
 			int port = 8128;
@@ -629,44 +631,123 @@ namespace Optimization
 			{
 				port = Int16.Parse(parts[1]);
 			}
-
+			
 			client.BeginConnect(parts[0], port, delegate (IAsyncResult result) {
 				try
 				{
-					client.EndConnect(result);
+					if (callback(client, result))
+					{
+						return;
+					}
 				}
 				catch  (Exception e)
 				{
 					Console.WriteLine(e);
 				}
-
-				signaller.Set();
+				
+				client.Close();
 			}, null);
 			
-			signaller.WaitOne(1000, false);
+			return client;
+		}
+		
+		private string GetTokenChallenge(TcpClient client)
+		{
+			string line = ReadLine(client.GetStream());
+				
+			if (!line.StartsWith("220"))
+			{
+				return null;
+			}
 			
+			int pos = line.LastIndexOf('<');
+			
+			if (pos < 0)
+			{
+				return null;
+			}
+
+			return line.Substring(pos + 1, line.Length - pos - 2);
+		}
+		
+		private void RevalidateToken()
+		{
+			string token = d_job.Token;
+
+			ConnectTokenServer(delegate (TcpClient client, IAsyncResult result) {
+				client.EndConnect(result);
+				
+				string challenge = GetTokenChallenge(client);
+
+				if (challenge == null)
+				{
+					Console.Error.WriteLine("Could not revalidate token, invalid token server response");
+					return false;
+				}
+
+				byte[] data = Encoding.UTF8.GetBytes("REVALIDATE " + EncodeTokenResponse(token, challenge) + "\n");
+				client.GetStream().Write(data, 0, data.Length);
+				return false;
+			});
+		}
+		
+		private void RevalidateTokenIfNeeded()
+		{
+			if (String.IsNullOrEmpty(d_job.Token))
+			{
+				return;
+			}
+			
+			if (d_lastRevalidate != null && DateTime.Now.Subtract((DateTime)d_lastRevalidate).Hours < 12)
+			{
+				return;
+			}
+			
+			RevalidateToken();
+			d_lastRevalidate = DateTime.Now;
+		}
+		
+		private bool CheckToken()
+		{
+			ShowMessage("Validating token, standby...");
+
+			TcpClient client;
+			EventWaitHandle signaller = new AutoResetEvent(false);
+			
+			client = ConnectTokenServer(delegate (TcpClient cli, IAsyncResult result) {
+				try
+				{
+					cli.EndConnect(result);
+				}
+				catch (Exception e)
+				{
+					Console.Error.WriteLine(e);
+				}
+				
+				signaller.Set();
+				return true;
+			});
+			
+			signaller.WaitOne(1000, false);
+
 			if (!client.Connected)
 			{
 				Error("Could not connect to token server");
 				return false;
 			}
 			
-			string line = ReadLine(client.GetStream());
+			string challenge = GetTokenChallenge(client);
 			
-			if (!line.StartsWith("220"))
+			if (challenge == null)
 			{
 				client.Close();
 				return false;
 			}
 			
-			int pos = line.LastIndexOf('<');
-			string challenge = line.Substring(pos + 1, line.Length - pos - 2);
-			
-			byte[] data = Encoding.UTF8.GetBytes("CHECK " + EncodeTokenResponse(d_job.Token, challenge) + "\n");
-			
+			byte[] data = Encoding.UTF8.GetBytes("CHECK " + EncodeTokenResponse(d_job.Token, challenge) + "\n");		
 			client.GetStream().Write(data, 0, data.Length);
 		
-			line = ReadLine(client.GetStream());
+			string line = ReadLine(client.GetStream());
 			client.Close();
 			
 			return line.StartsWith("2");
@@ -678,6 +759,8 @@ namespace Optimization
 			d_reconnect = true;
 			d_reconnectTimeoutIndex = 0;
 			
+			d_lastRevalidate = null;
+			
 #if USE_UNIXSIGNAL
 			if (d_signalThread == null)
 			{
@@ -687,13 +770,20 @@ namespace Optimization
 #endif
 
 			d_job = job;
+			
+			if (!String.IsNullOrEmpty(d_token))
+			{
+				job.Token = d_token;
+			}
 
 			if (job.Token != "")
 			{
 				// Check token first
 				if (!CheckToken())
 				{
-					Error("Invalid token specified");
+					Error(@"The token that was specified is invalid or has expired.
+Please generate a new token and try again. If you are resuming a job,
+use the --token option to use a new token with an existing database.");
 					Stop();
 					return;
 				}
@@ -723,6 +813,8 @@ namespace Optimization
 			// Main loop
 			while (true)
 			{
+				RevalidateTokenIfNeeded();
+
 				while (d_reconnect && !d_quitting)
 				{
 					Reconnect();
@@ -732,10 +824,10 @@ namespace Optimization
 				{
 					break;
 				}
-
+				
 				d_waitHandle.WaitOne();
 				HandleMessages();
-	
+				
 				try
 				{
 					OnIterate(this, new EventArgs());
