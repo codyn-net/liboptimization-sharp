@@ -713,13 +713,35 @@ namespace Optimization
 				{
 					if (!HasBoundary(bound.Value))
 					{
-						throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm, bound.Value));
+						throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm.Value, bound.Value));
 					}
 
 					boundary = Boundary(bound.Value);
 				}
-
-				AddParameter(new Parameter(nm.Value, boundary));
+				
+				if (node.Attributes["repeat"] != null)
+				{
+					string range = node.Attributes["repeat"].Value;
+					string[] parts = range.Split('-');
+					
+					if (parts.Length != 2)
+					{
+						throw new Exception(String.Format("XML: Invalid range specification `{0}' for `{1}'", range, nm.Value));
+					}
+					
+					int start = Int32.Parse(parts[0]);
+					int end = Int32.Parse(parts[1]);
+					
+					while (start <= end)
+					{
+						AddParameter(new Parameter(String.Format("{0}{1}", nm.Value, start), boundary));
+						++start;
+					}
+				}
+				else
+				{
+					AddParameter(new Parameter(nm.Value, boundary));
+				}
 			}
 
 		}
