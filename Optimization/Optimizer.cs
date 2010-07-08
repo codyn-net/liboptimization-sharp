@@ -55,6 +55,8 @@ namespace Optimization
 
 		private Settings d_settings;
 		private ConstructorInfo d_solutionConstructor;
+		
+		private List<Extension> d_extensions;
 
 		public Optimizer()
 		{
@@ -70,6 +72,8 @@ namespace Optimization
 
 			d_boundaryHash = new Dictionary<string, Boundary>();
 			d_parameterHash = new Dictionary<string, Parameter>();
+			
+			d_extensions = new List<Extension>();
 		}
 
 		public virtual void Initialize()
@@ -78,6 +82,11 @@ namespace Optimization
 			InitializePopulation();
 
 			d_storage.Begin();
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Initialize();
+			}
 		}
 
 		private int TypeDistance(Type parent, Type child)
@@ -157,14 +166,24 @@ namespace Optimization
 					d_solutionConstructor = type.GetConstructor(new Type[] {typeof(uint), typeof(Fitness), typeof(State)});
 				}
 			}
+			
+			Solution ret;
 
 			if (d_solutionConstructor == null)
 			{
-				return new Solution(idx, d_fitness, d_state);
+				ret = new Solution(idx, d_fitness, d_state);
+			}
+			else
+			{
+				ret = (Solution)d_solutionConstructor.Invoke(new object[] {idx, d_fitness, d_state});
+			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Initialize(ret);
 			}
 
-			object ret = d_solutionConstructor.Invoke(new object[] {idx, d_fitness, d_state});
-			return ret as Solution;
+			return ret;
 		}
 
 		virtual public void InitializePopulation()
@@ -185,6 +204,11 @@ namespace Optimization
 
 				Add(solution);
 			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.InitializePopulation();
+			}
 		}
 
 		virtual public void Add(Solution solution)
@@ -195,6 +219,19 @@ namespace Optimization
 		virtual public void Remove(Solution solution)
 		{
 			d_population.Remove(solution);
+		}
+		
+		public List<Extension> Extensions
+		{
+			get
+			{
+				return d_extensions;
+			}
+		}
+		
+		public virtual void AddExtension(Extension ext)
+		{
+			d_extensions.Add(ext);
 		}
 
 		public Solution Best
@@ -333,6 +370,14 @@ namespace Optimization
 
 			return null;
 		}
+		
+		public string Description
+		{
+			get
+			{
+				return GetDescription(GetType());
+			}
+		}
 
 		public static string GetName(Type type)
 		{
@@ -373,7 +418,20 @@ namespace Optimization
 
 		protected virtual bool Finished()
 		{
-			return d_currentIteration >= d_settings.MaxIterations;
+			if (d_currentIteration >= d_settings.MaxIterations && d_settings.MaxIterations > 0)
+			{
+				return true;
+			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				if (ext.Finished())
+				{
+					return true;
+				}
+			}
+			
+			return false;
 		}
 
 		protected virtual void IncrementIteration()
@@ -412,11 +470,19 @@ namespace Optimization
 			{
 				Update(solution);
 			}
+						
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Update();
+			}
 		}
 
 		public virtual void Update(Solution solution)
 		{
-			// NOOP
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Update(solution);
+			}
 		}
 
 		public void Log(string type, string format, params object[] args)
@@ -537,6 +603,11 @@ namespace Optimization
 				InitializePopulation();
 				d_best = null;
 			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.FromStorage(storage, optimizer);
+			}
 		}
 
 		public virtual void FromXml(XmlNode node)
@@ -545,6 +616,11 @@ namespace Optimization
 			LoadBoundaries(node);
 			LoadParameters(node);
 			LoadFitness(node);
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.FromXml(node);
+			}
 		}
 
 		private void LoadSettings(XmlNode root)

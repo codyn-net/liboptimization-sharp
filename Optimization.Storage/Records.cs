@@ -118,6 +118,7 @@ namespace Optimization.Storage.Records
 		public double Priority;
 		public double Timeout;
 		public string Token;
+		public List<string> Extensions;
 
 		public Optimizer Optimizer;
 		public Dispatcher Dispatcher;
@@ -126,6 +127,8 @@ namespace Optimization.Storage.Records
 		{
 			Optimizer = new Optimizer();
 			Dispatcher = new Dispatcher();
+			
+			Extensions = new List<string>();
 		}
 	}
 

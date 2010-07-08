@@ -59,6 +59,7 @@ FILES = \
 	Optimization/Connection.cs \
 	Optimization/Constants.cs \
 	Optimization/Directories.cs \
+	Optimization/Extension.cs \
 	Optimization/Fitness.cs \
 	Optimization/Job.cs \
 	Optimization/NumericSetting.cs \

@@ -131,6 +131,18 @@ namespace Optimization
 			{
 				d_dispatcher.Settings[pair.Key] = pair.Value;
 			}
+			
+			foreach (string ext in job.Extensions)
+			{
+				Extension e = Extension.Create(this, ext);
+				
+				if (e == null)
+				{
+					throw new Exception(String.Format("XML: Could not find extension `{0}'", ext));
+				}
+				
+				e.FromStorage(storage, job.Optimizer);
+			}
 		}
 
 		private void Load(XmlDocument doc)
@@ -138,6 +150,7 @@ namespace Optimization
 			LoadJob(doc);
 			LoadOptimizer(doc);
 			LoadDispatcher(doc);
+			LoadExtensions(doc);
 
 			if (String.IsNullOrEmpty(d_name))
 			{
@@ -276,6 +289,30 @@ namespace Optimization
 				}
 
 				d_dispatcher.Settings[nm.Value] = node.InnerText;
+			}
+		}
+		
+		private void LoadExtensions(XmlDocument doc)
+		{
+			XmlNodeList extensions = doc.SelectNodes("/job/extensions/extension");
+			
+			foreach (XmlNode node in extensions)
+			{
+				XmlAttribute name = node.Attributes["name"];
+				
+				if (name == null)
+				{
+					throw new Exception("XML: No name specified for extension");
+				}
+
+				Extension e = Extension.Create(this, name.Value);
+				
+				if (e == null)
+				{
+					throw new Exception(String.Format("XML: Could not find extension `{0}'", name.Value));
+				}
+				
+				e.FromXml(node);
 			}
 		}
 

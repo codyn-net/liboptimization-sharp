@@ -497,6 +497,13 @@ namespace Optimization.Storage
 			{
 				Query("INSERT INTO `dispatcher` (`name`, `value`) VALUES (@0, @1)", disp.Key, disp.Value);
 			}
+			
+			Query("CREATE TABLE IF NOT EXISTS `extensions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT)");
+			
+			foreach (Extension ext in Job.Optimizer.Extensions)
+			{
+				Query("INSERT INTO `extensions` (`name`) VALUES (@0)", Extension.GetName(ext.GetType()));
+			}
 
 			transaction.Commit();
 		}
@@ -514,7 +521,7 @@ namespace Optimization.Storage
 
 			Query("CREATE TABLE IF NOT EXISTS `log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `time` INT, `type` TEXT, `message` TEXT)");
 			Query("DELETE FROM `log`");
-
+			
 			transaction.Commit();
 
 			SaveSettings();
@@ -835,6 +842,14 @@ namespace Optimization.Storage
 					return false;
 				});
 			}
+			
+			/* Extensions stuff */
+			Query("SELECT `name` FROM `extensions`", delegate (IDataReader reader) {
+				string name = (string)reader[0];
+
+				job.Extensions.Add(name);
+				return true;
+			});
 
 			return job;
 		}
