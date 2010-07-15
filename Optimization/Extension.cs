@@ -36,9 +36,11 @@ namespace Optimization
 				
 				if (attr.AppliesTo != null && attr.AppliesTo.Length > 0)
 				{
+					Type opttype = d_job.Optimizer.GetType();
+
 					foreach (Type type in attr.AppliesTo)
 					{
-						if (d_job.Optimizer.GetType().IsSubclassOf(type))
+						if (type == opttype || opttype.IsSubclassOf(type))
 						{
 							return;
 						}
