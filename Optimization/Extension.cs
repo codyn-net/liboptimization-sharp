@@ -93,7 +93,11 @@ namespace Optimization
 			return false;
 		}
 
-		public virtual void Update()
+		public virtual void BeforeUpdate()
+		{
+		}
+		
+		public virtual void AfterUpdate()
 		{
 		}
 

@@ -175,7 +175,7 @@ namespace Optimization
 			return new State(d_settings);
 		}
 
-		protected virtual Solution CreateSolution(uint idx)
+		public virtual Solution CreateSolution(uint idx)
 		{
 			if (d_solutionConstructor == null)
 			{
@@ -513,6 +513,11 @@ namespace Optimization
 
 		public virtual void Update()
 		{
+			foreach (Extension ext in d_extensions)
+			{
+				ext.BeforeUpdate();
+			}
+
 			foreach (Solution solution in d_population)
 			{
 				Update(solution);
@@ -520,7 +525,7 @@ namespace Optimization
 						
 			foreach (Extension ext in d_extensions)
 			{
-				ext.Update();
+				ext.AfterUpdate();
 			}
 		}
 
