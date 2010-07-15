@@ -37,5 +37,8 @@ namespace Optimization.Messages
 		
 		[ProtoMember(4, IsRequired=false)]
 		public double Timeout;
+		
+		[ProtoMember(5, IsRequired=false)]
+		public UInt64 Version; 
 	}
 }

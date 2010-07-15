@@ -24,6 +24,7 @@ namespace Optimization
 {
 	public enum Constants
 	{
-		MasterPort = 9485
+		MasterPort = 9485,
+		ProtocolVersion = 2
 	}
 }

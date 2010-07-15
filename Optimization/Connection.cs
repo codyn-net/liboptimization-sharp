@@ -332,6 +332,7 @@ namespace Optimization
 			identify.User = job.User;
 			identify.Priority = job.Priority;
 			identify.Timeout = job.Timeout;
+			identify.Version = (ulong)Constants.ProtocolVersion;
 
 			communication.Identifiy = identify;
 			
