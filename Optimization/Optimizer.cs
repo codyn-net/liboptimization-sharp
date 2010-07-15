@@ -31,11 +31,20 @@ namespace Optimization
 	{
 		public class Settings : Optimization.Settings
 		{
-			[Setting("max-iterations", 30, Description="Maximum number of iterations")]
+			[Setting("max-iterations", 60, Description="Maximum number of iterations")]
 			public uint MaxIterations;
 
 			[Setting("population-size", 30, Description="Solution population size")]
 			public uint PopulationSize;
+			
+			[Setting("convergence-threshold", "0", Description="Threshold on minimum change in the objective function improvement over convergence-window measurements")]
+			public string ConvergenceThreshold;
+			
+			[Setting("convergence-window", "10", Description="Window over which to measure fitness improvement for convergence")]
+			public string ConvergenceWindow;
+			
+			[Setting("min-iterations", "20", Description="Minimum number of iterations before calculating convergence")]
+			public string MinIterations;
 		}
 
 		private Storage.Storage d_storage;
@@ -50,13 +59,18 @@ namespace Optimization
 
 		private List<Solution> d_population;
 		private Solution d_best;
-
+		private Fitness d_previousBest;	
+		
 		private uint d_currentIteration;
 
 		private Settings d_settings;
 		private ConstructorInfo d_solutionConstructor;
 		
 		private List<Extension> d_extensions;
+		
+		private Math.Expression d_convergenceThreshold;
+		private Math.Expression d_convergenceWindow;
+		private Math.Expression d_minIterations;		
 
 		public Optimizer()
 		{
@@ -74,6 +88,10 @@ namespace Optimization
 			d_parameterHash = new Dictionary<string, Parameter>();
 			
 			d_extensions = new List<Extension>();
+						
+			d_convergenceThreshold = new Math.Expression();
+			d_convergenceWindow = new Math.Expression();
+			d_minIterations = new Math.Expression();
 		}
 
 		public virtual void Initialize()
@@ -82,11 +100,13 @@ namespace Optimization
 			InitializePopulation();
 
 			d_storage.Begin();
-			
+					
 			foreach (Extension ext in d_extensions)
 			{
 				ext.Initialize();
 			}
+			
+			Setup();
 		}
 
 		private int TypeDistance(Type parent, Type child)
@@ -411,6 +431,11 @@ namespace Optimization
 			{
 				if (d_best == null || solution.Fitness.Value > d_best.Fitness.Value)
 				{
+					if (d_best == null)
+					{
+						d_previousBest = (Fitness)solution.Fitness.Clone();
+					}
+
 					d_best = solution.Clone() as Solution;
 				}
 			}
@@ -431,6 +456,21 @@ namespace Optimization
 				}
 			}
 			
+			uint minIterations = (uint)d_minIterations.Evaluate(Math.Constants.Context);
+			
+			if (CurrentIteration < minIterations)
+			{
+				return false;
+			}
+			
+			double threshold = d_convergenceThreshold.Evaluate(Math.Constants.Context);
+			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
+			
+			if (threshold > 0 && CurrentIteration > window)
+			{
+				return (d_best.Fitness.Value - d_previousBest.Value) < threshold;
+			}
+			
 			return false;
 		}
 
@@ -449,6 +489,13 @@ namespace Optimization
 
 			// Increment the iteration number
 			IncrementIteration();
+			
+			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
+			
+			if (d_currentIteration % window == 0)
+			{
+				d_previousBest = (Fitness)d_best.Clone();
+			}
 
 			// Check if the optimization is finished
 			if (Finished())
@@ -505,6 +552,13 @@ namespace Optimization
 			}
 			
 			sol.FromStorage(storage, optimizer, solution);
+		}
+		
+		protected virtual void Setup()
+		{
+			d_convergenceThreshold.Parse(Configuration.ConvergenceThreshold);
+			d_convergenceWindow.Parse(Configuration.ConvergenceWindow);
+			d_minIterations.Parse(Configuration.MinIterations);
 		}
 
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer)
@@ -608,6 +662,8 @@ namespace Optimization
 			{
 				ext.FromStorage(storage, optimizer);
 			}
+			
+			Setup();
 		}
 
 		public virtual void FromXml(XmlNode node)
