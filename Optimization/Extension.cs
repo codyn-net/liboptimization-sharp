@@ -104,6 +104,10 @@ namespace Optimization
 		public virtual void Update(Solution solution)
 		{
 		}
+
+		public virtual void Next()
+		{
+		}
 		
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer)
 		{

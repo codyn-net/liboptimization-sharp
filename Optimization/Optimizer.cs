@@ -481,6 +481,11 @@ namespace Optimization
 
 		public virtual bool Next()
 		{
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Next();
+			}
+
 			// First update the best solution up until now
 			UpdateBest();
 
