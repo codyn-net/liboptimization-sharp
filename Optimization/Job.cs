@@ -67,6 +67,7 @@ namespace Optimization
 		private string d_token;
 		private string d_user;
 		private Storage.Storage d_storage;
+		private bool d_synchronous;
 
 		public Job()
 		{
@@ -76,6 +77,7 @@ namespace Optimization
 			d_user = Environment.UserName;
 			d_timeout = -1;
 			d_priority = 1;
+			d_synchronous = true;
 		}
 
 		public static Job NewFromXml(string filename)
@@ -200,6 +202,13 @@ namespace Optimization
 			if (node != null)
 			{
 				d_token = node.InnerText;
+			}
+			
+			node = doc.SelectSingleNode("/job/asynchronous-storage");
+			
+			if (node != null)
+			{
+				d_synchronous = false;
 			}
 		}
 
@@ -393,6 +402,14 @@ namespace Optimization
 			set
 			{
 				d_timeout = value;
+			}
+		}
+		
+		public bool SynchronousStorage
+		{
+			get
+			{
+				return d_synchronous;
 			}
 		}
 	}

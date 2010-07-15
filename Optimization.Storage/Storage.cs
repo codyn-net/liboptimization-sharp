@@ -89,7 +89,10 @@ namespace Optimization.Storage
 			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3");
 			d_connection.Open();
 
-			Query("PRAGMA synchronous = OFF");
+			if (!d_job.SynchronousStorage)
+			{
+				Query("PRAGMA synchronous = OFF");
+			}
 			
 			if (!exists)
 			{
