@@ -55,11 +55,11 @@ all: $(ASSEMBLY) $(PROGRAMFILES) $(LINUX_PKGCONFIG)
 FILES = \
 	Optimization/Application.cs \
 	Optimization/AssemblyInfo.cs \
-	Optimization/Attributes.cs \
 	Optimization/Boundary.cs \
 	Optimization/Connection.cs \
 	Optimization/Constants.cs \
 	Optimization/Directories.cs \
+	Optimization/Extension.cs \
 	Optimization/Fitness.cs \
 	Optimization/Job.cs \
 	Optimization/NumericSetting.cs \
@@ -73,6 +73,7 @@ FILES = \
 	Optimization/State.cs \
 	Optimization/Utils.cs \
 	Optimization/Visual.cs \
+	Optimization.Attributes/Attributes.cs \
 	Optimization.Math/Expression.cs \
 	Optimization.Math/Instruction.cs \
 	Optimization.Math/Operations.cs \

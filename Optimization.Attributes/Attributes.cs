@@ -40,6 +40,23 @@ namespace Optimization.Attributes
 			Name = name;
 		}
 	}
+	
+	[AttributeUsage(AttributeTargets.Class)]
+	public class ExtensionAttribute : Attribute
+	{
+		public string Name;
+		public string Description;
+		public Type[] AppliesTo;
+
+		public ExtensionAttribute(string name)
+		{
+			Name = name;
+		}
+
+		public ExtensionAttribute() : this("")
+		{
+		}
+	}
 
 	[AttributeUsage(AttributeTargets.Class)]
 	public class DispatcherAttribute : Attribute

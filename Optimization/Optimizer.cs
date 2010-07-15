@@ -31,11 +31,20 @@ namespace Optimization
 	{
 		public class Settings : Optimization.Settings
 		{
-			[Setting("max-iterations", 30, Description="Maximum number of iterations")]
+			[Setting("max-iterations", 60, Description="Maximum number of iterations")]
 			public uint MaxIterations;
 
 			[Setting("population-size", 30, Description="Solution population size")]
 			public uint PopulationSize;
+			
+			[Setting("convergence-threshold", "0", Description="Threshold on minimum change in the objective function improvement over convergence-window measurements")]
+			public string ConvergenceThreshold;
+			
+			[Setting("convergence-window", "10", Description="Window over which to measure fitness improvement for convergence")]
+			public string ConvergenceWindow;
+			
+			[Setting("min-iterations", "20", Description="Minimum number of iterations before calculating convergence")]
+			public string MinIterations;
 		}
 
 		private Storage.Storage d_storage;
@@ -51,10 +60,18 @@ namespace Optimization
 		private List<Solution> d_population;
 		private Solution d_best;
 
+		private LinkedList<Fitness> d_lastBest;
+		
 		private uint d_currentIteration;
 
 		private Settings d_settings;
 		private ConstructorInfo d_solutionConstructor;
+		
+		private List<Extension> d_extensions;
+		
+		private Math.Expression d_convergenceThreshold;
+		private Math.Expression d_convergenceWindow;
+		private Math.Expression d_minIterations;		
 
 		public Optimizer()
 		{
@@ -70,6 +87,14 @@ namespace Optimization
 
 			d_boundaryHash = new Dictionary<string, Boundary>();
 			d_parameterHash = new Dictionary<string, Parameter>();
+			
+			d_extensions = new List<Extension>();
+						
+			d_convergenceThreshold = new Math.Expression();
+			d_convergenceWindow = new Math.Expression();
+			d_minIterations = new Math.Expression();
+			
+			d_lastBest = new LinkedList<Fitness>();
 		}
 
 		public virtual void Initialize()
@@ -78,6 +103,13 @@ namespace Optimization
 			InitializePopulation();
 
 			d_storage.Begin();
+					
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Initialize();
+			}
+			
+			Setup();
 		}
 
 		private int TypeDistance(Type parent, Type child)
@@ -146,7 +178,7 @@ namespace Optimization
 			return new State(d_settings);
 		}
 
-		protected virtual Solution CreateSolution(uint idx)
+		public virtual Solution CreateSolution(uint idx)
 		{
 			if (d_solutionConstructor == null)
 			{
@@ -157,14 +189,24 @@ namespace Optimization
 					d_solutionConstructor = type.GetConstructor(new Type[] {typeof(uint), typeof(Fitness), typeof(State)});
 				}
 			}
+			
+			Solution ret;
 
 			if (d_solutionConstructor == null)
 			{
-				return new Solution(idx, d_fitness, d_state);
+				ret = new Solution(idx, d_fitness, d_state);
+			}
+			else
+			{
+				ret = (Solution)d_solutionConstructor.Invoke(new object[] {idx, d_fitness, d_state});
+			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Initialize(ret);
 			}
 
-			object ret = d_solutionConstructor.Invoke(new object[] {idx, d_fitness, d_state});
-			return ret as Solution;
+			return ret;
 		}
 
 		virtual public void InitializePopulation()
@@ -185,6 +227,11 @@ namespace Optimization
 
 				Add(solution);
 			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.InitializePopulation();
+			}
 		}
 
 		virtual public void Add(Solution solution)
@@ -195,6 +242,19 @@ namespace Optimization
 		virtual public void Remove(Solution solution)
 		{
 			d_population.Remove(solution);
+		}
+		
+		public List<Extension> Extensions
+		{
+			get
+			{
+				return d_extensions;
+			}
+		}
+		
+		public virtual void AddExtension(Extension ext)
+		{
+			d_extensions.Add(ext);
 		}
 
 		public Solution Best
@@ -333,6 +393,14 @@ namespace Optimization
 
 			return null;
 		}
+		
+		public string Description
+		{
+			get
+			{
+				return GetDescription(GetType());
+			}
+		}
 
 		public static string GetName(Type type)
 		{
@@ -370,19 +438,106 @@ namespace Optimization
 				}
 			}
 		}
+		
+		private double LastBestDifference
+		{
+			get
+			{
+				double min = double.MaxValue;
+				double max = double.MinValue;
+				
+				foreach (Fitness fitness in d_lastBest)
+				{
+					if (fitness.Value < min)
+					{
+						min = fitness.Value;
+					}
+					
+					if (fitness.Value > max)
+					{
+						max = fitness.Value;
+					}
+				}
+				
+				return max - min;
+			}
+		}
 
 		protected virtual bool Finished()
 		{
-			return d_currentIteration >= d_settings.MaxIterations;
+			if (d_currentIteration >= d_settings.MaxIterations && d_settings.MaxIterations > 0)
+			{
+				return true;
+			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				if (ext.Finished())
+				{
+					return true;
+				}
+			}
+			
+			uint minIterations = (uint)d_minIterations.Evaluate(Math.Constants.Context);
+			
+			if (CurrentIteration < minIterations)
+			{
+				return false;
+			}
+			
+			double threshold = d_convergenceThreshold.Evaluate(Math.Constants.Context);
+			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
+			
+			if (threshold > 0 && CurrentIteration > window)
+			{
+				return LastBestDifference < threshold;
+			}
+			
+			return false;
 		}
 
 		protected virtual void IncrementIteration()
 		{
 			d_currentIteration++;
 		}
+		
+		private void UpdateConvergence()
+		{
+			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
+			
+			while (d_lastBest.Count > window)
+			{
+				d_lastBest.RemoveFirst();
+			}
+			
+			double best = double.MinValue;
+			Fitness fitness = null;
+
+			foreach (Solution solution in Population)
+			{
+				if (solution.Fitness.Value > best)
+				{
+					fitness = solution.Fitness;
+					best = fitness.Value;
+				}
+			}
+			
+			if (fitness != null)
+			{
+				d_lastBest.AddLast((Fitness)fitness.Clone());
+			}
+		}
 
 		public virtual bool Next()
 		{
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Next();
+			}
+			
+			// Update convergence
+			UpdateConvergence();
+
 			// First update the best solution up until now
 			UpdateBest();
 
@@ -391,7 +546,7 @@ namespace Optimization
 
 			// Increment the iteration number
 			IncrementIteration();
-
+			
 			// Check if the optimization is finished
 			if (Finished())
 			{
@@ -408,15 +563,28 @@ namespace Optimization
 
 		public virtual void Update()
 		{
+			foreach (Extension ext in d_extensions)
+			{
+				ext.BeforeUpdate();
+			}
+
 			foreach (Solution solution in d_population)
 			{
 				Update(solution);
+			}
+						
+			foreach (Extension ext in d_extensions)
+			{
+				ext.AfterUpdate();
 			}
 		}
 
 		public virtual void Update(Solution solution)
 		{
-			// NOOP
+			foreach (Extension ext in d_extensions)
+			{
+				ext.Update(solution);
+			}
 		}
 
 		public void Log(string type, string format, params object[] args)
@@ -439,6 +607,13 @@ namespace Optimization
 			}
 			
 			sol.FromStorage(storage, optimizer, solution);
+		}
+		
+		protected virtual void Setup()
+		{
+			d_convergenceThreshold.Parse(Configuration.ConvergenceThreshold);
+			d_convergenceWindow.Parse(Configuration.ConvergenceWindow);
+			d_minIterations.Parse(Configuration.MinIterations);
 		}
 
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer)
@@ -537,6 +712,13 @@ namespace Optimization
 				InitializePopulation();
 				d_best = null;
 			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.FromStorage(storage, optimizer);
+			}
+			
+			Setup();
 		}
 
 		public virtual void FromXml(XmlNode node)
@@ -545,6 +727,11 @@ namespace Optimization
 			LoadBoundaries(node);
 			LoadParameters(node);
 			LoadFitness(node);
+			
+			foreach (Extension ext in d_extensions)
+			{
+				ext.FromXml(node);
+			}
 		}
 
 		private void LoadSettings(XmlNode root)
@@ -713,13 +900,35 @@ namespace Optimization
 				{
 					if (!HasBoundary(bound.Value))
 					{
-						throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm, bound.Value));
+						throw new Exception(String.Format("XML: Invalid parameter specification {0}, could not find boundary {1}", nm.Value, bound.Value));
 					}
 
 					boundary = Boundary(bound.Value);
 				}
-
-				AddParameter(new Parameter(nm.Value, boundary));
+				
+				if (node.Attributes["repeat"] != null)
+				{
+					string range = node.Attributes["repeat"].Value;
+					string[] parts = range.Split('-');
+					
+					if (parts.Length != 2)
+					{
+						throw new Exception(String.Format("XML: Invalid range specification `{0}' for `{1}'", range, nm.Value));
+					}
+					
+					int start = Int32.Parse(parts[0]);
+					int end = Int32.Parse(parts[1]);
+					
+					while (start <= end)
+					{
+						AddParameter(new Parameter(String.Format("{0}{1}", nm.Value, start), boundary));
+						++start;
+					}
+				}
+				else
+				{
+					AddParameter(new Parameter(nm.Value, boundary));
+				}
 			}
 
 		}

@@ -111,5 +111,8 @@ namespace Optimization.Messages
 
 		[ProtoMember(6)]
 		public KeyValueType[] Data;
+		
+		[ProtoMember(7, IsRequired=false)]
+		public UInt64 UniqueId;
 	}
 }

@@ -55,7 +55,6 @@
     <Compile Include="Optimization.Messages\Token.cs" />
     <Compile Include="Optimization.Storage\Storage.cs" />
     <Compile Include="Optimization\Registry.cs" />
-    <Compile Include="Optimization\Attributes.cs" />
     <Compile Include="Optimization\Directories.cs" />
     <Compile Include="Optimization\Options.cs" />
     <Compile Include="Optimization.Dispatcher\Dispatcher.cs" />
@@ -70,6 +69,8 @@
     <Compile Include="Optimization.Messages\Identify.cs" />
     <Compile Include="Optimization.Messages\Ping.cs" />
     <Compile Include="Optimization\Utils.cs" />
+    <Compile Include="Optimization\Extension.cs" />
+    <Compile Include="Optimization.Attributes\Attributes.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
@@ -89,5 +90,11 @@
     <Folder Include="Optimization.Messages\" />
     <Folder Include="Optimization.Storage\" />
     <Folder Include="Optimization.Dispatcher.Internal\" />
+    <Folder Include="Optimization.Attributes\" />
   </ItemGroup>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties InternalTargetFrameworkVersion="3.5" />
+    </MonoDevelop>
+  </ProjectExtensions>
 </Project>
