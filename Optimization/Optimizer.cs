@@ -59,7 +59,8 @@ namespace Optimization
 
 		private List<Solution> d_population;
 		private Solution d_best;
-		private Fitness d_previousBest;	
+
+		private LinkedList<Fitness> d_lastBest;
 		
 		private uint d_currentIteration;
 
@@ -92,6 +93,8 @@ namespace Optimization
 			d_convergenceThreshold = new Math.Expression();
 			d_convergenceWindow = new Math.Expression();
 			d_minIterations = new Math.Expression();
+			
+			d_lastBest = new LinkedList<Fitness>();
 		}
 
 		public virtual void Initialize()
@@ -431,13 +434,32 @@ namespace Optimization
 			{
 				if (d_best == null || solution.Fitness.Value > d_best.Fitness.Value)
 				{
-					if (d_best == null)
-					{
-						d_previousBest = (Fitness)solution.Fitness.Clone();
-					}
-
 					d_best = solution.Clone() as Solution;
 				}
+			}
+		}
+		
+		private double LastBestDifference
+		{
+			get
+			{
+				double min = double.MaxValue;
+				double max = double.MinValue;
+				
+				foreach (Fitness fitness in d_lastBest)
+				{
+					if (fitness.Value < min)
+					{
+						min = fitness.Value;
+					}
+					
+					if (fitness.Value > max)
+					{
+						max = fitness.Value;
+					}
+				}
+				
+				return max - min;
 			}
 		}
 
@@ -468,7 +490,7 @@ namespace Optimization
 			
 			if (threshold > 0 && CurrentIteration > window)
 			{
-				return (d_best.Fitness.Value - d_previousBest.Value) < threshold;
+				return LastBestDifference < threshold;
 			}
 			
 			return false;
@@ -478,6 +500,33 @@ namespace Optimization
 		{
 			d_currentIteration++;
 		}
+		
+		private void UpdateConvergence()
+		{
+			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
+			
+			while (d_lastBest.Count > window)
+			{
+				d_lastBest.RemoveFirst();
+			}
+			
+			double best = double.MinValue;
+			Fitness fitness = null;
+
+			foreach (Solution solution in Population)
+			{
+				if (solution.Fitness.Value > best)
+				{
+					fitness = solution.Fitness;
+					best = fitness.Value;
+				}
+			}
+			
+			if (fitness != null)
+			{
+				d_lastBest.AddLast((Fitness)fitness.Clone());
+			}
+		}
 
 		public virtual bool Next()
 		{
@@ -485,6 +534,9 @@ namespace Optimization
 			{
 				ext.Next();
 			}
+			
+			// Update convergence
+			UpdateConvergence();
 
 			// First update the best solution up until now
 			UpdateBest();
@@ -495,13 +547,6 @@ namespace Optimization
 			// Increment the iteration number
 			IncrementIteration();
 			
-			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
-			
-			if (d_currentIteration % window == 0)
-			{
-				d_previousBest = (Fitness)d_best.Clone();
-			}
-
 			// Check if the optimization is finished
 			if (Finished())
 			{
