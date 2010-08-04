@@ -635,7 +635,9 @@ namespace Optimization.Storage
 
 		public void Log(string type, string str)
 		{
+			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
 			Query("INSERT INTO `log` (`time`, `type`, `message`) VALUES (@0, @1, @2)", UnixTimeStamp, type, str);
+			transaction.Commit();
 		}
 
 		/* Data retrieval */
