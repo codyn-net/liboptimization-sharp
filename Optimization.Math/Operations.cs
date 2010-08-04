@@ -216,6 +216,12 @@ namespace Optimization.Math
 		{
 			stack.Push(System.Math.Floor(stack.Pop()));
 		}
+		
+		[Operation(Arity=1)]
+		public static void Sign(Stack<double> stack)
+		{
+			stack.Push(System.Math.Sign(stack.Pop()));
+		}
 
 		// Operators
 		[Operation(Arity=2)]
