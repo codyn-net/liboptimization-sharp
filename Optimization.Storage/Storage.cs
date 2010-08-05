@@ -33,15 +33,31 @@ namespace Optimization.Storage
 {
 	public class Storage
 	{
+		private struct LogItem
+		{
+			public long TimeStamp;
+			public string Type;
+			public string Message;
+			
+			public LogItem(long timestamp, string type, string message)
+			{
+				TimeStamp = timestamp;
+				Type = type;
+				Message = message;
+			}
+		}
+
 		public delegate bool RowCallback(IDataReader reader);
 		private SqliteConnection d_connection;
 
 		private string d_uri;
 		private Job d_job;
+		private List<LogItem> d_logBatch;
 
 		public Storage(Job job)
 		{
 			d_job = job;
+			d_logBatch = new List<LogItem>();
 		}
 
 		public string Uri
@@ -86,14 +102,14 @@ namespace Optimization.Storage
 		{
 			bool exists = File.Exists(Uri);
 
-			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3");
+			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3,busy_timeout=15000");
 			d_connection.Open();
 
 			if (!d_job.SynchronousStorage)
 			{
 				Query("PRAGMA synchronous = OFF");
 			}
-			
+
 			if (!exists)
 			{
 				CreateTables();
@@ -138,6 +154,13 @@ namespace Optimization.Storage
 
 		public void End()
 		{
+			if (d_logBatch.Count != 0)
+			{
+				System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+				SaveLog();
+				transaction.Commit();
+			}
+
 			d_connection.Close();
 		}
 
@@ -394,6 +417,16 @@ namespace Optimization.Storage
 			SaveParameters(solution);
 			SaveData(solution);
 		}
+		
+		private void SaveLog()
+		{
+			foreach (LogItem item in d_logBatch)
+			{
+				Query("INSERT INTO `log` (`time`, `type`, `message`) VALUES (@0, @1, @2)", item.TimeStamp, item.Type, item.Message);
+			}
+			
+			d_logBatch.Clear();
+		}
 
 		public void SaveIteration()
 		{
@@ -422,17 +455,18 @@ namespace Optimization.Storage
 			}
 
 			SaveState();
+			SaveLog();
 
 			transaction.Commit();
 		}
-		
+
 		public void SaveToken()
 		{
 			if (!this)
 			{
 				return;
 			}
-			
+
 			Query("UPDATE job SET token = @0", Job.Token);
 		}
 
@@ -635,21 +669,21 @@ namespace Optimization.Storage
 
 		public void Log(string type, string str)
 		{
-			Query("INSERT INTO `log` (`time`, `type`, `message`) VALUES (@0, @1, @2)", UnixTimeStamp, type, str);
+			d_logBatch.Add(new LogItem(UnixTimeStamp, type, str));
 		}
 
 		/* Data retrieval */
 		private Records.Solution CreateSolution(IDataReader reader)
 		{
 			Records.Solution solution = new Records.Solution();
-			
+
 			solution.Index = (int)reader["the_index"];
 			solution.Iteration = (int)reader["the_iteration"];
 
 			for (int i = 0; i < reader.FieldCount; ++i)
 			{
 				string name = reader.GetName(i);
-				
+
 				if (name.StartsWith("_f_"))
 				{
 					solution.Fitness.Add(name.Substring(3), reader.GetDouble(i));
