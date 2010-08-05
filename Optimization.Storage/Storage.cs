@@ -102,14 +102,14 @@ namespace Optimization.Storage
 		{
 			bool exists = File.Exists(Uri);
 
-			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3");
+			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3,busy_timeout=15000");
 			d_connection.Open();
 
 			if (!d_job.SynchronousStorage)
 			{
 				Query("PRAGMA synchronous = OFF");
 			}
-			
+
 			if (!exists)
 			{
 				CreateTables();
