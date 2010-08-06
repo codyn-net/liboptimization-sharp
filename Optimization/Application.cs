@@ -129,7 +129,7 @@ namespace Optimization
 
 			d_waitHandle = new AutoResetEvent(false);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
-			
+
 			Console.ResetColor();
 		}
 

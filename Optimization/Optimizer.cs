@@ -36,13 +36,13 @@ namespace Optimization
 
 			[Setting("population-size", 30, Description="Solution population size")]
 			public uint PopulationSize;
-			
+
 			[Setting("convergence-threshold", "0", Description="Threshold on minimum change in the objective function improvement over convergence-window measurements")]
 			public string ConvergenceThreshold;
-			
+
 			[Setting("convergence-window", "10", Description="Window over which to measure fitness improvement for convergence")]
 			public string ConvergenceWindow;
-			
+
 			[Setting("min-iterations", "20", Description="Minimum number of iterations before calculating convergence")]
 			public string MinIterations;
 		}
@@ -61,17 +61,17 @@ namespace Optimization
 		private Solution d_best;
 
 		private LinkedList<Fitness> d_lastBest;
-		
+
 		private uint d_currentIteration;
 
 		private Settings d_settings;
 		private ConstructorInfo d_solutionConstructor;
-		
+
 		private List<Extension> d_extensions;
-		
+
 		private Math.Expression d_convergenceThreshold;
 		private Math.Expression d_convergenceWindow;
-		private Math.Expression d_minIterations;		
+		private Math.Expression d_minIterations;
 
 		public Optimizer()
 		{
@@ -87,13 +87,13 @@ namespace Optimization
 
 			d_boundaryHash = new Dictionary<string, Boundary>();
 			d_parameterHash = new Dictionary<string, Parameter>();
-			
+
 			d_extensions = new List<Extension>();
-						
+
 			d_convergenceThreshold = new Math.Expression();
 			d_convergenceWindow = new Math.Expression();
 			d_minIterations = new Math.Expression();
-			
+
 			d_lastBest = new LinkedList<Fitness>();
 		}
 
@@ -103,12 +103,12 @@ namespace Optimization
 			InitializePopulation();
 
 			d_storage.Begin();
-					
+
 			foreach (Extension ext in d_extensions)
 			{
 				ext.Initialize();
 			}
-			
+
 			Setup();
 		}
 
@@ -189,7 +189,7 @@ namespace Optimization
 					d_solutionConstructor = type.GetConstructor(new Type[] {typeof(uint), typeof(Fitness), typeof(State)});
 				}
 			}
-			
+
 			Solution ret;
 
 			if (d_solutionConstructor == null)
@@ -200,7 +200,7 @@ namespace Optimization
 			{
 				ret = (Solution)d_solutionConstructor.Invoke(new object[] {idx, d_fitness, d_state});
 			}
-			
+
 			foreach (Extension ext in d_extensions)
 			{
 				ext.Initialize(ret);
@@ -227,7 +227,7 @@ namespace Optimization
 
 				Add(solution);
 			}
-			
+
 			foreach (Extension ext in d_extensions)
 			{
 				ext.InitializePopulation();
@@ -243,7 +243,7 @@ namespace Optimization
 		{
 			d_population.Remove(solution);
 		}
-		
+
 		public List<Extension> Extensions
 		{
 			get
@@ -251,7 +251,7 @@ namespace Optimization
 				return d_extensions;
 			}
 		}
-		
+
 		public virtual void AddExtension(Extension ext)
 		{
 			d_extensions.Add(ext);
@@ -360,7 +360,7 @@ namespace Optimization
 		{
 			return d_boundaryHash[name];
 		}
-		
+
 		public bool HasBoundary(string name)
 		{
 			return d_boundaryHash.ContainsKey(name);
@@ -376,7 +376,7 @@ namespace Optimization
 		{
 			return d_parameterHash[name];
 		}
-		
+
 		public bool HasParameter(string name)
 		{
 			return d_parameterHash.ContainsKey(name);
@@ -393,7 +393,7 @@ namespace Optimization
 
 			return null;
 		}
-		
+
 		public string Description
 		{
 			get
@@ -432,33 +432,33 @@ namespace Optimization
 		{
 			foreach (Solution solution in d_population)
 			{
-				if (d_best == null || solution.Fitness.Value > d_best.Fitness.Value)
+				if (d_best == null || solution.Fitness > d_best.Fitness)
 				{
 					d_best = solution.Clone() as Solution;
 				}
 			}
 		}
-		
+
 		private double LastBestDifference
 		{
 			get
 			{
 				double min = double.MaxValue;
 				double max = double.MinValue;
-				
+
 				foreach (Fitness fitness in d_lastBest)
 				{
 					if (fitness.Value < min)
 					{
 						min = fitness.Value;
 					}
-					
+
 					if (fitness.Value > max)
 					{
 						max = fitness.Value;
 					}
 				}
-				
+
 				return max - min;
 			}
 		}
@@ -469,7 +469,7 @@ namespace Optimization
 			{
 				return true;
 			}
-			
+
 			foreach (Extension ext in d_extensions)
 			{
 				if (ext.Finished())
@@ -477,22 +477,22 @@ namespace Optimization
 					return true;
 				}
 			}
-			
+
 			uint minIterations = (uint)d_minIterations.Evaluate(Math.Constants.Context);
-			
+
 			if (CurrentIteration < minIterations)
 			{
 				return false;
 			}
-			
+
 			double threshold = d_convergenceThreshold.Evaluate(Math.Constants.Context);
 			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
-			
+
 			if (threshold > 0 && CurrentIteration > window)
 			{
 				return LastBestDifference < threshold;
 			}
-			
+
 			return false;
 		}
 
@@ -500,28 +500,26 @@ namespace Optimization
 		{
 			d_currentIteration++;
 		}
-		
+
 		private void UpdateConvergence()
 		{
 			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
-			
+
 			while (d_lastBest.Count > window)
 			{
 				d_lastBest.RemoveFirst();
 			}
-			
-			double best = double.MinValue;
+
 			Fitness fitness = null;
 
 			foreach (Solution solution in Population)
 			{
-				if (solution.Fitness.Value > best)
+				if (fitness == null || solution.Fitness > fitness)
 				{
 					fitness = solution.Fitness;
-					best = fitness.Value;
 				}
 			}
-			
+
 			if (fitness != null)
 			{
 				d_lastBest.AddLast((Fitness)fitness.Clone());
@@ -534,7 +532,7 @@ namespace Optimization
 			{
 				ext.Next();
 			}
-			
+
 			// Update convergence
 			UpdateConvergence();
 
@@ -546,7 +544,7 @@ namespace Optimization
 
 			// Increment the iteration number
 			IncrementIteration();
-			
+
 			// Check if the optimization is finished
 			if (Finished())
 			{
@@ -572,7 +570,7 @@ namespace Optimization
 			{
 				Update(solution);
 			}
-						
+
 			foreach (Extension ext in d_extensions)
 			{
 				ext.AfterUpdate();
@@ -596,7 +594,7 @@ namespace Optimization
 		{
 			d_storage.Log(type, str);
 		}
-		
+
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer, Storage.Records.Solution solution, Optimization.Solution sol)
 		{
 			sol.Parameters.Clear();
@@ -605,10 +603,10 @@ namespace Optimization
 			{
 				sol.Parameters.Add(new Parameter(parameter.Key, parameter.Value, Parameter(parameter.Key).Boundary));
 			}
-			
+
 			sol.FromStorage(storage, optimizer, solution);
 		}
-		
+
 		protected virtual void Setup()
 		{
 			d_convergenceThreshold.Parse(Configuration.ConvergenceThreshold);
@@ -660,11 +658,31 @@ namespace Optimization
 			/* Fitness */
 			d_fitness.Clear();
 
+			Fitness.Mode mode = Fitness.ModeFromString(optimizer.Fitness.Mode);
+
+			if (mode != Fitness.Mode.Invalid)
+			{
+				Fitness.CompareMode = mode;
+			}
+			else
+			{
+				Fitness.CompareMode = Fitness.Mode.Default;
+			}
+
 			d_fitness.Expression.Parse(optimizer.Fitness.Expression);
 
-			foreach (KeyValuePair<string, string> pair in optimizer.Fitness.Variables)
+			foreach (KeyValuePair<string, Storage.Records.Fitness.Variable> pair in optimizer.Fitness.Variables)
 			{
-				d_fitness.AddVariable(pair.Key, pair.Value);
+				mode = Fitness.CompareMode;
+
+				Fitness.Mode parsed = Fitness.ModeFromString(pair.Value.Mode);
+
+				if (parsed != Fitness.Mode.Invalid)
+				{
+					mode = parsed;
+				}
+
+				d_fitness.AddVariable(pair.Key, pair.Value.Expression, parsed);
 			}
 
 			/* Restore iteration, state */
@@ -690,13 +708,13 @@ namespace Optimization
 				{
 					Solution sol = CreateSolution((uint)solution.Index);
 					FromStorage(storage, optimizer, solution, sol);
-					
+
 					Add(sol);
 				}
-				
+
 				// Restore best solution
 				Storage.Records.Solution best = storage.ReadSolution(-1, -1);
-				
+
 				if (best != null)
 				{
 					d_best = CreateSolution((uint)best.Index);
@@ -712,12 +730,12 @@ namespace Optimization
 				InitializePopulation();
 				d_best = null;
 			}
-			
+
 			foreach (Extension ext in d_extensions)
 			{
 				ext.FromStorage(storage, optimizer);
 			}
-			
+
 			Setup();
 		}
 
@@ -727,7 +745,7 @@ namespace Optimization
 			LoadBoundaries(node);
 			LoadParameters(node);
 			LoadFitness(node);
-			
+
 			foreach (Extension ext in d_extensions)
 			{
 				ext.FromXml(node);
@@ -752,7 +770,7 @@ namespace Optimization
 				}
 			}
 		}
-		
+
 		private Boundary CreateBoundary(string name, XmlNode node)
 		{
 			XmlAttribute min = node.Attributes["min"];
@@ -768,9 +786,9 @@ namespace Optimization
 			{
 				throw new Exception(String.Format("XML: No maximum value specified for boundary: {0}", name));
 			}
-			
+
 			Optimization.Boundary boundary = new Optimization.Boundary(name);
-					
+
 			try
 			{
 				boundary.MinSetting.Representation = min.Value;
@@ -779,7 +797,7 @@ namespace Optimization
 			{
 				throw new Exception(String.Format("XML: Could not parse minimum boundary value: {0} ({1})", name, min.Value));
 			}
-			
+
 			try
 			{
 				boundary.MaxSetting.Representation = max.Value;
@@ -793,7 +811,7 @@ namespace Optimization
 			{
 				throw new Exception(String.Format("XML: Maximum boundary value is smaller than minimum value: {0} => [{1}, {2}]", name, min.Value, max.Value));
 			}
-			
+
 			try
 			{
 				if (maxInitial != null)
@@ -814,7 +832,7 @@ namespace Optimization
 			{
 				throw new Exception(String.Format("XML: Maximum initial value is larger than maximum value: {0}", name));
 			}
-			
+
 			try
 			{
 				if (minInitial != null)
@@ -840,7 +858,7 @@ namespace Optimization
 			{
 				throw new Exception(String.Format("XML: Maximum initial value is smaller than minimum initial value: {0}", name));
 			}
-			
+
 			return boundary;
 		}
 
@@ -856,7 +874,7 @@ namespace Optimization
 				{
 					throw new Exception("XML: No name specified for boundary");
 				}
-				
+
 				AddBoundary(CreateBoundary(nm.Value, node));
 			}
 		}
@@ -869,7 +887,7 @@ namespace Optimization
 			{
 				XmlAttribute nm = node.Attributes["name"];
 				XmlAttribute bound = node.Attributes["boundary"];
-				
+
 				Boundary boundary = null;
 
 				if (nm == null)
@@ -905,20 +923,20 @@ namespace Optimization
 
 					boundary = Boundary(bound.Value);
 				}
-				
+
 				if (node.Attributes["repeat"] != null)
 				{
 					string range = node.Attributes["repeat"].Value;
 					string[] parts = range.Split('-');
-					
+
 					if (parts.Length != 2)
 					{
 						throw new Exception(String.Format("XML: Invalid range specification `{0}' for `{1}'", range, nm.Value));
 					}
-					
+
 					int start = Int32.Parse(parts[0]);
 					int end = Int32.Parse(parts[1]);
-					
+
 					while (start <= end)
 					{
 						AddParameter(new Parameter(String.Format("{0}{1}", nm.Value, start), boundary));
@@ -935,6 +953,28 @@ namespace Optimization
 
 		private void LoadFitness(XmlNode root)
 		{
+			XmlNode fitness = root.SelectSingleNode("fitness");
+			Fitness.CompareMode = Fitness.Mode.Default;
+
+			if (fitness == null)
+			{
+				return;
+			}
+
+			XmlAttribute attr = fitness.Attributes["mode"];
+
+			if (attr != null)
+			{
+				Fitness.Mode mode = Fitness.ModeFromString(attr.Value);
+
+				if (mode == Fitness.Mode.Invalid)
+				{
+					throw new Exception(String.Format("Fitness mode is invalid: `{0}'", attr.Value));
+				}
+
+				Fitness.CompareMode = mode;
+			}
+
 			XmlNode expression = root.SelectSingleNode("fitness/expression");
 
 			if (expression == null)
@@ -958,7 +998,21 @@ namespace Optimization
 					throw new Exception("XML: Fitness variable has no name");
 				}
 
-				d_fitness.AddVariable(nm.Value, node.InnerText);
+				XmlAttribute hint = node.Attributes["mode"];
+
+				Fitness.Mode mode = Fitness.CompareMode;
+
+				if (hint != null)
+				{
+					Fitness.Mode parsed = Fitness.ModeFromString(hint.Value);
+
+					if (parsed != Fitness.Mode.Invalid)
+					{
+						mode = parsed;
+					}
+				}
+
+				d_fitness.AddVariable(nm.Value, node.InnerText, mode);
 			}
 		}
 	}

@@ -26,24 +26,122 @@ namespace Optimization
 {
 	public class Fitness : ICloneable
 	{
-		Expression d_expression;
+		public enum Mode
+		{
+			Invalid,
+			Minimize,
+			Maximize,
+			Default = Maximize
+		}
 
-		Dictionary<string, Expression> d_variables;
-		Dictionary<string, double> d_values;
+		public struct Variable
+		{
+			public Math.Expression Expression;
+			public Mode Mode;
 
-		object d_value;
+			public Variable(Math.Expression expression, Mode mode)
+			{
+				Expression = expression;
+				Mode = mode;
+			}
+		}
+
+		private Expression d_expression;
+
+		private Dictionary<string, Variable> d_variables;
+
+		private Dictionary<string, double> d_values;
+		private Dictionary<string, object> d_context;
+		private static Mode s_mode;
+		private object d_value;
+
+		private static Comparison<Fitness> s_comparer;
+
+		static Fitness()
+		{
+			CompareMode = Mode.Default;
+		}
+
+		private static void SetMode(Mode mode)
+		{
+			switch (mode)
+			{
+				case Mode.Maximize:
+					s_comparer = delegate (Fitness a, Fitness b)
+					{
+						return a.Value.CompareTo(b.Value);
+					};
+				break;
+				case Mode.Minimize:
+					s_comparer = delegate (Fitness a, Fitness b)
+					{
+						return b.Value.CompareTo(a.Value);
+					};
+				break;
+			}
+
+			s_mode = mode;
+		}
+
+		public static Mode ModeFromString(string mode)
+		{
+			if (String.IsNullOrEmpty(mode))
+			{
+				return Mode.Default;
+			}
+
+			try
+			{
+				object o = Enum.Parse(typeof(Mode), mode, true);
+
+				if (o != null)
+				{
+					return (Mode)o;
+				}
+			}
+			catch
+			{
+			}
+
+			return Mode.Invalid;
+		}
+
+		public static string ModeAsString(Mode mode)
+		{
+			return Enum.GetName(typeof(Mode), mode).ToLower();
+		}
+
+		public static Mode CompareMode
+		{
+			get
+			{
+				return s_mode;
+			}
+			set
+			{
+				SetMode(value);
+			}
+		}
 
 		public Fitness()
 		{
-			d_variables = new Dictionary<string, Expression>();
+			d_variables = new Dictionary<string, Variable>();
 			d_values = new Dictionary<string, double>();
+			d_context = new Dictionary<string, object>();
+
 			d_expression = new Expression();
+		}
+
+		public static int Compare(Fitness a, Fitness b)
+		{
+			return s_comparer(a, b);
 		}
 
 		public void Clear()
 		{
 			d_variables.Clear();
 			d_values.Clear();
+			d_context.Clear();
 
 			d_expression.Parse("0");
 		}
@@ -60,7 +158,7 @@ namespace Optimization
 			}
 		}
 
-		public Dictionary<string, Expression> Variables
+		public Dictionary<string, Variable> Variables
 		{
 			get
 			{
@@ -80,13 +178,13 @@ namespace Optimization
 			}
 		}
 
-		public void AddVariable(string name, string expression)
+		public void AddVariable(string name, string expression, Mode mode)
 		{
 			Expression expr = new Expression();
 
 			if (expr.Parse(expression))
 			{
-				d_variables[name] = expr;
+				d_variables[name] = new Variable(expr, mode);
 			}
 		}
 
@@ -105,21 +203,24 @@ namespace Optimization
 			return 0;
 		}
 
-		private double ExpressionFitness()
+		public void Update()
 		{
-			Dictionary<string, object> context = new Dictionary<string, object>();
+			d_context.Clear();
 
-			foreach (KeyValuePair<string, Expression> pair in d_variables)
+			foreach (KeyValuePair<string, Variable> pair in d_variables)
 			{
-				context[pair.Key] = pair.Value;
+				d_context[pair.Key] = pair.Value.Expression;
 			}
 
 			foreach (KeyValuePair<string, double> pair in d_values)
 			{
-				context[pair.Key] = pair.Value;
+				d_context[pair.Key] = pair.Value;
 			}
+		}
 
-			return d_expression.Evaluate(Optimization.Math.Constants.Context, context);
+		private double ExpressionFitness()
+		{
+			return d_expression.Evaluate(Optimization.Math.Constants.Context, d_context);
 		}
 
 		public double Value
@@ -166,17 +267,27 @@ namespace Optimization
 			}
 
 			fit.d_value = d_value;
+			fit.Update();
+
 			return fit;
 		}
 
 		public static bool operator>(Fitness first, Fitness second)
 		{
-			return first.Value > second.Value;
+			return Compare(first, second) > 0;
 		}
 
 		public static bool operator<(Fitness first, Fitness second)
 		{
-			return first.Value < second.Value;
+			return Compare(first, second) < 0;
+		}
+
+		public Dictionary<string, object> Context
+		{
+			get
+			{
+				return d_context;
+			}
 		}
 
 		public Expression Expression

@@ -68,13 +68,26 @@ namespace Optimization.Storage.Records
 
 	public class Fitness
 	{
+		public class Variable
+		{
+			public string Expression;
+			public string Mode;
+
+			public Variable(string expression, string mode)
+			{
+				Expression = expression;
+				Mode = mode;
+			}
+		}
+
+		public string Mode;
 		public string Expression;
 
-		public Dictionary<string, string> Variables;
+		public Dictionary<string, Variable> Variables;
 
 		public Fitness()
 		{
-			Variables = new Dictionary<string, string>();
+			Variables = new Dictionary<string, Variable>();
 		}
 	}
 
@@ -127,7 +140,7 @@ namespace Optimization.Storage.Records
 		{
 			Optimizer = new Optimizer();
 			Dispatcher = new Dispatcher();
-			
+
 			Extensions = new List<string>();
 		}
 	}

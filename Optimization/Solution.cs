@@ -153,7 +153,7 @@ namespace Optimization
 				return d_state;
 			}
 		}
-
+		
 		public virtual void Update(Dictionary<string, double> fitness)
 		{
 			d_fitness.Reset();
@@ -162,8 +162,20 @@ namespace Optimization
 			{
 				d_fitness.Values[pair.Key] = pair.Value;
 			}
+			
+			d_fitness.Update();
+
+			// Put parameters in the fitness context so you can actually use them
+			// But only if they are not defined yet
+			foreach (Parameter parameter in Parameters)
+			{
+				if (!d_fitness.Context.ContainsKey(parameter.Name))
+				{
+					d_fitness.Context[parameter.Name] = parameter.Value;
+				}
+			}
 		}
-		
+
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer, Storage.Records.Solution solution)
 		{
 			Data.Clear();
