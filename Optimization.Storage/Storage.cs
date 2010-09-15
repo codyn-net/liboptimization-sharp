@@ -135,7 +135,7 @@ namespace Optimization.Storage
 		{
 			string orig = Path.GetFullPath(filename);
 			int i = 1;
-			
+
 			string ext = Path.GetExtension(orig);
 			orig = orig.Substring(0, orig.Length - ext.Length);
 
@@ -190,6 +190,13 @@ namespace Optimization.Storage
 				string norm = NormalizeName(pair.Key);
 
 				builder.AppendFormat(", `_f_{0}`", norm);
+			}
+
+			foreach (KeyValuePair<string, Fitness.Variable> pair in solution.Fitness.Variables)
+			{
+				string norm = NormalizeName(pair.Key);
+
+				builder.AppendFormat(", `_fv_{0}`", norm);
 			}
 
 			builder.Append(")");
@@ -286,13 +293,13 @@ namespace Optimization.Storage
 			InitializeParametersTable();
 			InitializeDataTable();
 			InitializeStateTable();
-			
+
 			transaction.Commit();
 		}
 
 		delegate bool GenerateSavePair(object container, out string name, out object val);
 
-		private void SavePairs(Solution solution, ICollection collection, string table, string prefix, Dictionary<string, object> additional, GenerateSavePair generator)
+		private void SavePairs(Solution solution, ICollection collection, string table, Dictionary<string, object> additional, GenerateSavePair generator)
 		{
 			StringBuilder builder = new StringBuilder();
 			builder.AppendFormat("INSERT INTO `{0}` (`iteration`", table);
@@ -334,7 +341,7 @@ namespace Optimization.Storage
 
 				if (generator(o, out name, out val))
 				{
-					builder.AppendFormat(", `{0}`", NormalizeName(prefix + name));
+					builder.AppendFormat(", `{0}`", NormalizeName(name));
 					values.AppendFormat(", @{0}", i);
 
 					vals.Add(val);
@@ -342,7 +349,7 @@ namespace Optimization.Storage
 					++i;
 				}
 			}
-			
+
 			builder.Append(") ").Append(values).Append(")");
 			Query(builder.ToString(), vals.ToArray());
 		}
@@ -351,9 +358,22 @@ namespace Optimization.Storage
 		{
 			Dictionary<string, object> additional = new Dictionary<string, object>();
 			additional["value"] = solution.Fitness.Value;
+			
+			Dictionary<string, double> fitvalues = new Dictionary<string, double>();
+			
+			foreach (KeyValuePair<string, double> pair in solution.Fitness.Values)
+			{
+				fitvalues["_f_" + pair.Key] = pair.Value;
+			}
+			
+			foreach (KeyValuePair<string, Optimization.Fitness.Variable> pair in solution.Fitness.Variables)
+			{
+				fitvalues["_fv_" + pair.Key] = pair.Value.Expression.Evaluate(Math.Constants.Context, solution.Fitness.Context);
+			}
 
-			SavePairs(solution, solution.Fitness.Values, "fitness", "_f_", additional, delegate (object o, out string name, out object val) {
+			SavePairs(solution, fitvalues, "fitness", additional, delegate (object o, out string name, out object val) {
 				KeyValuePair<string, double> pair = (KeyValuePair<string, double>)o;
+
 				name = pair.Key;
 				val = pair.Value;
 
@@ -363,10 +383,10 @@ namespace Optimization.Storage
 
 		private void SaveParameters(Solution solution)
 		{
-			SavePairs(solution, solution.Parameters, "parameter_values", "_p_", null, delegate (object o, out string name, out object val) {
+			SavePairs(solution, solution.Parameters, "parameter_values", null, delegate (object o, out string name, out object val) {
 				Parameter parameter = (Parameter)o;
 
-				name = parameter.Name;
+				name = "_p_" + parameter.Name;
 				val = parameter.Value;
 
 				return true;
@@ -375,10 +395,10 @@ namespace Optimization.Storage
 
 		private void SaveData(Solution solution)
 		{
-			SavePairs(solution, solution.Data, "data", "_d_", null, delegate (object o, out string name, out object val) {
+			SavePairs(solution, solution.Data, "data", null, delegate (object o, out string name, out object val) {
 				KeyValuePair<string, object> data = (KeyValuePair<string, object>)o;
 
-				name = data.Key;
+				name = "_d_" + data.Key;
 				val = data.Value;
 
 				return true;
@@ -398,10 +418,10 @@ namespace Optimization.Storage
 			additional["random"] = stream.ToArray();
 			stream.Close();
 
-			SavePairs(null, Job.Optimizer.State.Settings.All(), "state", "_s_", additional, delegate (object o, out string name, out object val) {
+			SavePairs(null, Job.Optimizer.State.Settings.All(), "state", additional, delegate (object o, out string name, out object val) {
 				KeyValuePair<string, object> data = (KeyValuePair<string, object>)o;
 
-				name = data.Key;
+				name = "_s_" + data.Key;
 				val = data.Value;
 
 				return true;
@@ -490,14 +510,15 @@ namespace Optimization.Storage
 				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", pair.Key, pair.Value.ToString());
 			}
 
-			Query("CREATE TABLE IF NOT EXISTS `fitness_settings` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT, `value` TEXT)");
+			Query("CREATE TABLE IF NOT EXISTS `fitness_settings` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT, `value` TEXT, `mode` TEXT)");
 
 			Query("DELETE FROM `fitness_settings`");
-			Query("INSERT INTO `fitness_settings` (`name`, `value`) VALUES (@0, @1)", "expression", Job.Optimizer.Fitness.Expression.Text);
+			Query("INSERT INTO `fitness_settings` (`name`, `value`) VALUES (@0, @1)", "__expression__", Job.Optimizer.Fitness.Expression.Text);
+			Query("INSERT INTO `fitness_settings` (`name`, `value`) VALUES (@0, @1)", "__mode__", Fitness.ModeAsString(Fitness.CompareMode));
 
-			foreach (KeyValuePair<string, Expression> var in Job.Optimizer.Fitness.Variables)
+			foreach (KeyValuePair<string, Fitness.Variable> var in Job.Optimizer.Fitness.Variables)
 			{
-				Query("INSERT INTO `fitness_settings` (`name`, `value`) VALUES(@0, @1)", var.Key, var.Value.Text);
+				Query("INSERT INTO `fitness_settings` (`name`, `value`, `mode`) VALUES(@0, @1, @2)", var.Key, var.Value.Expression.Text, Fitness.ModeAsString(var.Value.Mode));
 			}
 
 			Query("CREATE TABLE IF NOT EXISTS `boundaries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT, `min` DOUBLE, `max` DOUBLE, `min_initial` DOUBLE, `max_initial` DOUBLE, `min_repr` TEXT, `max_repr` TEXT, `min_initial_repr` TEXT, `max_initial_repr` TEXT)");
@@ -534,9 +555,9 @@ namespace Optimization.Storage
 			{
 				Query("INSERT INTO `dispatcher` (`name`, `value`) VALUES (@0, @1)", disp.Key, disp.Value);
 			}
-			
+
 			Query("CREATE TABLE IF NOT EXISTS `extensions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT)");
-			
+
 			foreach (Extension ext in Job.Optimizer.Extensions)
 			{
 				Query("INSERT INTO `extensions` (`name`) VALUES (@0)", Extension.GetName(ext.GetType()));
@@ -558,7 +579,7 @@ namespace Optimization.Storage
 
 			Query("CREATE TABLE IF NOT EXISTS `log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `time` INT, `type` TEXT, `message` TEXT)");
 			Query("DELETE FROM `log`");
-			
+
 			transaction.Commit();
 
 			SaveSettings();
@@ -712,7 +733,7 @@ namespace Optimization.Storage
 
 			ret.Index = iteration;
 			ret.Time = FromUnixTimestamp((int)vals[1]);
-			
+
 			Dictionary<int, Records.Solution> idmap = new Dictionary<int, Records.Solution>();
 
 			Query(@"SELECT solution.iteration AS `the_iteration`, solution.`index` AS `the_index`, solution.*, fitness.*, parameter_values.*, data.* FROM solution
@@ -743,7 +764,7 @@ namespace Optimization.Storage
 		{
 			Records.Solution solution = null;
 			string condition = "";
-			
+
 			if (iteration >= 0 && id >= 0)
 			{
 				condition = "`solution`.`iteration` = @0 AND `solution`.`index` = @1";
@@ -757,12 +778,12 @@ namespace Optimization.Storage
 				condition = "`solution`.`index` = @0";
 				iteration = id;
 			}
-			
+
 			if (condition != "")
 			{
 				condition = "WHERE " + condition;
 			}
-			
+
 			string q = String.Format(@"SELECT solution.iteration AS the_iteration, solution.`index` AS the_index, solution.*, fitness.*, parameter_values.*, data.* FROM solution
                     LEFT JOIN fitness ON (fitness.`index` = solution.`index` AND
                                           fitness.`iteration` = solution.`iteration`)
@@ -832,17 +853,22 @@ namespace Optimization.Storage
 			});
 
 			/* Fitness stuff */
-			Query("SELECT `name`, `value` FROM `fitness_settings`", delegate (IDataReader reader) {
+			Query("SELECT `name`, `value`, `mode` FROM `fitness_settings`", delegate (IDataReader reader) {
 				string name = (string)reader[0];
 				string val = (string)reader[1];
+				string mode = (string)reader[2];
 
-				if (name == "expression")
+				if (name == "__expression__")
 				{
 					job.Optimizer.Fitness.Expression = val;
 				}
+				else if (name == "__mode__")
+				{
+					job.Optimizer.Fitness.Mode = val;
+				}
 				else
 				{
-					job.Optimizer.Fitness.Variables.Add(name, val);
+					job.Optimizer.Fitness.Variables.Add(name, new Records.Fitness.Variable(val, mode));
 				}
 
 				return true;
@@ -879,7 +905,7 @@ namespace Optimization.Storage
 					return false;
 				});
 			}
-			
+
 			/* Extensions stuff */
 			Query("SELECT `name` FROM `extensions`", delegate (IDataReader reader) {
 				string name = (string)reader[0];

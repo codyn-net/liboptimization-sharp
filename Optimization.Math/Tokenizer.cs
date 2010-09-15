@@ -183,7 +183,7 @@ namespace Optimization.Math
 		private string d_text;
 		private int d_pos;
 
-		static string Number = "0123456789";
+		static string Number = "0123456789:";
 		static string Alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 		public Tokenizer(string text)

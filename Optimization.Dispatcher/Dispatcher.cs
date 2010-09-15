@@ -193,6 +193,7 @@ namespace Optimization.Dispatcher
 			if (ret != null)
 			{
 				Console.OpenStandardOutput().Write(ret, 0, ret.Length);
+				Console.OpenStandardOutput().Flush();
 				return true;
 			}
 

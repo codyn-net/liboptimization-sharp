@@ -101,7 +101,7 @@ DATA_FILES =
 RESOURCES = 
 
 EXTRAS = \
-	optimization-sharp.pc.in 
+	optimization-sharp.pc.in
 
 REFERENCES =  \
 	Mono.Data.SqliteClient \
