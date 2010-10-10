@@ -207,24 +207,33 @@ namespace Optimization.Storage
 			Query("CREATE INDEX fitness_iteration ON fitness(`iteration`)");
 			Query("CREATE INDEX IF NOT EXISTS solution_fitness ON solution(`fitness`)");
 		}
-
+		
 		private void InitializeParametersTable()
+		{
+			InitializeParametersTable("parameter_values");
+		}
+		
+		private void InitializeParametersActiveTable()
+		{
+			InitializeParametersTable("parameter_active");
+		}
+
+		private void InitializeParametersTable(string name)
 		{
 			if (Job.Optimizer.Population.Count == 0)
 			{
 				return;
 			}
 
-			Solution solution = Job.Optimizer.Population[0];
 			StringBuilder builder = new StringBuilder();
 
-			Query("DROP INDEX IF EXISTS parameter_values_index");
-			Query("DROP INDEX IF EXISTS parameter_values_iteration");
-			Query("DROP TABLE IF EXISTS `parameter_values`");
+			Query("DROP INDEX IF EXISTS " + name + "_index");
+			Query("DROP INDEX IF EXISTS " + name + "_iteration");
+			Query("DROP TABLE IF EXISTS `" + name + "`");
+			
+			builder.Append("CREATE TABLE `" + name + "` (`iteration` INT, `index` INT");
 
-			builder.Append("CREATE TABLE `parameter_values` (`iteration` INT, `index` INT");
-
-			foreach (Parameter parameter in solution.Parameters)
+			foreach (Parameter parameter in Job.Optimizer.Parameters)
 			{
 				string norm = NormalizeName(parameter.Name);
 				builder.AppendFormat(", `_p_{0}`", norm);
@@ -234,8 +243,8 @@ namespace Optimization.Storage
 
 			Query(builder.ToString());
 
-			Query("CREATE INDEX parameter_values_index ON parameter_values(`index`)");
-			Query("CREATE INDEX parameter_values_iteration ON parameter_values(`iteration`)");
+			Query("CREATE INDEX " + name + "_index ON " + name + "(`index`)");
+			Query("CREATE INDEX " + name + "_iteration ON " + name + "(`iteration`)");
 		}
 
 		private void InitializeDataTable()
@@ -291,6 +300,7 @@ namespace Optimization.Storage
 
 			InitializeFitnessTable();
 			InitializeParametersTable();
+			InitializeParametersActiveTable();
 			InitializeDataTable();
 			InitializeStateTable();
 
@@ -391,6 +401,45 @@ namespace Optimization.Storage
 
 				return true;
 			});
+		}
+		
+		private void SaveActiveParameters(Solution solution)
+		{
+			List<object> values = new List<object>();
+			StringBuilder q = new StringBuilder();
+			StringBuilder valq = new StringBuilder();
+			
+			q.Append("INSERT INTO `parameter_active` (");
+			
+			for (int i = 0; i < solution.Parameters.Count; ++i)
+			{
+				if (i != 0)
+				{
+					q.Append(", ");
+					valq.Append(", ");
+				}
+				
+				q.AppendFormat("`_p_{0}`", NormalizeName(solution.Parameters[i].Name));
+				valq.AppendFormat("@{0}", i);
+				
+				values.Add(1);
+			}
+			
+			q.AppendFormat(" VALUES (").Append(valq).Append(")");
+			
+			Query(q.ToString(), values);
+		}
+		
+		public void SaveActiveParameters()
+		{
+			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+			
+			foreach (Solution solution in Job.Optimizer.Population)
+			{
+				SaveActiveParameters(solution);
+			}
+			
+			transaction.Commit();
 		}
 
 		private void SaveData(Solution solution)
