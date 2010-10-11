@@ -236,7 +236,7 @@ namespace Optimization.Storage
 			foreach (Parameter parameter in Job.Optimizer.Parameters)
 			{
 				string norm = NormalizeName(parameter.Name);
-				builder.AppendFormat(", `_p_{0}`", norm);
+				builder.AppendFormat(", `_p_{0}` DOUBLE DEFAULT 0", norm);
 			}
 
 			builder.Append(")");
@@ -409,25 +409,26 @@ namespace Optimization.Storage
 			StringBuilder q = new StringBuilder();
 			StringBuilder valq = new StringBuilder();
 			
-			q.Append("INSERT INTO `parameter_active` (");
+			q.Append("INSERT INTO `parameter_active` (`iteration`, `index`");
+			valq.Append("@0, @1");
+
+			values.Add(Job.Optimizer.CurrentIteration);
+			values.Add(solution.Id);
 			
 			for (int i = 0; i < solution.Parameters.Count; ++i)
 			{
-				if (i != 0)
-				{
-					q.Append(", ");
-					valq.Append(", ");
-				}
+				q.Append(", ");
+				valq.Append(", ");
 				
 				q.AppendFormat("`_p_{0}`", NormalizeName(solution.Parameters[i].Name));
-				valq.AppendFormat("@{0}", i);
+				valq.AppendFormat("@{0}", i + 2);
 				
 				values.Add(1);
 			}
 			
-			q.AppendFormat(" VALUES (").Append(valq).Append(")");
+			q.AppendFormat(") VALUES (").Append(valq).Append(")");
 			
-			Query(q.ToString(), values);
+			Query(q.ToString(), values.ToArray());
 		}
 		
 		public void SaveActiveParameters()
