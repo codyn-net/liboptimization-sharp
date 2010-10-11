@@ -525,6 +525,11 @@ namespace Optimization
 				d_lastBest.AddLast((Fitness)fitness.Clone());
 			}
 		}
+		
+		protected virtual void SaveIteration()
+		{
+			d_storage.SaveIteration();
+		}
 
 		public virtual bool Next()
 		{
@@ -540,8 +545,8 @@ namespace Optimization
 			UpdateBest();
 
 			// Then tell the store to save the current iteration
-			d_storage.SaveIteration();
-
+			SaveIteration();
+			
 			// Increment the iteration number
 			IncrementIteration();
 
