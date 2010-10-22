@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Collections;
 using Optimization.Attributes;
 using System.Xml;
+using Biorob.Math;
 
 namespace Optimization
 {
@@ -69,9 +70,9 @@ namespace Optimization
 
 		private List<Extension> d_extensions;
 
-		private Math.Expression d_convergenceThreshold;
-		private Math.Expression d_convergenceWindow;
-		private Math.Expression d_minIterations;
+		private Expression d_convergenceThreshold;
+		private Expression d_convergenceWindow;
+		private Expression d_minIterations;
 
 		public Optimizer()
 		{
@@ -90,9 +91,9 @@ namespace Optimization
 
 			d_extensions = new List<Extension>();
 
-			d_convergenceThreshold = new Math.Expression();
-			d_convergenceWindow = new Math.Expression();
-			d_minIterations = new Math.Expression();
+			d_convergenceThreshold = new Expression();
+			d_convergenceWindow = new Expression();
+			d_minIterations = new Expression();
 
 			d_lastBest = new LinkedList<Fitness>();
 		}
@@ -478,15 +479,15 @@ namespace Optimization
 				}
 			}
 
-			uint minIterations = (uint)d_minIterations.Evaluate(Math.Constants.Context);
+			uint minIterations = (uint)d_minIterations.Evaluate(Biorob.Math.Constants.Context);
 
 			if (CurrentIteration < minIterations)
 			{
 				return false;
 			}
 
-			double threshold = d_convergenceThreshold.Evaluate(Math.Constants.Context);
-			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
+			double threshold = d_convergenceThreshold.Evaluate(Biorob.Math.Constants.Context);
+			uint window = (uint)d_convergenceWindow.Evaluate(Biorob.Math.Constants.Context);
 
 			if (threshold > 0 && CurrentIteration > window)
 			{
@@ -503,7 +504,7 @@ namespace Optimization
 
 		private void UpdateConvergence()
 		{
-			uint window = (uint)d_convergenceWindow.Evaluate(Math.Constants.Context);
+			uint window = (uint)d_convergenceWindow.Evaluate(Biorob.Math.Constants.Context);
 
 			while (d_lastBest.Count > window)
 			{
@@ -987,7 +988,7 @@ namespace Optimization
 				return;
 			}
 
-			if (!d_fitness.Expression.Parse(expression.InnerText))
+			if (!d_fitness.Parse(expression.InnerText))
 			{
 				throw new Exception("XML: Could not parse fitness");
 			}

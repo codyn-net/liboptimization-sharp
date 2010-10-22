@@ -26,6 +26,32 @@ namespace Optimization.Messages
 	[ProtoContract()]
 	public class Identify
 	{
+		[ProtoContract()]
+		public class Fitness
+		{
+			[ProtoContract()]
+			public enum Type
+			{
+				[ProtoEnum]
+				Maximize = 0,
+				
+				[ProtoEnum]
+				Minimize = 1
+			}
+			
+			[ProtoMember(1, IsRequired=true)]
+			public Type FitnessType;
+			
+			[ProtoMember(2, IsRequired=true)]
+			public string Name;
+			
+			public Fitness(Type type, string name)
+			{
+				FitnessType = type;
+				Name = name;
+			}
+		}
+
 		[ProtoMember(1, IsRequired=true)]
 		public string Name;
 
@@ -40,5 +66,8 @@ namespace Optimization.Messages
 		
 		[ProtoMember(5, IsRequired=false)]
 		public UInt64 Version; 
+		
+		[ProtoMember(6)]
+		public Fitness[] FitnessTerms;
 	}
 }

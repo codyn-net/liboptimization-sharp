@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT(liboptimization2-sharp, 2.12)
+AC_INIT(liboptimization2-sharp, 2.13)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
@@ -28,7 +28,7 @@ fi
 
 AC_ARG_ENABLE(debug,
 	AC_HELP_STRING([--enable-debug],
-		[Use 'DEBUG' Configuration [default=NO]]),
+		[Use 'DEBUG' Configuration [default=YES]]),
 		enable_debug=yes, enable_debug=no)
 AM_CONDITIONAL(ENABLE_DEBUG, test x$enable_debug = xyes)
 if test "x$enable_debug" = "xyes" ; then
@@ -36,24 +36,28 @@ if test "x$enable_debug" = "xyes" ; then
 fi
 AC_ARG_ENABLE(release,
 	AC_HELP_STRING([--enable-release],
-		[Use 'RELEASE' Configuration [default=YES]]),
+		[Use 'RELEASE' Configuration [default=NO]]),
 		enable_release=yes, enable_release=no)
 AM_CONDITIONAL(ENABLE_RELEASE, test x$enable_release = xyes)
 if test "x$enable_release" = "xyes" ; then
 	CONFIG_REQUESTED="yes"
 fi
 if test -z "$CONFIG_REQUESTED" ; then
-	AM_CONDITIONAL(ENABLE_RELEASE, true)
-	enable_release=yes
+	AM_CONDITIONAL(ENABLE_DEBUG, true)
+	enable_debug=yes
 fi
 
 mono_version=`$GMCS --version | sed 's/.*\([[0-9]]\.[[0-9]]\).*/\1/g'`
 AM_CONDITIONAL(USE_UNIXSIGNAL, test "x$mono_version" = "x2.3")
 
 dnl package checks, common for all configs
+PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
 
 dnl package checks, per config
 
+UNSTABLE_INSTALL_ASSEMBLIES="biorob-math-sharp-1.0"
+INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries $UNSTABLE_INSTALL_ASSEMBLIES`"
+AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
 optimization-sharp.pc

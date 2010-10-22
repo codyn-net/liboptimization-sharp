@@ -40,6 +40,7 @@ namespace Optimization
 		public event MessageHandler OnStatus = delegate {};
 		public event MessageHandler OnError = delegate {};
 		public event MessageHandler OnMessage = delegate {};
+		public event MessageHandler OnWarning = delegate {};
 
 		public event ProgressHandler OnProgress = delegate {};
 		public event JobHandler OnJob = delegate {};
@@ -65,6 +66,16 @@ namespace Optimization
 		class MessageClosed : Message
 		{
 		}
+		
+		class MessageNotification : Message
+		{
+			public Notification Notification;
+			
+			public MessageNotification(Notification notification)
+			{
+				Notification = notification;
+			}
+		}
 
 		Job d_job;
 		Connection d_connection;
@@ -80,6 +91,7 @@ namespace Optimization
 		int d_reconnectTimeoutIndex;
 		string d_token;
 		object d_lastRevalidate;
+		Dictionary<string, string> d_overrideSettings;
 
 		Dictionary<uint, Solution> d_running;
 
@@ -102,11 +114,13 @@ namespace Optimization
 
 			d_connection.OnClosed += HandleOnClosed;
 			d_connection.OnCommunicationReceived += HandleOnCommunicationReceived;
-
+			
 			Initialize();
+			
+			d_overrideSettings = new Dictionary<string, string>();
 
 			ParseArguments(ref args);
-
+			
 			if (String.IsNullOrEmpty(d_masterAddress))
 			{
 				d_masterAddress = "localhost:" + (int)Constants.MasterPort;
@@ -126,11 +140,9 @@ namespace Optimization
 			{
 				d_tokenAddress += ":8128";
 			}
-
+			
 			d_waitHandle = new AutoResetEvent(false);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
-
-			Console.ResetColor();
 		}
 
 #if USE_UNIXSIGNAL
@@ -183,6 +195,9 @@ namespace Optimization
 					case Communication.CommunicationType.Response:
 						messages.Add(new MessageResponse(comm.Response));
 					break;
+					case Communication.CommunicationType.Notification:
+						messages.Add(new MessageNotification(comm.Notification));
+					break;
 					default:
 						// NOOP
 					break;
@@ -206,13 +221,28 @@ namespace Optimization
 
 			Environment.Exit(0);
 		}
+		
+		private void AddOverrideSetting(string s)
+		{
+			string[] parts = s.Split(new char[] {'='}, 2);
+			
+			if (parts.Length == 1)
+			{
+				d_overrideSettings[parts[0]] = null;
+			}
+			else
+			{
+				d_overrideSettings[parts[0]] = parts[1];
+			}
+		}
 
 		protected virtual void AddOptions(NDesk.Options.OptionSet optionSet)
 		{
-			optionSet.Add("h|help", "Show this help message", delegate (string s) { ShowHelp(optionSet); });
-			optionSet.Add("m=|master=", "Specify master connection string", delegate (string s) { d_masterAddress = s; });
-			optionSet.Add("t=|tokensrv=", "Specify token server connection string", delegate (string s) { d_tokenAddress = s; });
-			optionSet.Add("token=", "Specify token string", delegate (string s) { d_token = s; });
+			optionSet.Add("h|help", "Show this help message", s => ShowHelp(optionSet));
+			optionSet.Add("m=|master=", "Specify master connection string", s => d_masterAddress = s);
+			optionSet.Add("t=|tokensrv=", "Specify token server connection string", s => d_tokenAddress = s);
+			optionSet.Add("token=", "Specify token string", s => d_token = s);
+			optionSet.Add("override-setting=", "Specify override dispatcher settings (key=value)", s => AddOverrideSetting(s));
 		}
 
 		protected virtual void ParseArguments(ref string[] args)
@@ -259,6 +289,9 @@ namespace Optimization
 
 		protected virtual void NewIteration()
 		{
+			// Send progress report!
+			d_connection.Progress(d_job);
+
 			// Next iteration for optimizer
 			if (!d_job.Optimizer.Next())
 			{
@@ -268,7 +301,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("An error occurred: " + e);
 				}
 
 				// No more iterations, we're done
@@ -282,7 +315,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				System.Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("An error occurred: " + e);
 			}
 
 			// Send optimizer population as batch to the master
@@ -335,11 +368,15 @@ namespace Optimization
 			try
 			{
 				OnError(this, str);
-				d_job.Optimizer.Log("error", str);
+				
+				if (d_job != null)
+				{
+					d_job.Optimizer.Log("error", str);
+				}
 			}
 			catch (Exception e)
 			{
-				System.Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("An error ocurred: " + e);
 			}
 		}
 
@@ -383,7 +420,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				System.Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("Error: " + e);
 			}
 
 			Done(solution);
@@ -471,6 +508,22 @@ namespace Optimization
 		{
 			d_quitting = true;
 		}
+		
+		private void HandleNotification(Notification notification)
+		{
+			switch (notification.NotificationType)
+			{
+				case Notification.Type.Info:
+					OnMessage(this, notification.Message);
+				break;
+				case Notification.Type.Warning:
+					OnWarning(this, notification.Message);
+				break;
+				case Notification.Type.Error:
+					OnError(this, notification.Message);
+				break;
+			}
+		}
 
 		private void HandleMessages()
 		{
@@ -491,11 +544,15 @@ namespace Optimization
 						{
 							HandleResponse((msg as MessageResponse).Response);
 						}
+						else if (msg is MessageNotification)
+						{
+							HandleNotification((msg as MessageNotification).Notification);
+						}
 					}
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("Error: " + e);
 				}
 			}
 		}
@@ -526,7 +583,7 @@ namespace Optimization
 					fitness = dispatcher.Evaluate(solution);
 					solution.Update(fitness);
 				}
-
+				
 				if (!d_job.Optimizer.Next())
 				{
 					try
@@ -535,7 +592,7 @@ namespace Optimization
 					}
 					catch (Exception e)
 					{
-						System.Console.Error.WriteLine("Erreur: " + e);
+						System.Console.Error.WriteLine("Error: " + e);
 					}
 
 					// No more iterations, we're done
@@ -549,7 +606,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("Error: " + e);
 				}
 			}
 		}
@@ -771,6 +828,18 @@ namespace Optimization
 
 			d_job = job;
 			
+			foreach (KeyValuePair<string, string> pair in d_overrideSettings)
+			{
+				if (pair.Value == null)
+				{
+					d_job.Dispatcher.Settings.Remove(pair.Key);
+				}
+				else
+				{
+					d_job.Dispatcher.Settings[pair.Key] = pair.Value;
+				}
+			}
+			
 			if (!String.IsNullOrEmpty(d_token))
 			{
 				job.Token = d_token;
@@ -834,7 +903,7 @@ use the --token option to use a new token with an existing database.");
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("An error occurred: " + e);
 				}
 			}
 

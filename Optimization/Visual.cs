@@ -16,6 +16,7 @@ namespace Optimization
 			application.OnProgress += OnProgress;
 			application.OnIterate += OnIterate;
 			application.OnMessage += OnMessage;
+			application.OnWarning += OnWarning;
 		}
 
 		protected virtual void OnIterate(object sender, EventArgs e)
@@ -39,6 +40,11 @@ namespace Optimization
 		}
 		
 		protected virtual void OnMessage(object source, string message)
+		{
+			// NOOP
+		}
+		
+		protected virtual void OnWarning(object source, string message)
 		{
 			// NOOP
 		}

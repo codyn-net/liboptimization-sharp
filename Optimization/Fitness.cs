@@ -20,7 +20,7 @@
 
 using System;
 using System.Collections.Generic;
-using Optimization.Math;
+using Biorob.Math;
 
 namespace Optimization
 {
@@ -36,13 +36,18 @@ namespace Optimization
 
 		public struct Variable
 		{
-			public Math.Expression Expression;
+			public Expression Expression;
 			public Mode Mode;
 
-			public Variable(Math.Expression expression, Mode mode)
+			public Variable(Expression expression, Mode mode)
 			{
 				Expression = expression;
 				Mode = mode;
+			}
+			
+			public static implicit operator Expression(Variable v)
+			{
+				return v.Expression;
 			}
 		}
 
@@ -54,12 +59,26 @@ namespace Optimization
 		private Dictionary<string, object> d_context;
 		private static Mode s_mode;
 		private object d_value;
+		private List<string> d_unknowns;
 
 		private static Comparison<Fitness> s_comparer;
 
 		static Fitness()
 		{
 			CompareMode = Mode.Default;
+		}
+		
+		public static int CompareByMode(Mode mode, double a, double b)
+		{
+			switch (mode)
+			{
+				case Mode.Maximize:
+					return a.CompareTo(b);
+				case Mode.Minimize:
+					return b.CompareTo(a);
+			}
+			
+			return 0;
 		}
 
 		private static void SetMode(Mode mode)
@@ -130,6 +149,7 @@ namespace Optimization
 			d_context = new Dictionary<string, object>();
 
 			d_expression = new Expression();
+			d_expression.CheckVariables = true;
 		}
 
 		public static int Compare(Fitness a, Fitness b)
@@ -144,6 +164,7 @@ namespace Optimization
 			d_context.Clear();
 
 			d_expression.Parse("0");
+			d_unknowns = null;
 		}
 
 		public double this [string key]
@@ -220,7 +241,7 @@ namespace Optimization
 
 		private double ExpressionFitness()
 		{
-			return d_expression.Evaluate(Optimization.Math.Constants.Context, d_context);
+			return d_expression.Evaluate(Biorob.Math.Constants.Context, d_context);
 		}
 
 		public double Value
@@ -244,6 +265,44 @@ namespace Optimization
 			{
 				d_value = value;
 			}
+		}
+		
+		private void ResolveUnknowns()
+		{
+			if (d_unknowns != null)
+			{
+				return;
+			}
+			
+			d_unknowns = new List<string>();
+			
+			if (d_expression == null || !d_expression)
+			{
+				return;
+			}
+			
+			Dictionary<string, object> context = new Dictionary<string, object>();
+			
+			foreach (KeyValuePair<string, Variable> pair in d_variables)
+			{
+				context[pair.Key] = pair.Value;
+			}
+			
+			d_unknowns.AddRange(d_expression.ResolveUnknowns(context));
+		}
+		
+		public string[] Unknowns
+		{
+			get
+			{
+				ResolveUnknowns();
+				return d_unknowns.ToArray();
+			}
+		}
+		
+		public bool Parse(string expression)
+		{
+			return d_expression.Parse(expression);
 		}
 
 		public void Reset()

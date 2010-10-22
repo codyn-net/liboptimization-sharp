@@ -24,7 +24,7 @@ using Mono.Data.SqliteClient;
 using System.Reflection;
 using System.Xml.Serialization;
 using System.Collections.Generic;
-using Optimization.Math;
+using Biorob.Math;
 using System.Text;
 using System.IO;
 using System.Collections;
@@ -378,7 +378,7 @@ namespace Optimization.Storage
 			
 			foreach (KeyValuePair<string, Optimization.Fitness.Variable> pair in solution.Fitness.Variables)
 			{
-				fitvalues["_fv_" + pair.Key] = pair.Value.Expression.Evaluate(Math.Constants.Context, solution.Fitness.Context);
+				fitvalues["_fv_" + pair.Key] = pair.Value.Expression.Evaluate(Biorob.Math.Constants.Context, solution.Fitness.Context);
 			}
 
 			SavePairs(solution, fitvalues, "fitness", additional, delegate (object o, out string name, out object val) {

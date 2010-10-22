@@ -3,5 +3,5 @@ Description: optimization-sharp
 Version: @VERSION@
 Libraries=@expanded_libdir@/@PACKAGE@/Optimization.dll @expanded_libdir@/@PACKAGE@/protobuf-net.dll
 
-Requires:
+Requires: biorob-math-sharp-1.0
 Libs: -r:@expanded_libdir@/@PACKAGE@/Optimization.dll -r:@expanded_libdir@/@PACKAGE@/protobuf-net.dll
