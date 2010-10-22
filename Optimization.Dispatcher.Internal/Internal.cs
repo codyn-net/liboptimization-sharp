@@ -6,19 +6,19 @@ namespace Optimization.Dispatcher.Internal
 	[Attributes.DispatcherAttribute("internal")]
 	public class Internal : Optimization.Dispatcher.Internal.Dispatcher
 	{
-		private Dictionary<string, Optimization.Math.Expression> d_fitnesses;
+		private Dictionary<string, Biorob.Math.Expression> d_fitnesses;
 
 		public override void Initialize(Job job)
 		{
 			base.Initialize(job);
 
-			d_fitnesses = new Dictionary<string, Optimization.Math.Expression>();
+			d_fitnesses = new Dictionary<string, Biorob.Math.Expression>();
 
 			foreach (KeyValuePair<string, string> pair in Job.Dispatcher.Settings)
 			{
 				if (pair.Key.StartsWith("fitness"))
 				{
-					Optimization.Math.Expression expr = new Optimization.Math.Expression();
+					Biorob.Math.Expression expr = new Biorob.Math.Expression();
 					expr.Parse(pair.Value);
 
 					d_fitnesses.Add(pair.Key.Substring(7), expr);
@@ -39,7 +39,7 @@ namespace Optimization.Dispatcher.Internal
 			double maxit = 0;
 			fitness.Add("value", 0);
 
-			foreach (KeyValuePair<string, Optimization.Math.Expression> pair in d_fitnesses)
+			foreach (KeyValuePair<string, Biorob.Math.Expression> pair in d_fitnesses)
 			{
 				try
 				{
@@ -51,7 +51,7 @@ namespace Optimization.Dispatcher.Internal
 						maxit = val;
 					}
 				}
-				catch (Optimization.Math.Expression.ContextException)
+				catch (Biorob.Math.Expression.ContextException)
 				{
 					fitness.Add(pair.Key, 0);
 				}

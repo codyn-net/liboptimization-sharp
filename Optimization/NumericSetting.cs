@@ -24,7 +24,7 @@ namespace Optimization
 		
 		private void Parse(string val)
 		{
-			Math.Expression expr = new Math.Expression();
+			Biorob.Math.Expression expr = new Biorob.Math.Expression();
 			expr.CheckVariables = true;
 			
 			if (!expr.Parse(val))
@@ -32,7 +32,7 @@ namespace Optimization
 				throw new Exception(String.Format("Could not parse expression {0}", val));
 			}
 			
-			d_value = expr.Evaluate(Optimization.Math.Constants.Context);
+			d_value = expr.Evaluate(Biorob.Math.Constants.Context);
 			d_representation = val;
 		}
 		

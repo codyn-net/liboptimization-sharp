@@ -74,11 +74,6 @@ FILES = \
 	Optimization/Utils.cs \
 	Optimization/Visual.cs \
 	Optimization.Attributes/Attributes.cs \
-	Optimization.Math/Expression.cs \
-	Optimization.Math/Instruction.cs \
-	Optimization.Math/Operations.cs \
-	Optimization.Math/Tokenizer.cs \
-	Optimization.Math/Constants.cs \
 	Optimization.Messages/Batch.cs \
 	Optimization.Messages/Cancel.cs \
 	Optimization.Messages/Communication.cs \
@@ -108,7 +103,8 @@ REFERENCES =  \
 	Mono.Posix \
 	System.Data \
 	System \
-	System.Xml
+	System.Xml \
+	$(BIOROB_MATH_SHARP_LIBS)
 
 DLL_REFERENCES =  \
 	$(BUILD_DIR)/protobuf-net.dll
@@ -136,3 +132,13 @@ $(build_xamlg_list): %.xaml.g.cs: %.xaml
 $(ASSEMBLY) $(ASSEMBLY_MDB): $(build_sources) $(build_resources) $(build_datafiles) $(DLL_REFERENCES) $(PROJECT_REFERENCES) $(build_xamlg_list) $(build_satellite_assembly_list)
 	mkdir -p $(shell dirname $(ASSEMBLY))
 	$(ASSEMBLY_COMPILER_COMMAND) $(ASSEMBLY_COMPILER_FLAGS) -out:$(ASSEMBLY) -target:$(COMPILE_TARGET) $(build_sources_embed) $(build_resources_embed) $(build_references_ref)
+
+install-data-hook:
+	for ASM in $(INSTALLED_ASSEMBLIES); do \
+		$(INSTALL) -c -m 0755 $$ASM $(DESTDIR)$(pkglibdir); \
+	done;
+
+uninstall-hook:
+	for ASM in $(INSTALLED_ASSEMBLIES); do \
+		rm -f $(DESTDIR)$(pkglibdir)/`basename $$ASM`; \
+	done

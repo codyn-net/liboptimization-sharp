@@ -20,7 +20,7 @@
 
 using System;
 using System.Collections.Generic;
-using Optimization.Math;
+using Biorob.Math;
 
 namespace Optimization
 {
@@ -36,13 +36,18 @@ namespace Optimization
 
 		public struct Variable
 		{
-			public Math.Expression Expression;
+			public Expression Expression;
 			public Mode Mode;
 
-			public Variable(Math.Expression expression, Mode mode)
+			public Variable(Expression expression, Mode mode)
 			{
 				Expression = expression;
 				Mode = mode;
+			}
+			
+			public static implicit operator Expression(Variable v)
+			{
+				return v.Expression;
 			}
 		}
 
@@ -220,7 +225,7 @@ namespace Optimization
 
 		private double ExpressionFitness()
 		{
-			return d_expression.Evaluate(Optimization.Math.Constants.Context, d_context);
+			return d_expression.Evaluate(Biorob.Math.Constants.Context, d_context);
 		}
 
 		public double Value
@@ -244,6 +249,11 @@ namespace Optimization
 			{
 				d_value = value;
 			}
+		}
+		
+		public bool Parse(string expression)
+		{
+			return d_expression.Parse(expression);
 		}
 
 		public void Reset()
