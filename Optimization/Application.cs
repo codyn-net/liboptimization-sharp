@@ -40,6 +40,7 @@ namespace Optimization
 		public event MessageHandler OnStatus = delegate {};
 		public event MessageHandler OnError = delegate {};
 		public event MessageHandler OnMessage = delegate {};
+		public event MessageHandler OnWarning = delegate {};
 
 		public event ProgressHandler OnProgress = delegate {};
 		public event JobHandler OnJob = delegate {};
@@ -64,6 +65,16 @@ namespace Optimization
 
 		class MessageClosed : Message
 		{
+		}
+		
+		class MessageNotification : Message
+		{
+			public Notification Notification;
+			
+			public MessageNotification(Notification notification)
+			{
+				Notification = notification;
+			}
 		}
 
 		Job d_job;
@@ -183,6 +194,9 @@ namespace Optimization
 					case Communication.CommunicationType.Response:
 						messages.Add(new MessageResponse(comm.Response));
 					break;
+					case Communication.CommunicationType.Notification:
+						messages.Add(new MessageNotification(comm.Notification));
+					break;
 					default:
 						// NOOP
 					break;
@@ -259,6 +273,9 @@ namespace Optimization
 
 		protected virtual void NewIteration()
 		{
+			// Send progress report!
+			d_connection.Progress(d_job);
+
 			// Next iteration for optimizer
 			if (!d_job.Optimizer.Next())
 			{
@@ -491,12 +508,32 @@ namespace Optimization
 						{
 							HandleResponse((msg as MessageResponse).Response);
 						}
+						else if (msg is MessageNotification)
+						{
+							HandleNotification((msg as MessageNotification).Notification);
+						}
 					}
 				}
 				catch (Exception e)
 				{
 					System.Console.Error.WriteLine("Erreur: " + e);
 				}
+			}
+		}
+		
+		private void HandleNotification(Notification notification)
+		{
+			switch (notification.NotificationType)
+			{
+				case Notification.Type.Info:
+					OnMessage(this, notification.Message);
+				break;
+				case Notification.Type.Warning:
+					OnWarning(this, notification.Message);
+				break;
+				case Notification.Type.Error:
+					OnError(this, notification.Message);
+				break;
 			}
 		}
 

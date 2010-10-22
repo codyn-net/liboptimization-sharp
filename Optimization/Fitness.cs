@@ -59,12 +59,26 @@ namespace Optimization
 		private Dictionary<string, object> d_context;
 		private static Mode s_mode;
 		private object d_value;
+		private List<string> d_unknowns;
 
 		private static Comparison<Fitness> s_comparer;
 
 		static Fitness()
 		{
 			CompareMode = Mode.Default;
+		}
+		
+		public static int CompareByMode(Mode mode, double a, double b)
+		{
+			switch (mode)
+			{
+				case Mode.Maximize:
+					return a.CompareTo(b);
+				case Mode.Minimize:
+					return b.CompareTo(a);
+			}
+			
+			return 0;
 		}
 
 		private static void SetMode(Mode mode)
@@ -149,6 +163,7 @@ namespace Optimization
 			d_context.Clear();
 
 			d_expression.Parse("0");
+			d_unknowns = null;
 		}
 
 		public double this [string key]
@@ -248,6 +263,39 @@ namespace Optimization
 			set
 			{
 				d_value = value;
+			}
+		}
+		
+		private void ResolveUnknowns()
+		{
+			if (d_unknowns != null)
+			{
+				return;
+			}
+			
+			d_unknowns = new List<string>();
+			
+			if (d_expression == null || !d_expression)
+			{
+				return;
+			}
+			
+			Dictionary<string, object> context = new Dictionary<string, object>();
+			
+			foreach (KeyValuePair<string, Variable> pair in d_variables)
+			{
+				context[pair.Key] = pair.Value;
+			}
+			
+			d_unknowns.AddRange(d_expression.ResolveUnknowns(context));
+		}
+		
+		public string[] Unknowns
+		{
+			get
+			{
+				ResolveUnknowns();
+				return d_unknowns.ToArray();
 			}
 		}
 		

@@ -79,6 +79,8 @@ FILES = \
 	Optimization.Messages/Communication.cs \
 	Optimization.Messages/Identify.cs \
 	Optimization.Messages/Ping.cs \
+	Optimization.Messages/Progress.cs \
+	Optimization.Messages/Notification.cs \
 	Optimization.Messages/Response.cs \
 	Optimization.Messages/Task.cs \
 	Optimization.Messages/Token.cs \

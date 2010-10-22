@@ -48,7 +48,13 @@ namespace Optimization.Messages
 			Identify = 5,
 			
 			[ProtoEnum()]
-			Ping = 6
+			Ping = 6,
+			
+			[ProtoEnum()]
+			Progress = 7,
+			
+			[ProtoEnum()]
+			Notification = 8
 		}
 
 		[ProtoMember(1, IsRequired=true)]
@@ -74,5 +80,11 @@ namespace Optimization.Messages
 
 		[ProtoMember(8, IsRequired=false)]
 		public Ping Ping;
+		
+		[ProtoMember(9, IsRequired=false)]
+		public Progress Progress;
+		
+		[ProtoMember(10, IsRequired=false)]
+		public Notification Notification;
 	}
 }

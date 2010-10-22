@@ -33,6 +33,9 @@ namespace Optimization
 		private TcpClient d_client;
 		private byte[] d_readBuffer;
 		private byte[] d_buffer;
+		
+		private List<string> d_unknowns;
+		private List<string> d_variables;
 
 		public delegate void CommunicationReceivedHandler(object source, Communication[] communication);
 		public event CommunicationReceivedHandler OnCommunicationReceived = delegate {};
@@ -316,6 +319,18 @@ namespace Optimization
 			return Send(Construct(job));
 		}
 		
+		public Identify.Fitness.Type FitnessType(Fitness.Mode mode)
+		{
+			if (mode == Fitness.Mode.Minimize)
+			{
+				return Optimization.Messages.Identify.Fitness.Type.Minimize;
+			}
+			else
+			{
+				return Optimization.Messages.Identify.Fitness.Type.Maximize;
+			}
+		}
+		
 		public bool Identify(Job job)
 		{
 			if (!d_client.Connected)
@@ -333,8 +348,121 @@ namespace Optimization
 			identify.Priority = job.Priority;
 			identify.Timeout = job.Timeout;
 			identify.Version = (ulong)Constants.ProtocolVersion;
+			
+			string[] unknowns = job.Optimizer.Fitness.Unknowns;
+			Dictionary<string, Fitness.Variable> variables = job.Optimizer.Fitness.Variables;
+			
+			identify.FitnessTerms = new Identify.Fitness[unknowns.Length + variables.Count + 1];
+			identify.FitnessTerms[0] = new Identify.Fitness(FitnessType(Fitness.CompareMode), "value");
+			
+			d_unknowns = new List<string>(unknowns);
+			
+			for (int i = 0; i < unknowns.Length; ++i)
+			{
+				identify.FitnessTerms[i + 1] = new Identify.Fitness(FitnessType(Fitness.CompareMode), unknowns[i]);
+			}
+			
+			int idx = 0;
+			d_variables = new List<string>();
+			
+			foreach (KeyValuePair<string, Fitness.Variable> pair in variables)
+			{
+				identify.FitnessTerms[idx + unknowns.Length + 1] = new Identify.Fitness(FitnessType(pair.Value.Mode), pair.Key);
+				d_variables.Add(pair.Key);
+				++idx;
+			}
 
 			communication.Identifiy = identify;
+			
+			return Send(communication);
+		}
+		
+		delegate double FitnessForIndex(Fitness fitness, int i);
+		
+		public bool Progress(Job job)
+		{
+			if (!d_client.Connected)
+			{
+				return false;
+			}
+			
+			Communication communication = new Communication();
+			communication.Type = Communication.CommunicationType.Progress;
+			
+			Progress pgs = new Progress();
+			
+			pgs.Tick = job.Optimizer.CurrentIteration;
+
+			int num = d_unknowns.Count + d_variables.Count + 1;
+			
+			pgs.Terms = new Progress.Term[num];
+			
+			FitnessForIndex fitfunc = delegate (Fitness fitness, int i)
+			{
+				if (i == 0)
+				{
+					return fitness.Value;
+				}
+				else if (i <= d_unknowns.Count)
+				{
+					string key = d_unknowns[i - 1];
+					
+					if (fitness.Values.ContainsKey(key))
+					{
+						return fitness.Values[key];
+					}
+					else
+					{
+						return 0;
+					}
+				}
+				else
+				{
+					string key = d_variables[i - d_unknowns.Count - 1];
+					
+					if (fitness.Variables.ContainsKey(key))
+					{
+						return fitness.Variables[key].Expression.Evaluate(fitness.Context);
+					}
+					else
+					{					
+						return 0;
+					}
+				}
+			};
+			
+			// Compute best here manually because it's not yet updated in the optimizer
+			Fitness best = null;
+			
+			// Setup the means
+			for (int s = 0; s < job.Optimizer.Population.Count; ++s)
+			{
+				Solution solution = job.Optimizer.Population[s];
+				
+				if (best == null || solution.Fitness > best)
+				{
+					best = solution.Fitness;
+				}
+				
+				for (int i = 0; i < num; ++i)
+				{
+					if (s == 0)
+					{
+						pgs.Terms[i] = new Progress.Term();
+					}
+
+					pgs.Terms[i].Mean += fitfunc(solution.Fitness, i);
+				}
+			}
+
+			// Setup the bests
+			for (int i = 0; i < num; ++i)
+			{
+				pgs.Terms[i].Best = fitfunc(best, i);
+				pgs.Terms[i].Mean /= job.Optimizer.Population.Count;
+			}
+			
+			communication.Progress = pgs;
 			
 			return Send(communication);
 		}
