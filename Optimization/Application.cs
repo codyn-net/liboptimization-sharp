@@ -91,6 +91,7 @@ namespace Optimization
 		int d_reconnectTimeoutIndex;
 		string d_token;
 		object d_lastRevalidate;
+		Dictionary<string, string> d_overrideSettings;
 
 		Dictionary<uint, Solution> d_running;
 
@@ -113,11 +114,13 @@ namespace Optimization
 
 			d_connection.OnClosed += HandleOnClosed;
 			d_connection.OnCommunicationReceived += HandleOnCommunicationReceived;
-
+			
 			Initialize();
+			
+			d_overrideSettings = new Dictionary<string, string>();
 
 			ParseArguments(ref args);
-
+			
 			if (String.IsNullOrEmpty(d_masterAddress))
 			{
 				d_masterAddress = "localhost:" + (int)Constants.MasterPort;
@@ -220,13 +223,28 @@ namespace Optimization
 
 			Environment.Exit(0);
 		}
+		
+		private void AddOverrideSetting(string s)
+		{
+			string[] parts = s.Split(new char[] {'='}, 2);
+			
+			if (parts.Length == 1)
+			{
+				d_overrideSettings[parts[0]] = null;
+			}
+			else
+			{
+				d_overrideSettings[parts[0]] = parts[1];
+			}
+		}
 
 		protected virtual void AddOptions(NDesk.Options.OptionSet optionSet)
 		{
-			optionSet.Add("h|help", "Show this help message", delegate (string s) { ShowHelp(optionSet); });
-			optionSet.Add("m=|master=", "Specify master connection string", delegate (string s) { d_masterAddress = s; });
-			optionSet.Add("t=|tokensrv=", "Specify token server connection string", delegate (string s) { d_tokenAddress = s; });
-			optionSet.Add("token=", "Specify token string", delegate (string s) { d_token = s; });
+			optionSet.Add("h|help", "Show this help message", s => ShowHelp(optionSet));
+			optionSet.Add("m=|master=", "Specify master connection string", s => d_masterAddress = s);
+			optionSet.Add("t=|tokensrv=", "Specify token server connection string", s => d_tokenAddress = s);
+			optionSet.Add("token=", "Specify token string", s => d_token = s);
+			optionSet.Add("override-setting=", "Specify override dispatcher settings (key=value)", s => AddOverrideSetting(s));
 		}
 
 		protected virtual void ParseArguments(ref string[] args)
@@ -488,6 +506,22 @@ namespace Optimization
 		{
 			d_quitting = true;
 		}
+		
+		private void HandleNotification(Notification notification)
+		{
+			switch (notification.NotificationType)
+			{
+				case Notification.Type.Info:
+					OnMessage(this, notification.Message);
+				break;
+				case Notification.Type.Warning:
+					OnWarning(this, notification.Message);
+				break;
+				case Notification.Type.Error:
+					OnError(this, notification.Message);
+				break;
+			}
+		}
 
 		private void HandleMessages()
 		{
@@ -518,22 +552,6 @@ namespace Optimization
 				{
 					System.Console.Error.WriteLine("Erreur: " + e);
 				}
-			}
-		}
-		
-		private void HandleNotification(Notification notification)
-		{
-			switch (notification.NotificationType)
-			{
-				case Notification.Type.Info:
-					OnMessage(this, notification.Message);
-				break;
-				case Notification.Type.Warning:
-					OnWarning(this, notification.Message);
-				break;
-				case Notification.Type.Error:
-					OnError(this, notification.Message);
-				break;
 			}
 		}
 
@@ -807,6 +825,18 @@ namespace Optimization
 #endif
 
 			d_job = job;
+			
+			foreach (KeyValuePair<string, string> pair in d_overrideSettings)
+			{
+				if (pair.Value == null)
+				{
+					d_job.Dispatcher.Settings.Remove(pair.Key);
+				}
+				else
+				{
+					d_job.Dispatcher.Settings[pair.Key] = pair.Value;
+				}
+			}
 			
 			if (!String.IsNullOrEmpty(d_token))
 			{
