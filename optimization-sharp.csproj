@@ -43,10 +43,6 @@
     <Compile Include="Optimization\Solution.cs" />
     <Compile Include="Optimization\State.cs" />
     <Compile Include="Optimization\Visual.cs" />
-    <Compile Include="Optimization.Math\Expression.cs" />
-    <Compile Include="Optimization.Math\Instruction.cs" />
-    <Compile Include="Optimization.Math\Operations.cs" />
-    <Compile Include="Optimization.Math\Tokenizer.cs" />
     <Compile Include="Optimization.Messages\Batch.cs" />
     <Compile Include="Optimization.Messages\Cancel.cs" />
     <Compile Include="Optimization.Messages\Communication.cs" />
@@ -60,7 +56,6 @@
     <Compile Include="Optimization.Dispatcher\Dispatcher.cs" />
     <Compile Include="Optimization.Messages\Messages.cs" />
     <Compile Include="Optimization.Dispatcher\Webots.cs" />
-    <Compile Include="Optimization.Math\Constants.cs" />
     <Compile Include="Optimization.Dispatcher.Internal\Dispatcher.cs" />
     <Compile Include="Optimization.Dispatcher.Internal\Internal.cs" />
     <Compile Include="Optimization.Dispatcher.Internal\Registry.cs" />
@@ -71,6 +66,8 @@
     <Compile Include="Optimization\Utils.cs" />
     <Compile Include="Optimization\Extension.cs" />
     <Compile Include="Optimization.Attributes\Attributes.cs" />
+    <Compile Include="Optimization.Messages\Progress.cs" />
+    <Compile Include="Optimization.Messages\Notification.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
@@ -82,11 +79,13 @@
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="Mono.Posix" />
+    <Reference Include="Biorob.Math, Version=1.0.3909.29930, Culture=neutral">
+      <Package>biorob-math-sharp-1.0</Package>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Optimization\" />
     <Folder Include="Optimization.Dispatcher\" />
-    <Folder Include="Optimization.Math\" />
     <Folder Include="Optimization.Messages\" />
     <Folder Include="Optimization.Storage\" />
     <Folder Include="Optimization.Dispatcher.Internal\" />
