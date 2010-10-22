@@ -149,6 +149,7 @@ namespace Optimization
 			d_context = new Dictionary<string, object>();
 
 			d_expression = new Expression();
+			d_expression.CheckVariables = true;
 		}
 
 		public static int Compare(Fitness a, Fitness b)
