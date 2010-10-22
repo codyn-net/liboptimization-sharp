@@ -22,6 +22,7 @@ using System;
 using System.Xml;
 using System.Collections.Generic;
 using System.Reflection;
+using System.IO;
 
 namespace Optimization
 {
@@ -87,10 +88,77 @@ namespace Optimization
 			job.d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);
+			
+			ProcessInclude(doc, doc, filename);
 
 			job.Load(doc);
 
 			return job;
+		}
+
+		private static void ProcessInclude(XmlDocument doc, XmlNode root, string basename)
+		{
+			List<XmlNode> includes = new List<XmlNode>();
+
+			foreach (XmlNode node in root.SelectNodes("//include"))
+			{
+				includes.Add(node);
+			}
+			
+			foreach (XmlNode node in includes)
+			{
+				XmlNode parent = node.ParentNode;
+
+				while (parent != doc && parent != root)
+				{
+					parent = parent.ParentNode;
+				}
+
+				if (parent == root)
+				{
+					ProcessInclude(doc, root, node, basename);
+				}
+				
+				node.ParentNode.RemoveChild(node);
+			}
+		}
+		
+		private static void ProcessInclude(XmlDocument doc, XmlNode root, XmlNode node, string basename)
+		{
+			string uri = node.InnerText.Trim();
+			
+			if (!uri.StartsWith("/"))
+			{
+				uri = Path.Combine(Path.GetDirectoryName(basename), uri);
+			}
+
+			XmlDocument included = new XmlDocument();
+			included.Load(uri);
+			
+			XmlAttribute path = node.Attributes["path"];
+			List<XmlNode> nodes = new List<XmlNode>();
+			
+			if (path != null)
+			{
+				foreach (XmlNode child in included.SelectNodes(path.Value.Trim()))
+				{
+					nodes.Add(child);
+				}
+			}
+			else
+			{
+				nodes.Add(included);
+			}
+			
+			XmlNode parent = node.ParentNode;
+			
+			foreach (XmlNode ext in nodes)
+			{
+				ProcessInclude(included, ext, uri);
+
+				XmlNode intern = doc.ImportNode(ext, true);
+				parent.InsertAfter(intern, node);
+			}
 		}
 
 		public bool LoadFromStorage(string filename)
