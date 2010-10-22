@@ -303,7 +303,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("An error occurred: " + e);
 				}
 
 				// No more iterations, we're done
@@ -317,7 +317,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				System.Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("An error occurred: " + e);
 			}
 
 			// Send optimizer population as batch to the master
@@ -374,7 +374,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				System.Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("An error ocurred: " + e);
 			}
 		}
 
@@ -418,7 +418,7 @@ namespace Optimization
 			}
 			catch (Exception e)
 			{
-				System.Console.Error.WriteLine("Erreur: " + e);
+				System.Console.Error.WriteLine("Error: " + e);
 			}
 
 			Done(solution);
@@ -550,7 +550,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("Error: " + e);
 				}
 			}
 		}
@@ -581,7 +581,7 @@ namespace Optimization
 					fitness = dispatcher.Evaluate(solution);
 					solution.Update(fitness);
 				}
-
+				
 				if (!d_job.Optimizer.Next())
 				{
 					try
@@ -590,7 +590,7 @@ namespace Optimization
 					}
 					catch (Exception e)
 					{
-						System.Console.Error.WriteLine("Erreur: " + e);
+						System.Console.Error.WriteLine("Error: " + e);
 					}
 
 					// No more iterations, we're done
@@ -604,7 +604,7 @@ namespace Optimization
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("Error: " + e);
 				}
 			}
 		}
@@ -901,7 +901,7 @@ use the --token option to use a new token with an existing database.");
 				}
 				catch (Exception e)
 				{
-					System.Console.Error.WriteLine("Erreur: " + e);
+					System.Console.Error.WriteLine("An error occurred: " + e);
 				}
 			}
 
