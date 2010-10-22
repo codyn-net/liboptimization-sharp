@@ -140,11 +140,9 @@ namespace Optimization
 			{
 				d_tokenAddress += ":8128";
 			}
-
+			
 			d_waitHandle = new AutoResetEvent(false);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
-
-			Console.ResetColor();
 		}
 
 #if USE_UNIXSIGNAL
