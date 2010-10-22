@@ -368,7 +368,11 @@ namespace Optimization
 			try
 			{
 				OnError(this, str);
-				d_job.Optimizer.Log("error", str);
+				
+				if (d_job != null)
+				{
+					d_job.Optimizer.Log("error", str);
+				}
 			}
 			catch (Exception e)
 			{
