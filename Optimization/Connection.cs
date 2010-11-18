@@ -215,7 +215,7 @@ namespace Optimization
 				Task.KeyValueType kv = new Task.KeyValueType();
 
 				kv.Key = pair.Key;
-				kv.Value = Utils.SubstituteEnvironment(pair.Value);
+				kv.Value = pair.Value;
 
 				settings.Add(kv);
 			}
