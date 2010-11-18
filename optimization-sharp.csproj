@@ -63,7 +63,6 @@
     <Compile Include="Optimization\NumericSetting.cs" />
     <Compile Include="Optimization.Messages\Identify.cs" />
     <Compile Include="Optimization.Messages\Ping.cs" />
-    <Compile Include="Optimization\Utils.cs" />
     <Compile Include="Optimization\Extension.cs" />
     <Compile Include="Optimization.Attributes\Attributes.cs" />
     <Compile Include="Optimization.Messages\Progress.cs" />
