@@ -7,14 +7,15 @@ Build-Depends: debhelper (>= 7),
                pkg-config,
                mono-devel | mono-gmcs,
                libmono-sqlite2.0-cil,
-               libmono2.0-cil
+               libmono2.0-cil,
+			   libbiorob-math1-sharp
 Standards-Version: 3.8.0
 Section: libs
-Homepage: http://birg.epfl.ch
+Homepage: http://biorob.epfl.ch
 
 Package: liboptimization2-sharp
 Section: libs
 Architecture: any
-Depends: mono-runtime, libmono-system2.0-cil, libmono-corlib2.0-cil, libmono-sqlite2.0-cil, libmono2.0-cil
+Depends: mono-runtime, libmono-system2.0-cil, libmono-corlib2.0-cil, libmono-sqlite2.0-cil, libmono2.0-cil, libbiorob-math1-sharp
 Description: Optimization framework C# bindings
  C# bindings for the optimization framework
