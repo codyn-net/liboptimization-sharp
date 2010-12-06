@@ -76,7 +76,7 @@ namespace Optimization.Messages
 		public Cancel Cancel;
 		
 		[ProtoMember(7, IsRequired=false)]
-		public Identify Identifiy;
+		public Identify Identify;
 
 		[ProtoMember(8, IsRequired=false)]
 		public Ping Ping;

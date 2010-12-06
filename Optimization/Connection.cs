@@ -371,8 +371,8 @@ namespace Optimization
 				d_variables.Add(pair.Key);
 				++idx;
 			}
-
-			communication.Identifiy = identify;
+			
+			communication.Identify = identify;
 			
 			return Send(communication);
 		}
