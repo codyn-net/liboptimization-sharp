@@ -23,6 +23,7 @@ using System.Xml;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using System.Text;
 
 namespace Optimization
 {
@@ -89,14 +90,17 @@ namespace Optimization
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);
 			
-			ProcessInclude(doc, doc, filename);
-
+			Dictionary<string, XmlDocument> includeCache = new Dictionary<string, XmlDocument>();
+			includeCache[Path.GetFullPath(filename)] = doc;
+			
+			ProcessInclude(doc, doc, filename, includeCache);
+			
 			job.Load(doc);
 
 			return job;
 		}
 
-		private static void ProcessInclude(XmlDocument doc, XmlNode root, string basename)
+		private static void ProcessInclude(XmlDocument doc, XmlNode root, string basename, Dictionary<string, XmlDocument> cache)
 		{
 			List<XmlNode> includes = new List<XmlNode>();
 
@@ -116,14 +120,14 @@ namespace Optimization
 
 				if (parent == root)
 				{
-					ProcessInclude(doc, root, node, basename);
+					ProcessInclude(doc, root, node, basename, cache);
 				}
 				
 				node.ParentNode.RemoveChild(node);
 			}
 		}
 		
-		private static void ProcessInclude(XmlDocument doc, XmlNode root, XmlNode node, string basename)
+		private static void ProcessInclude(XmlDocument doc, XmlNode root, XmlNode node, string basename, Dictionary<string, XmlDocument> cache)
 		{
 			string uri = node.InnerText.Trim();
 			
@@ -131,9 +135,22 @@ namespace Optimization
 			{
 				uri = Path.Combine(Path.GetDirectoryName(basename), uri);
 			}
-
-			XmlDocument included = new XmlDocument();
-			included.Load(uri);
+			
+			XmlDocument included;
+			
+			if (!cache.ContainsKey(uri))
+			{			
+				included = new XmlDocument();
+				included.Load(uri);
+				
+				cache[uri] = included;
+				
+				ProcessInclude(included, included, uri, cache);
+			}
+			else
+			{
+				included = cache[uri];
+			}
 			
 			XmlAttribute path = node.Attributes["path"];
 			List<XmlNode> nodes = new List<XmlNode>();
@@ -154,7 +171,7 @@ namespace Optimization
 			
 			foreach (XmlNode ext in nodes)
 			{
-				ProcessInclude(included, ext, uri);
+				ProcessInclude(included, ext, uri, cache);
 
 				XmlNode intern = doc.ImportNode(ext, true);
 				parent.InsertAfter(intern, node);

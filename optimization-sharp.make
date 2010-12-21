@@ -71,7 +71,6 @@ FILES = \
 	Optimization/Settings.cs \
 	Optimization/Solution.cs \
 	Optimization/State.cs \
-	Optimization/Utils.cs \
 	Optimization/Visual.cs \
 	Optimization.Attributes/Attributes.cs \
 	Optimization.Messages/Batch.cs \

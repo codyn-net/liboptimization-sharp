@@ -215,7 +215,7 @@ namespace Optimization
 				Task.KeyValueType kv = new Task.KeyValueType();
 
 				kv.Key = pair.Key;
-				kv.Value = Utils.SubstituteEnvironment(pair.Value);
+				kv.Value = pair.Value;
 
 				settings.Add(kv);
 			}
@@ -371,8 +371,8 @@ namespace Optimization
 				d_variables.Add(pair.Key);
 				++idx;
 			}
-
-			communication.Identifiy = identify;
+			
+			communication.Identify = identify;
 			
 			return Send(communication);
 		}
