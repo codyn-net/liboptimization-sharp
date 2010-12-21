@@ -191,6 +191,8 @@ namespace Optimization
 			{
 				Fitness.Values[fit.Key] = fit.Value;
 			}
+
+			Fitness.Update();
 		}
 	}
 }
