@@ -754,18 +754,20 @@ namespace Optimization.Storage
 			for (int i = 0; i < reader.FieldCount; ++i)
 			{
 				string name = reader.GetName(i);
+				
+				object val = reader.GetValue(i);
 
 				if (name.StartsWith("_f_"))
 				{
-					solution.Fitness.Add(name.Substring(3), reader.GetDouble(i));
+					solution.Fitness.Add(name.Substring(3), val == null ? 0 : reader.GetDouble(i));
 				}
 				else if (name.StartsWith("_p_"))
 				{
-					solution.Parameters.Add(name.Substring(3), reader.GetDouble(i));
+					solution.Parameters.Add(name.Substring(3), val == null ? 0 : reader.GetDouble(i));
 				}
 				else if (name.StartsWith("_d_"))
 				{
-					solution.Data.Add(name.Substring(3), reader.GetString(i));
+					solution.Data.Add(name.Substring(3), val == null ? "" : reader.GetString(i));
 				}
 			}
 
