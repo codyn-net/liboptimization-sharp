@@ -285,6 +285,8 @@ namespace Optimization
 		{
 			Scan();
 			
+			name = name.ToLower();
+			
 			if (s_extensions.ContainsKey(name))
 			{
 				Extension ret = (Extension)s_extensions[name].GetConstructor(new Type[] {typeof(Job)}).Invoke(new object[] {job});
