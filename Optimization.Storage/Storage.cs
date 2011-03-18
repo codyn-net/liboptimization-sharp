@@ -163,6 +163,14 @@ namespace Optimization.Storage
 
 			d_connection.Close();
 		}
+		
+		public int LastInsertId
+		{
+			get
+			{
+				return d_connection.LastInsertRowId;
+			}
+		}
 
 		private string NormalizeName(string name)
 		{
