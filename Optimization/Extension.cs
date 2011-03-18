@@ -86,6 +86,10 @@ namespace Optimization
 
 		public virtual void InitializePopulation()
 		{
+			foreach (Solution solution in d_job.Optimizer.Population)
+			{
+				Initialize(solution);
+			}
 		}
 
 		public virtual bool Finished()

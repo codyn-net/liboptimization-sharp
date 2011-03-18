@@ -202,11 +202,6 @@ namespace Optimization
 				ret = (Solution)d_solutionConstructor.Invoke(new object[] {idx, d_fitness, d_state});
 			}
 
-			foreach (Extension ext in d_extensions)
-			{
-				ext.Initialize(ret);
-			}
-
 			return ret;
 		}
 
