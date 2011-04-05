@@ -195,6 +195,11 @@ namespace Optimization
 				return false;
 			}
 		}
+		
+		private string ExpandJobPath(string s)
+		{
+			return s.Replace("$OPTIMIZATION_JOB_PATH", System.IO.Path.GetDirectoryName(d_filename));
+		}
 
 		private void Load(Storage.Storage storage)
 		{
@@ -219,7 +224,7 @@ namespace Optimization
 
 			foreach (KeyValuePair<string, string> pair in job.Dispatcher.Settings)
 			{
-				d_dispatcher.Settings[pair.Key] = pair.Value;
+				d_dispatcher.Settings[pair.Key] = ExpandJobPath(pair.Value);
 			}
 			
 			foreach (string ext in job.Extensions)
@@ -385,7 +390,7 @@ namespace Optimization
 					throw new Exception(String.Format("XML: No name specified for dispatcher setting {0}", nm.Value));
 				}
 
-				d_dispatcher.Settings[nm.Value] = node.InnerText;
+				d_dispatcher.Settings[nm.Value] = ExpandJobPath(node.InnerText);
 			}
 		}
 		
