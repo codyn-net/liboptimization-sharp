@@ -122,8 +122,35 @@ namespace Optimization.Storage
 			{
 				d_connection.Close();
 			}
+		
+			if (exists && ret)
+			{
+				Upgrade();
+			}
 
 			return ret;
+		}
+		
+		private void Upgrade()
+		{
+			bool hasfilename = false;
+
+			Query("PRAGMA table_info(job)", delegate (IDataReader reader) {
+				string name = (string)reader[1];
+				
+				if (name == "filename")
+				{
+					hasfilename = true;
+					return false;
+				}
+				
+				return true;
+			});
+			
+			if (!hasfilename)
+			{
+				Query("ALTER TABLE `job` ADD COLUMN `filename` TEXT");
+			}
 		}
 
 		public static implicit operator bool(Storage s)
@@ -552,10 +579,10 @@ namespace Optimization.Storage
 		{
 			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
 
-			Query("CREATE TABLE IF NOT EXISTS `job` (`name` TEXT, `optimizer` TEXT, `dispatcher` TEXT, `priority` DOUBLE, `timeout` DOUBLE, `token` TEXT)");
+			Query("CREATE TABLE IF NOT EXISTS `job` (`filename` TEXT, `name` TEXT, `optimizer` TEXT, `dispatcher` TEXT, `priority` DOUBLE, `timeout` DOUBLE, `token` TEXT)");
 			Query("DELETE FROM `job`");
 
-			Query("INSERT INTO `job` (`name`, `optimizer`, `dispatcher`, `priority`, `timeout`, `token`) VALUES(@0, @1, @2, @3, @4, @5)", Job.Name, Job.Optimizer.Name, Job.Dispatcher.Name, Job.Priority, Job.Timeout, Job.Token);
+			Query("INSERT INTO `job` (`filename`, `name`, `optimizer`, `dispatcher`, `priority`, `timeout`, `token`) VALUES(@0, @1, @2, @3, @4, @5, @6)", Job.Filename, Job.Name, Job.Optimizer.Name, Job.Dispatcher.Name, Job.Priority, Job.Timeout, Job.Token);
 
 			Query("CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT, `value` TEXT)");
 			Query("DELETE FROM `settings`");
@@ -864,7 +891,7 @@ namespace Optimization.Storage
 		public Records.Job ReadJob()
 		{
 			Records.Job job = new Records.Job();
-			object[] jobspec = QueryFirst("SELECT `name`, `priority`, `timeout`, `token`, `optimizer`, `dispatcher` FROM `job`");
+			object[] jobspec = QueryFirst("SELECT `name`, `priority`, `timeout`, `token`, `optimizer`, `dispatcher`, `filename` FROM `job`");
 
 			job.Name = (string)jobspec[0];
 			job.Priority = (double)jobspec[1];
@@ -872,7 +899,8 @@ namespace Optimization.Storage
 			job.Token = (string)jobspec[3];
 			job.Optimizer.Name = (string)jobspec[4];
 			job.Dispatcher.Name = (string)jobspec[5];
-
+			job.Filename = (string)jobspec[6];
+			
 			/* Optimizer stuff */
 			Query("SELECT `name`, `value` FROM `settings`", delegate (IDataReader reader) {
 				job.Optimizer.Settings[(string)reader[0]] = (string)reader[1];

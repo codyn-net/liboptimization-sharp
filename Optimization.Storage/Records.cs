@@ -131,6 +131,7 @@ namespace Optimization.Storage.Records
 		public double Priority;
 		public double Timeout;
 		public string Token;
+		public string Filename;
 		public List<string> Extensions;
 
 		public Optimizer Optimizer;

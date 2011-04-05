@@ -70,6 +70,7 @@ namespace Optimization
 		private string d_user;
 		private Storage.Storage d_storage;
 		private bool d_synchronous;
+		private string d_filename;
 
 		public Job()
 		{
@@ -86,6 +87,7 @@ namespace Optimization
 		{
 			Job job = new Job();
 
+			job.d_filename = System.IO.Path.GetFullPath(filename);
 			job.d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);
@@ -202,6 +204,7 @@ namespace Optimization
 			d_priority = job.Priority;
 			d_token = job.Token;
 			d_timeout = job.Timeout;
+			d_filename = job.Filename;
 
 			d_optimizer = Registry.Create(job.Optimizer.Name);
 
@@ -415,6 +418,14 @@ namespace Optimization
 			get
 			{
 				return d_name;
+			}
+		}
+		
+		public string Filename
+		{
+			get
+			{
+				return d_filename;
 			}
 		}
 
