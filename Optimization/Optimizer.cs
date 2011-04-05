@@ -433,6 +433,16 @@ namespace Optimization
 					d_best = solution.Clone() as Solution;
 				}
 			}
+			
+			foreach (Extension ext in d_extensions)
+			{
+				Solution best = ext.UpdateBest();
+				
+				if (best != null)
+				{
+					d_best = best;
+				}
+			}
 		}
 
 		private double LastBestDifference

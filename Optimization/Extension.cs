@@ -113,6 +113,11 @@ namespace Optimization
 		{
 		}
 		
+		public virtual Solution UpdateBest()
+		{
+			return null;
+		}
+		
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer)
 		{
 			/* Settings */
