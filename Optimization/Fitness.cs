@@ -404,5 +404,28 @@ namespace Optimization
 				return d_expression;
 			}
 		}
+		
+		public override string ToString()
+		{
+			List<string> parts = new List<string>();
+			
+			parts.Add(String.Format("Value = {0}", Value.ToString()));
+			
+			foreach (KeyValuePair<string, object> v in d_context)
+			{
+				Biorob.Math.Expression expr = v.Value as Biorob.Math.Expression;
+				
+				if (expr != null)
+				{
+					parts.Add(String.Format("{0} = {1}", v.Key, expr.Evaluate(Context)));
+				}
+				else
+				{
+					parts.Add(String.Format("{0} = {1}", v.Key, v.Value));
+				}
+			}
+			
+			return String.Format("Fitness [{0}]", String.Join(", ", parts.ToArray()));
+		}
 	}
 }
