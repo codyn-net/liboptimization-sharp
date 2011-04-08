@@ -61,6 +61,7 @@ FILES = \
 	Optimization/Directories.cs \
 	Optimization/Extension.cs \
 	Optimization/Fitness.cs \
+	Optimization/ICopyable.cs \
 	Optimization/Job.cs \
 	Optimization/NumericSetting.cs \
 	Optimization/Optimizer.cs \
@@ -71,6 +72,7 @@ FILES = \
 	Optimization/Settings.cs \
 	Optimization/Solution.cs \
 	Optimization/State.cs \
+	Optimization/UserData.cs \
 	Optimization/Visual.cs \
 	Optimization.Attributes/Attributes.cs \
 	Optimization.Messages/Batch.cs \
