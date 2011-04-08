@@ -151,6 +151,14 @@ namespace Optimization
 			d_expression = new Expression();
 			d_expression.CheckVariables = true;
 		}
+		
+		public static Comparison<Fitness> OverrideCompare(Comparison<Fitness> comparison)
+		{
+			Comparison<Fitness> original = s_comparer;
+			s_comparer = comparison;
+			
+			return original;
+		}
 
 		public static int Compare(Fitness a, Fitness b)
 		{
