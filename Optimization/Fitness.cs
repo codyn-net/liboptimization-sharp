@@ -275,6 +275,17 @@ namespace Optimization
 			}
 		}
 		
+		private void AddUnknown(List<string> unknowns, params string[] unknown)
+		{
+			foreach (string u in unknown)
+			{
+				if (!unknowns.Contains(u))
+				{
+					unknowns.Add(u);
+				}
+			}
+		}
+		
 		private void ResolveUnknowns()
 		{
 			if (d_unknowns != null)
@@ -296,7 +307,12 @@ namespace Optimization
 				context[pair.Key] = pair.Value;
 			}
 			
-			d_unknowns.AddRange(d_expression.ResolveUnknowns(context));
+			AddUnknown(d_unknowns, d_expression.ResolveUnknowns(context));
+			
+			foreach (KeyValuePair<string, Variable> pair in d_variables)
+			{
+				AddUnknown(d_unknowns, pair.Value.Expression.ResolveUnknowns(context));
+			}
 		}
 		
 		public string[] Unknowns
