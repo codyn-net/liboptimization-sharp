@@ -425,15 +425,7 @@ namespace Optimization
 		}
 
 		protected virtual void UpdateBest()
-		{
-			foreach (Solution solution in d_population)
-			{
-				if (d_best == null || solution.Fitness > d_best.Fitness)
-				{
-					d_best = solution.Clone() as Solution;
-				}
-			}
-			
+		{		
 			foreach (Extension ext in d_extensions)
 			{
 				Solution best = ext.UpdateBest();
@@ -441,6 +433,15 @@ namespace Optimization
 				if (best != null)
 				{
 					d_best = best;
+					return;
+				}
+			}
+
+			foreach (Solution solution in d_population)
+			{
+				if (d_best == null || solution.Fitness > d_best.Fitness)
+				{
+					d_best = solution.Clone() as Solution;
 				}
 			}
 		}
