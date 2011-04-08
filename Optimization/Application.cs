@@ -289,9 +289,6 @@ namespace Optimization
 
 		protected virtual void NewIteration()
 		{
-			// Send progress report!
-			d_connection.Progress(d_job);
-
 			// Next iteration for optimizer
 			if (!d_job.Optimizer.Next())
 			{
@@ -308,6 +305,8 @@ namespace Optimization
 				d_quitting = true;
 				return;
 			}
+			
+			d_connection.Progress(d_job);
 
 			try
 			{
