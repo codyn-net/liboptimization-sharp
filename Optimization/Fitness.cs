@@ -24,7 +24,7 @@ using Biorob.Math;
 
 namespace Optimization
 {
-	public class Fitness : ICloneable
+	public class Fitness : UserData, ICloneable
 	{
 		public enum Mode
 		{
@@ -335,24 +335,48 @@ namespace Optimization
 			d_values.Clear();
 		}
 
-		public object Clone()
+		public override object Clone()
 		{
 			Fitness fit = new Fitness();
+			fit.Copy(this);
+			
+			return fit;
+		}
+		
+		public override void Copy(object source)
+		{
+			base.Copy(source);
+
+			Fitness fit = (Fitness)source;
 
 			// Shallow copy
-			fit.d_variables = d_variables;
-			fit.d_expression = d_expression;
-
-			// 'Deep' copy
-			foreach (KeyValuePair<string, double> pair in d_values)
+			d_variables = fit.d_variables;
+			d_expression = fit.d_expression;
+			
+			Dictionary<string, object> rest = new Dictionary<string, object>();
+			
+			// Copy additional context
+			foreach (KeyValuePair<string, object> ctx in fit.d_context)
 			{
-				fit.d_values[pair.Key] = pair.Value;
+				if (!fit.d_variables.ContainsKey(ctx.Key) && !fit.d_values.ContainsKey(ctx.Key))
+				{
+					rest[ctx.Key] = ctx.Value;
+				}
 			}
 
-			fit.d_value = d_value;
-			fit.Update();
+			// 'Deep' copy
+			foreach (KeyValuePair<string, double> pair in fit.d_values)
+			{
+				d_values[pair.Key] = pair.Value;
+			}
 
-			return fit;
+			d_value = fit.d_value;
+			Update();
+			
+			foreach (KeyValuePair<string, object> ctx in rest)
+			{
+				d_context[ctx.Key] = ctx.Value;
+			}
 		}
 
 		public static bool operator>(Fitness first, Fitness second)
