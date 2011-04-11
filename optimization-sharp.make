@@ -88,6 +88,7 @@ FILES = \
 	Optimization.Messages/Messages.cs \
 	Optimization.Storage/Storage.cs \
 	Optimization.Storage/Records.cs \
+	Optimization.Storage/Database.cs \
 	Optimization.Dispatcher/Dispatcher.cs \
 	Optimization.Dispatcher/Webots.cs \
 	Optimization.Dispatcher.Internal/Dispatcher.cs \
@@ -102,7 +103,7 @@ EXTRAS = \
 	optimization-sharp.pc.in
 
 REFERENCES =  \
-	Mono.Data.SqliteClient \
+	Mono.Data.Sqlite \
 	Mono.Posix \
 	System.Data \
 	System \

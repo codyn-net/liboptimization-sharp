@@ -46,6 +46,12 @@ namespace Optimization
 
 			[Setting("min-iterations", "20", Description="Minimum number of iterations before calculating convergence")]
 			public string MinIterations;
+			
+			[Setting("initial-population", null, Description="Database file from which to generate the initial population")]
+			public string InitialPopulation;
+			
+			[Setting("initial-population-noise", 0, Description="Noise to add to initial sampling from the initial population database")]
+			public double InitialPopulationNoise;
 		}
 
 		private Storage.Storage d_storage;
@@ -100,10 +106,21 @@ namespace Optimization
 
 		public virtual void Initialize()
 		{
+			d_storage.Begin();
+			
+			if (d_settings.InitialPopulation != null)
+			{
+				Storage.Database db = new Storage.Database(d_settings.InitialPopulation);
+				db.Open();
+				
+				d_storage.ImportTable(db, "initial_population");
+				d_storage.ImportTable(db, "initial_population_data");
+				
+				db.Close();
+			}
+			
 			// Create the initial population
 			InitializePopulation();
-
-			d_storage.Begin();
 
 			foreach (Extension ext in d_extensions)
 			{
@@ -204,10 +221,36 @@ namespace Optimization
 
 			return ret;
 		}
+		
+		private void SolutionFromInitial(Solution solution, Optimization.Storage.Records.InitialPopulation population)
+		{
+			int idx = (int)System.Math.Round(State.Random.NextDouble() * population.Population.Count);
+			Optimization.Storage.Records.InitialSolution sol = population.Population[idx];
+			
+			foreach (Parameter parameter in solution.Parameters)
+			{
+				double val = sol.Parameters[parameter.Name];
+				
+				if (d_settings.InitialPopulationNoise > 0)
+				{
+					val += (State.Random.NextDouble() * 2 - 1) * d_settings.InitialPopulationNoise;
+					val = System.Math.Max(System.Math.Min(val, parameter.Boundary.Max), parameter.Boundary.Min);
+				}
+				
+				parameter.Value = val;
+			}
+			
+			foreach (KeyValuePair<string, string> pair in sol.Data)
+			{
+				solution.Data[pair.Key] = pair.Value;
+			}
+		}
 
 		virtual public void InitializePopulation()
 		{
 			d_population.Clear();
+			
+			Optimization.Storage.Records.InitialPopulation initial = d_storage.ReadInitialPopulation();
 
 			// Create initial population
 			for (uint idx = 0; idx < d_settings.PopulationSize; ++idx)
@@ -220,6 +263,12 @@ namespace Optimization
 
 				// Resetting the solution randomly initializes its parameters
 				solution.Reset();
+				
+				if (initial != null)
+				{
+					// Initialize solution from the specified initial population
+					SolutionFromInitial(solution, initial);
+				}
 
 				Add(solution);
 			}

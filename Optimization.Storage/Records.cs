@@ -145,6 +145,28 @@ namespace Optimization.Storage.Records
 			Extensions = new List<string>();
 		}
 	}
+	
+	public class InitialSolution
+	{
+		public Dictionary<string, double> Parameters;
+		public Dictionary<string, string> Data;
+		
+		public InitialSolution()
+		{
+			Parameters = new Dictionary<string, double>();
+			Data = new Dictionary<string, string>();
+		}
+	}
+	
+	public class InitialPopulation
+	{
+		public List<InitialSolution> Population;
+		
+		public InitialPopulation()
+		{
+			Population = new List<InitialSolution>();
+		}
+	}
 
 	public class Log
 	{
