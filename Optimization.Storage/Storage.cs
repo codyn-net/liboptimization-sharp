@@ -809,7 +809,7 @@ namespace Optimization.Storage
 			job.Token = (string)jobspec[3];
 			job.Optimizer.Name = (string)jobspec[4];
 			job.Dispatcher.Name = (string)jobspec[5];
-			job.Filename = (string)jobspec[6];
+			job.Filename = jobspec[6] as string;
 			
 			/* Optimizer stuff */
 			Query("SELECT `name`, `value` FROM `settings`", delegate (IDataReader reader) {
@@ -854,7 +854,7 @@ namespace Optimization.Storage
 			Query("SELECT `name`, `value`, `mode` FROM `fitness_settings`", delegate (IDataReader reader) {
 				string name = (string)reader[0];
 				string val = (string)reader[1];
-				string mode = (string)reader[2];
+				string mode = reader[2] as string;
 
 				if (name == "__expression__")
 				{
@@ -896,7 +896,7 @@ namespace Optimization.Storage
 
 						if (name.StartsWith("_s_"))
 						{
-							job.Optimizer.State.Settings.Add(name.Substring(3), reader.GetString(i));
+							job.Optimizer.State.Settings.Add(name.Substring(3), Convert.ChangeType(reader[i], typeof(string)) as string);
 						}
 					}
 
