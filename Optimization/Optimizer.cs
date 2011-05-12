@@ -518,6 +518,30 @@ namespace Optimization
 				return max - min;
 			}
 		}
+		
+		public Biorob.Math.Expression MinIterations
+		{
+			get
+			{
+				return d_minIterations;
+			}
+		}
+		
+		public Biorob.Math.Expression ConvergenceThreshold
+		{
+			get
+			{
+				return d_convergenceThreshold;
+			}
+		}
+		
+		public Biorob.Math.Expression ConvergenceWindow
+		{
+			get
+			{
+				return d_convergenceWindow;
+			}
+		}
 
 		protected virtual bool Finished()
 		{
@@ -525,6 +549,8 @@ namespace Optimization
 			{
 				return true;
 			}
+			
+			bool suppress = false;
 
 			foreach (Extension ext in d_extensions)
 			{
@@ -532,6 +558,16 @@ namespace Optimization
 				{
 					return true;
 				}
+				
+				if (ext.SuppressConvergenceCalculation())
+				{
+					suppress = true;
+				}
+			}
+			
+			if (suppress)
+			{
+				return false;
 			}
 
 			uint minIterations = (uint)d_minIterations.Evaluate(Biorob.Math.Constants.Context);

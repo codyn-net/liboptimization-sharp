@@ -224,6 +224,11 @@ namespace Optimization
 			}
 		}
 		
+		public virtual bool SuppressConvergenceCalculation()
+		{
+			return false;
+		}
+		
 		public static Type[] GetAppliesTo(Type type)
 		{
 			if (!type.IsSubclassOf(typeof(Extension)))
