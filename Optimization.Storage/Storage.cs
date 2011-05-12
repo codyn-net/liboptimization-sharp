@@ -130,6 +130,45 @@ namespace Optimization.Storage
 			{
 				Query("ALTER TABLE `job` ADD COLUMN `filename` TEXT");
 			}
+			
+			Dictionary<string, string> vals = new Dictionary<string, string>();
+			
+			Query("PRAGMA table_info(state)", delegate (IDataReader reader) {
+				string name = (string)reader[1];
+				
+				if (name != null && name.StartsWith("_s_"))
+				{
+					vals[name.Substring(3)] = name;
+				}
+				
+				return true;
+			});
+			
+			if (!vals.ContainsKey("initial-population"))
+			{
+				Query(String.Format("ALTER TABLE `state` ADD COLUMN `_s_initial-population` TEXT"));
+				Query("UPDATE `state` SET `_s_initial-population` = ''");
+			}
+			
+			if (!vals.ContainsKey("initial-population-noise"))
+			{
+				Query("ALTER TABLE `state` ADD COLUMN `_s_initial-population-noise` TEXT");
+				Query("UPDATE `state` SET `_s_initial-population-noise` = '0'");
+			}
+			
+			vals.Clear();
+			
+			Query("SELECT `name` FROM settings", delegate (IDataReader reader) {
+				string name = reader[0] as string;
+				vals[name] = name;
+				return true;
+			});
+			
+			if (!vals.ContainsKey("initial-population"))
+			{
+				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", "initial-population", "");
+				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", "initial-population-noise", "0");
+			}
 		}
 
 		private string UniqueFile(string filename)
