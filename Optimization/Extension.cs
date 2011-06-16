@@ -86,6 +86,10 @@ namespace Optimization
 
 		public virtual void InitializePopulation()
 		{
+			foreach (Solution solution in d_job.Optimizer.Population)
+			{
+				Initialize(solution);
+			}
 		}
 
 		public virtual bool Finished()
@@ -107,6 +111,11 @@ namespace Optimization
 
 		public virtual void Next()
 		{
+		}
+		
+		public virtual Solution UpdateBest()
+		{
+			return null;
 		}
 		
 		public virtual void FromStorage(Storage.Storage storage, Storage.Records.Optimizer optimizer)
@@ -215,6 +224,11 @@ namespace Optimization
 			}
 		}
 		
+		public virtual bool SuppressConvergenceCalculation()
+		{
+			return false;
+		}
+		
 		public static Type[] GetAppliesTo(Type type)
 		{
 			if (!type.IsSubclassOf(typeof(Extension)))
@@ -284,6 +298,8 @@ namespace Optimization
 		public static Extension Create(Job job, string name)
 		{
 			Scan();
+			
+			name = name.ToLower();
 			
 			if (s_extensions.ContainsKey(name))
 			{

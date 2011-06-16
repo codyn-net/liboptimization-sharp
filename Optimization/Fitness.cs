@@ -24,7 +24,7 @@ using Biorob.Math;
 
 namespace Optimization
 {
-	public class Fitness : ICloneable
+	public class Fitness : UserData, ICloneable
 	{
 		public enum Mode
 		{
@@ -151,6 +151,14 @@ namespace Optimization
 			d_expression = new Expression();
 			d_expression.CheckVariables = true;
 		}
+		
+		public static Comparison<Fitness> OverrideCompare(Comparison<Fitness> comparison)
+		{
+			Comparison<Fitness> original = s_comparer;
+			s_comparer = comparison;
+			
+			return original;
+		}
 
 		public static int Compare(Fitness a, Fitness b)
 		{
@@ -267,6 +275,17 @@ namespace Optimization
 			}
 		}
 		
+		private void AddUnknown(List<string> unknowns, params string[] unknown)
+		{
+			foreach (string u in unknown)
+			{
+				if (!unknowns.Contains(u))
+				{
+					unknowns.Add(u);
+				}
+			}
+		}
+		
 		private void ResolveUnknowns()
 		{
 			if (d_unknowns != null)
@@ -288,7 +307,12 @@ namespace Optimization
 				context[pair.Key] = pair.Value;
 			}
 			
-			d_unknowns.AddRange(d_expression.ResolveUnknowns(context));
+			AddUnknown(d_unknowns, d_expression.ResolveUnknowns(context));
+			
+			foreach (KeyValuePair<string, Variable> pair in d_variables)
+			{
+				AddUnknown(d_unknowns, pair.Value.Expression.ResolveUnknowns(context));
+			}
 		}
 		
 		public string[] Unknowns
@@ -311,24 +335,48 @@ namespace Optimization
 			d_values.Clear();
 		}
 
-		public object Clone()
+		public override object Clone()
 		{
 			Fitness fit = new Fitness();
+			fit.Copy(this);
+			
+			return fit;
+		}
+		
+		public override void Copy(object source)
+		{
+			base.Copy(source);
+
+			Fitness fit = (Fitness)source;
 
 			// Shallow copy
-			fit.d_variables = d_variables;
-			fit.d_expression = d_expression;
-
-			// 'Deep' copy
-			foreach (KeyValuePair<string, double> pair in d_values)
+			d_variables = fit.d_variables;
+			d_expression = fit.d_expression;
+			
+			Dictionary<string, object> rest = new Dictionary<string, object>();
+			
+			// Copy additional context
+			foreach (KeyValuePair<string, object> ctx in fit.d_context)
 			{
-				fit.d_values[pair.Key] = pair.Value;
+				if (!fit.d_variables.ContainsKey(ctx.Key) && !fit.d_values.ContainsKey(ctx.Key))
+				{
+					rest[ctx.Key] = ctx.Value;
+				}
 			}
 
-			fit.d_value = d_value;
-			fit.Update();
+			// 'Deep' copy
+			foreach (KeyValuePair<string, double> pair in fit.d_values)
+			{
+				d_values[pair.Key] = pair.Value;
+			}
 
-			return fit;
+			d_value = fit.d_value;
+			Update();
+			
+			foreach (KeyValuePair<string, object> ctx in rest)
+			{
+				d_context[ctx.Key] = ctx.Value;
+			}
 		}
 
 		public static bool operator>(Fitness first, Fitness second)
@@ -355,6 +403,29 @@ namespace Optimization
 			{
 				return d_expression;
 			}
+		}
+		
+		public override string ToString()
+		{
+			List<string> parts = new List<string>();
+			
+			parts.Add(String.Format("Value = {0}", Value.ToString()));
+			
+			foreach (KeyValuePair<string, object> v in d_context)
+			{
+				Biorob.Math.Expression expr = v.Value as Biorob.Math.Expression;
+				
+				if (expr != null)
+				{
+					parts.Add(String.Format("{0} = {1}", v.Key, expr.Evaluate(Context)));
+				}
+				else
+				{
+					parts.Add(String.Format("{0} = {1}", v.Key, v.Value));
+				}
+			}
+			
+			return String.Format("Fitness [{0}]", String.Join(", ", parts.ToArray()));
 		}
 	}
 }

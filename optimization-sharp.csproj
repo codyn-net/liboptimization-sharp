@@ -67,20 +67,23 @@
     <Compile Include="Optimization.Attributes\Attributes.cs" />
     <Compile Include="Optimization.Messages\Progress.cs" />
     <Compile Include="Optimization.Messages\Notification.cs" />
+    <Compile Include="Optimization\UserData.cs" />
+    <Compile Include="Optimization\ICopyable.cs" />
+    <Compile Include="Optimization.Storage\Database.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>protobuf-net.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Data.SqliteClient" />
     <Reference Include="System.Data" />
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="Mono.Posix" />
-    <Reference Include="Biorob.Math, Version=1.0.3909.29930, Culture=neutral">
+    <Reference Include="Biorob.Math, Version=1.0.3947.27054, Culture=neutral">
       <Package>biorob-math-sharp-1.0</Package>
     </Reference>
+    <Reference Include="Mono.Data.Sqlite" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Optimization\" />

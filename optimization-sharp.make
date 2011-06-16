@@ -61,6 +61,7 @@ FILES = \
 	Optimization/Directories.cs \
 	Optimization/Extension.cs \
 	Optimization/Fitness.cs \
+	Optimization/ICopyable.cs \
 	Optimization/Job.cs \
 	Optimization/NumericSetting.cs \
 	Optimization/Optimizer.cs \
@@ -71,6 +72,7 @@ FILES = \
 	Optimization/Settings.cs \
 	Optimization/Solution.cs \
 	Optimization/State.cs \
+	Optimization/UserData.cs \
 	Optimization/Visual.cs \
 	Optimization.Attributes/Attributes.cs \
 	Optimization.Messages/Batch.cs \
@@ -86,6 +88,7 @@ FILES = \
 	Optimization.Messages/Messages.cs \
 	Optimization.Storage/Storage.cs \
 	Optimization.Storage/Records.cs \
+	Optimization.Storage/Database.cs \
 	Optimization.Dispatcher/Dispatcher.cs \
 	Optimization.Dispatcher/Webots.cs \
 	Optimization.Dispatcher.Internal/Dispatcher.cs \
@@ -100,7 +103,7 @@ EXTRAS = \
 	optimization-sharp.pc.in
 
 REFERENCES =  \
-	Mono.Data.SqliteClient \
+	Mono.Data.Sqlite \
 	Mono.Posix \
 	System.Data \
 	System \

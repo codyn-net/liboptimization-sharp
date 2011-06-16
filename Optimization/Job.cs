@@ -70,6 +70,7 @@ namespace Optimization
 		private string d_user;
 		private Storage.Storage d_storage;
 		private bool d_synchronous;
+		private string d_filename;
 
 		public Job()
 		{
@@ -86,6 +87,7 @@ namespace Optimization
 		{
 			Job job = new Job();
 
+			job.d_filename = System.IO.Path.GetFullPath(filename);
 			job.d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);
@@ -193,6 +195,11 @@ namespace Optimization
 				return false;
 			}
 		}
+		
+		private string ExpandJobPath(string s)
+		{
+			return s.Replace("$OPTIMIZATION_JOB_PATH", System.IO.Path.GetDirectoryName(d_filename));
+		}
 
 		private void Load(Storage.Storage storage)
 		{
@@ -202,6 +209,7 @@ namespace Optimization
 			d_priority = job.Priority;
 			d_token = job.Token;
 			d_timeout = job.Timeout;
+			d_filename = job.Filename;
 
 			d_optimizer = Registry.Create(job.Optimizer.Name);
 
@@ -216,7 +224,7 @@ namespace Optimization
 
 			foreach (KeyValuePair<string, string> pair in job.Dispatcher.Settings)
 			{
-				d_dispatcher.Settings[pair.Key] = pair.Value;
+				d_dispatcher.Settings[pair.Key] = ExpandJobPath(pair.Value);
 			}
 			
 			foreach (string ext in job.Extensions)
@@ -382,7 +390,7 @@ namespace Optimization
 					throw new Exception(String.Format("XML: No name specified for dispatcher setting {0}", nm.Value));
 				}
 
-				d_dispatcher.Settings[nm.Value] = node.InnerText;
+				d_dispatcher.Settings[nm.Value] = ExpandJobPath(node.InnerText);
 			}
 		}
 		
@@ -415,6 +423,14 @@ namespace Optimization
 			get
 			{
 				return d_name;
+			}
+		}
+		
+		public string Filename
+		{
+			get
+			{
+				return d_filename;
 			}
 		}
 

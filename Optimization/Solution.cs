@@ -78,6 +78,20 @@ namespace Optimization
 			{
 				Add(parameter);
 			}
+			
+			foreach (KeyValuePair<string, object> data in other.Data)
+			{
+				ICloneable cloneable = data.Value as ICloneable;
+
+				if (cloneable != null)
+				{
+					Data[data.Key] = ((ICloneable)data.Value).Clone();
+				}
+				else
+				{
+					Data[data.Key] = data.Value;
+				}
+			}
 		}
 
 		public virtual object Clone()

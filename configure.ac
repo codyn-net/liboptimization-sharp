@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT(liboptimization2-sharp, 2.14)
+AC_INIT(liboptimization2-sharp, 2.15)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
@@ -51,7 +51,7 @@ mono_version=`$GMCS --version | sed 's/.*\([[0-9]]\.[[0-9]]\).*/\1/g'`
 AM_CONDITIONAL(USE_UNIXSIGNAL, test "x$mono_version" = "x2.3")
 
 dnl package checks, common for all configs
-PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
+PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0 >= 0.3])
 
 dnl package checks, per config
 

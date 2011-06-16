@@ -20,7 +20,8 @@
 
 using System;
 using System.Data;
-using Mono.Data.SqliteClient;
+using System.Data.Common;
+using Mono.Data.Sqlite;
 using System.Reflection;
 using System.Xml.Serialization;
 using System.Collections.Generic;
@@ -31,7 +32,7 @@ using System.Collections;
 
 namespace Optimization.Storage
 {
-	public class Storage
+	public class Storage : Database
 	{
 		private struct LogItem
 		{
@@ -47,10 +48,6 @@ namespace Optimization.Storage
 			}
 		}
 
-		public delegate bool RowCallback(IDataReader reader);
-		private SqliteConnection d_connection;
-
-		private string d_uri;
 		private Job d_job;
 		private List<LogItem> d_logBatch;
 
@@ -58,18 +55,6 @@ namespace Optimization.Storage
 		{
 			d_job = job;
 			d_logBatch = new List<LogItem>();
-		}
-
-		public string Uri
-		{
-			get
-			{
-				return d_uri;
-			}
-			set
-			{
-				d_uri = value;
-			}
 		}
 
 		public Job Job
@@ -93,17 +78,11 @@ namespace Optimization.Storage
 			CreateTables();
 		}
 
-		public void Close()
-		{
-			d_connection.Close();
-		}
-
-		public bool Open()
+		public new bool Open()
 		{
 			bool exists = File.Exists(Uri);
-
-			d_connection = new SqliteConnection("URI=file:" + Uri + ",version=3,busy_timeout=15000");
-			d_connection.Open();
+			
+			base.Open();
 
 			if (!d_job.SynchronousStorage)
 			{
@@ -120,15 +99,76 @@ namespace Optimization.Storage
 
 			if (!ret)
 			{
-				d_connection.Close();
+				Close();
+			}
+		
+			if (exists && ret)
+			{
+				Upgrade();
 			}
 
 			return ret;
 		}
-
-		public static implicit operator bool(Storage s)
+		
+		private void Upgrade()
 		{
-			return s.d_connection.State != ConnectionState.Closed;
+			bool hasfilename = false;
+
+			Query("PRAGMA table_info(job)", delegate (IDataReader reader) {
+				string name = (string)reader[1];
+				
+				if (name == "filename")
+				{
+					hasfilename = true;
+					return false;
+				}
+				
+				return true;
+			});
+			
+			if (!hasfilename)
+			{
+				Query("ALTER TABLE `job` ADD COLUMN `filename` TEXT");
+			}
+			
+			Dictionary<string, string> vals = new Dictionary<string, string>();
+			
+			Query("PRAGMA table_info(state)", delegate (IDataReader reader) {
+				string name = (string)reader[1];
+				
+				if (name != null && name.StartsWith("_s_"))
+				{
+					vals[name.Substring(3)] = name;
+				}
+				
+				return true;
+			});
+			
+			if (!vals.ContainsKey("initial-population"))
+			{
+				Query(String.Format("ALTER TABLE `state` ADD COLUMN `_s_initial-population` TEXT"));
+				Query("UPDATE `state` SET `_s_initial-population` = ''");
+			}
+			
+			if (!vals.ContainsKey("initial-population-noise"))
+			{
+				Query("ALTER TABLE `state` ADD COLUMN `_s_initial-population-noise` TEXT");
+				Query("UPDATE `state` SET `_s_initial-population-noise` = '0'");
+			}
+			
+			vals.Clear();
+			
+			Query("SELECT `name` FROM settings", delegate (IDataReader reader) {
+				string name = reader[0] as string;
+				vals[name] = name;
+				return true;
+			});
+			
+			if (!vals.ContainsKey("initial-population"))
+			{
+				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", "initial-population", "");
+				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", "initial-population-noise", "0");
+			}
 		}
 
 		private string UniqueFile(string filename)
@@ -156,12 +196,12 @@ namespace Optimization.Storage
 		{
 			if (d_logBatch.Count != 0)
 			{
-				System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+				DbTransaction transaction = BeginTransaction();
 				SaveLog();
 				transaction.Commit();
 			}
 
-			d_connection.Close();
+			Close();
 		}
 
 		private string NormalizeName(string name)
@@ -296,7 +336,7 @@ namespace Optimization.Storage
 
 		private void InitializeFirst()
 		{
-			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+			DbTransaction transaction = BeginTransaction();
 
 			InitializeFitnessTable();
 			InitializeParametersTable();
@@ -433,7 +473,7 @@ namespace Optimization.Storage
 		
 		public void SaveActiveParameters()
 		{
-			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+			DbTransaction transaction = BeginTransaction();
 			
 			foreach (Solution solution in Job.Optimizer.Population)
 			{
@@ -505,7 +545,7 @@ namespace Optimization.Storage
 				InitializeFirst();
 			}
 
-			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+			DbTransaction transaction = BeginTransaction();
 
 			int bestid = -1;
 			double bestfitness = 0;
@@ -542,12 +582,12 @@ namespace Optimization.Storage
 
 		public void SaveSettings()
 		{
-			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+			DbTransaction transaction = BeginTransaction();
 
-			Query("CREATE TABLE IF NOT EXISTS `job` (`name` TEXT, `optimizer` TEXT, `dispatcher` TEXT, `priority` DOUBLE, `timeout` DOUBLE, `token` TEXT)");
+			Query("CREATE TABLE IF NOT EXISTS `job` (`filename` TEXT, `name` TEXT, `optimizer` TEXT, `dispatcher` TEXT, `priority` DOUBLE, `timeout` DOUBLE, `token` TEXT)");
 			Query("DELETE FROM `job`");
 
-			Query("INSERT INTO `job` (`name`, `optimizer`, `dispatcher`, `priority`, `timeout`, `token`) VALUES(@0, @1, @2, @3, @4, @5)", Job.Name, Job.Optimizer.Name, Job.Dispatcher.Name, Job.Priority, Job.Timeout, Job.Token);
+			Query("INSERT INTO `job` (`filename`, `name`, `optimizer`, `dispatcher`, `priority`, `timeout`, `token`) VALUES(@0, @1, @2, @3, @4, @5, @6)", Job.Filename, Job.Name, Job.Optimizer.Name, Job.Dispatcher.Name, Job.Priority, Job.Timeout, Job.Token);
 
 			Query("CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT, `value` TEXT)");
 			Query("DELETE FROM `settings`");
@@ -557,7 +597,7 @@ namespace Optimization.Storage
 			// Settings
 			foreach (KeyValuePair<string, object> pair in settings)
 			{
-				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", pair.Key, pair.Value.ToString());
+				Query("INSERT INTO `settings` (`name`, `value`) VALUES(@0, @1)", pair.Key, pair.Value != null ? pair.Value.ToString() : null);
 			}
 
 			Query("CREATE TABLE IF NOT EXISTS `fitness_settings` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT, `value` TEXT, `mode` TEXT)");
@@ -618,7 +658,7 @@ namespace Optimization.Storage
 
 		private void CreateTables()
 		{
-			System.Data.Common.DbTransaction transaction = d_connection.BeginTransaction();
+			DbTransaction transaction = BeginTransaction();
 
 			Query("CREATE TABLE IF NOT EXISTS `iteration` (`iteration` INT PRIMARY KEY, `best_id` INT, `best_fitness` DOUBLE, `time` INT)");
 			Query("CREATE INDEX IF NOT EXISTS iteration_iteration ON iteration(`iteration`)");
@@ -633,101 +673,6 @@ namespace Optimization.Storage
 			transaction.Commit();
 
 			SaveSettings();
-		}
-
-		public bool Query(string s, RowCallback cb, params object[] parameters)
-		{
-			IDbCommand cmd = d_connection.CreateCommand();
-			cmd.CommandText = s;
-
-			for (int idx = 0; idx < parameters.Length; ++idx)
-			{
-				IDbDataParameter par = cmd.CreateParameter();
-				par.ParameterName = "@" + idx;
-				par.Value = parameters[idx];
-
-				cmd.Parameters.Add(par);
-			}
-
-			bool ret = false;
-
-			if (cb == null)
-			{
-				try
-				{
-					ret = cmd.ExecuteNonQuery() > 0;
-				}
-				catch (Exception e)
-				{
-					Console.Error.WriteLine("Error in query `{0}': {1}", s, e.Message);
-				}
-			}
-			else
-			{
-				IDataReader reader;
-
-				try
-				{
-					reader = cmd.ExecuteReader();
-				}
-				catch (Exception e)
-				{
-					reader = null;
-					Console.Error.WriteLine("Error in query `{0}': {1}", s, e.Message);
-				}
-
-				while (reader != null && reader.Read())
-				{
-					ret = cb(reader);
-
-					if (!ret)
-					{
-						break;
-					}
-				}
-
-				if (reader != null)
-				{
-					reader.Close();
-					reader = null;
-				}
-			}
-
-			cmd.Dispose();
-			cmd = null;
-
-			return ret;
-		}
-
-		public object[] QueryFirst(string s, params object[] parameters)
-		{
-			object[] ret = null;
-
-			Query(s, delegate (IDataReader reader) {
-				ret = new object[reader.FieldCount];
-
-				reader.GetValues(ret);
-				return false;
-			}, parameters);
-
-			return ret;
-		}
-
-		public object QueryValue(string s, params object[] parameters)
-		{
-			object ret = null;
-
-			Query(s, delegate (IDataReader reader) {
-				ret = reader.GetValue(0);
-				return false;
-			}, parameters);
-
-			return ret;
-		}
-
-		public bool Query(string s, params object[] parameters)
-		{
-			return Query(s, null, parameters);
 		}
 
 		public long UnixTimeStamp
@@ -754,18 +699,20 @@ namespace Optimization.Storage
 			for (int i = 0; i < reader.FieldCount; ++i)
 			{
 				string name = reader.GetName(i);
+				
+				object val = reader.GetValue(i);
 
 				if (name.StartsWith("_f_"))
 				{
-					solution.Fitness.Add(name.Substring(3), reader.GetDouble(i));
+					solution.Fitness.Add(name.Substring(3), val == null ? 0 : reader.GetDouble(i));
 				}
 				else if (name.StartsWith("_p_"))
 				{
-					solution.Parameters.Add(name.Substring(3), reader.GetDouble(i));
+					solution.Parameters.Add(name.Substring(3), val == null ? 0 : reader.GetDouble(i));
 				}
 				else if (name.StartsWith("_d_"))
 				{
-					solution.Data.Add(name.Substring(3), reader.GetString(i));
+					solution.Data.Add(name.Substring(3), val == null ? "" : reader.GetString(i));
 				}
 			}
 
@@ -854,7 +801,7 @@ namespace Optimization.Storage
 		public Records.Job ReadJob()
 		{
 			Records.Job job = new Records.Job();
-			object[] jobspec = QueryFirst("SELECT `name`, `priority`, `timeout`, `token`, `optimizer`, `dispatcher` FROM `job`");
+			object[] jobspec = QueryFirst("SELECT `name`, `priority`, `timeout`, `token`, `optimizer`, `dispatcher`, `filename` FROM `job`");
 
 			job.Name = (string)jobspec[0];
 			job.Priority = (double)jobspec[1];
@@ -862,7 +809,8 @@ namespace Optimization.Storage
 			job.Token = (string)jobspec[3];
 			job.Optimizer.Name = (string)jobspec[4];
 			job.Dispatcher.Name = (string)jobspec[5];
-
+			job.Filename = jobspec[6] as string;
+			
 			/* Optimizer stuff */
 			Query("SELECT `name`, `value` FROM `settings`", delegate (IDataReader reader) {
 				job.Optimizer.Settings[(string)reader[0]] = (string)reader[1];
@@ -906,7 +854,7 @@ namespace Optimization.Storage
 			Query("SELECT `name`, `value`, `mode` FROM `fitness_settings`", delegate (IDataReader reader) {
 				string name = (string)reader[0];
 				string val = (string)reader[1];
-				string mode = (string)reader[2];
+				string mode = reader[2] as string;
 
 				if (name == "__expression__")
 				{
@@ -948,7 +896,7 @@ namespace Optimization.Storage
 
 						if (name.StartsWith("_s_"))
 						{
-							job.Optimizer.State.Settings.Add(name.Substring(3), reader.GetString(i));
+							job.Optimizer.State.Settings.Add(name.Substring(3), Convert.ChangeType(reader[i], typeof(string)) as string);
 						}
 					}
 
@@ -998,6 +946,71 @@ namespace Optimization.Storage
 				return true;
 			});
 
+			return ret;
+		}
+		
+		public Records.InitialPopulation ReadInitialPopulation()
+		{
+			List<string> parameters = new List<string>();
+			
+			Query("PRAGMA table_info(`initial_population`)", delegate (IDataReader reader) {
+				string name = reader.GetString(1);
+				
+				if (name.StartsWith("_p_"))
+				{
+					parameters.Add(name);
+				}
+				
+				return true;
+			});
+			
+			List<string> data = new List<string>();
+			
+			Query("PRAGMA table_info(`initial_population`)", delegate (IDataReader reader) {
+				string name = reader.GetString(1);
+				
+				if (name.StartsWith("_d_"))
+				{
+					data.Add(name);
+				}
+				
+				return true;
+			});
+			
+			if (parameters.Count == 0)
+			{
+				return null;
+			}
+
+			Records.InitialPopulation ret = new Records.InitialPopulation();
+
+			string paramsel = String.Join(", ", Array.ConvertAll(parameters.ToArray(), a => String.Format("`initial_population`.`{0}`", a)));
+			string datasel = String.Join(", ", Array.ConvertAll(data.ToArray(), a => String.Format("`initial_population_data`.`{0}`", a)));
+			
+			Query("SELECT " + paramsel + ", " + datasel + " FROM `initial_population` " +
+			       "LEFT JOIN `initial_population_data` ON " +
+			       "(`initial_population`.`id` = `initial_population_data`.`id`)", delegate (IDataReader reader) {
+				Records.InitialSolution solution = new Records.InitialSolution();
+				
+				for (int i = 0; i < reader.FieldCount; ++i)
+				{
+					string name = reader.GetName(i);
+				
+					if (name.StartsWith("_p_"))
+					{
+						solution.Parameters[name.Substring(3)] = reader.GetDouble(i);
+					}
+					else if (name.StartsWith("_d_"))
+					{
+						solution.Data[name.Substring(3)] = reader.GetString(i);
+					}
+				}
+				
+				ret.Population.Add(solution);
+				
+				return true;
+			});
+			
 			return ret;
 		}
 	}
