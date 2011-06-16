@@ -51,7 +51,7 @@ mono_version=`$GMCS --version | sed 's/.*\([[0-9]]\.[[0-9]]\).*/\1/g'`
 AM_CONDITIONAL(USE_UNIXSIGNAL, test "x$mono_version" = "x2.3")
 
 dnl package checks, common for all configs
-PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
+PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0 >= 0.3])
 
 dnl package checks, per config
 
