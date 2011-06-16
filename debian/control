@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 7),
                mono-devel | mono-gmcs,
                libmono-sqlite2.0-cil,
                libmono2.0-cil,
-			   libbiorob-math1-sharp
+               libbiorob-math1-sharp (>= 0.3)
 Standards-Version: 3.8.0
 Section: libs
 Homepage: http://biorob.epfl.ch

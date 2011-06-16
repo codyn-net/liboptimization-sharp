@@ -1,3 +1,10 @@
+liboptimization2-sharp (2.15-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * Depend on biorob math sharp 0.3
+
+ -- Jesse van den Kieboom <jvanden@grijpc10.epfl.ch>  Thu, 16 Jun 2011 15:27:09 +0200
+
 liboptimization2-sharp (2.14-1) UNRELEASED; urgency=low
 
   * New upstream release
