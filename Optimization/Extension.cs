@@ -303,7 +303,14 @@ namespace Optimization
 			
 			if (s_extensions.ContainsKey(name))
 			{
-				Extension ret = (Extension)s_extensions[name].GetConstructor(new Type[] {typeof(Job)}).Invoke(new object[] {job});
+				ConstructorInfo cons = s_extensions[name].GetConstructor(new Type[] {typeof(Job)});
+				
+				if (cons == null)
+				{
+					throw new Exception(String.Format("Could not instantiate extension `{0}' (constructor does not accept job)", name));
+				}
+
+				Extension ret = (Extension)cons.Invoke(new object[] {job});
 				
 				if (job != null)
 				{
