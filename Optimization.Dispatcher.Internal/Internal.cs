@@ -13,15 +13,17 @@ namespace Optimization.Dispatcher.Internal
 			base.Initialize(job);
 
 			d_fitnesses = new Dictionary<string, Biorob.Math.Expression>();
+			
+			string prefix = "fitness_";
 
 			foreach (KeyValuePair<string, string> pair in Job.Dispatcher.Settings)
 			{
-				if (pair.Key.StartsWith("fitness"))
+				if (pair.Key.StartsWith(prefix))
 				{
 					Biorob.Math.Expression expr = new Biorob.Math.Expression();
 					expr.Parse(pair.Value);
 
-					d_fitnesses.Add(pair.Key.Substring(7), expr);
+					d_fitnesses.Add(pair.Key.Substring(prefix.Length), expr);
 				}
 			}
 		}
@@ -36,8 +38,6 @@ namespace Optimization.Dispatcher.Internal
 			}
 
 			Dictionary<string, double> fitness = new Dictionary<string, double>();
-			double maxit = 0;
-			fitness.Add("value", 0);
 
 			foreach (KeyValuePair<string, Biorob.Math.Expression> pair in d_fitnesses)
 			{
@@ -45,11 +45,6 @@ namespace Optimization.Dispatcher.Internal
 				{
 					double val = pair.Value.Evaluate(variables);
 					fitness.Add(pair.Key, val);
-
-					if (val > maxit)
-					{
-						maxit = val;
-					}
 				}
 				catch (Biorob.Math.Expression.ContextException)
 				{
@@ -57,7 +52,6 @@ namespace Optimization.Dispatcher.Internal
 				}
 			}
 
-			fitness["value"] = maxit;
 			return fitness;
 		}
 	}
