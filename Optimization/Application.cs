@@ -94,6 +94,7 @@ namespace Optimization
 		Dictionary<string, string> d_overrideSettings;
 
 		Dictionary<uint, Solution> d_running;
+		bool d_log;
 
 #if USE_UNIXSIGNAL
 		Thread d_signalThread;
@@ -105,6 +106,7 @@ namespace Optimization
 			d_connection = new Connection();
 			d_quitting = false;
 			d_reconnect = true;
+			d_log = false;
 			
 			d_reconnectTimeout = new int[] {5, 10, 30, 60, 600, 3600};
 
@@ -243,6 +245,7 @@ namespace Optimization
 			optionSet.Add("t=|tokensrv=", "Specify token server connection string", s => d_tokenAddress = s);
 			optionSet.Add("token=", "Specify token string", s => d_token = s);
 			optionSet.Add("override-setting=", "Specify override dispatcher settings (key=value)", s => AddOverrideSetting(s));
+			optionSet.Add("log", "Log various events", s => d_log = true);
 		}
 
 		protected virtual void ParseArguments(ref string[] args)
@@ -343,7 +346,11 @@ namespace Optimization
 		protected virtual void ShowMessage(string str)
 		{
 			OnMessage(this, str);
-			d_job.Optimizer.Log("message", str);
+			
+			if (d_log)
+			{
+				d_job.Optimizer.Log("message", str);
+			}
 		}
 
 		protected void Status(string format, params object[] args)
@@ -354,7 +361,11 @@ namespace Optimization
 		protected virtual void Status(string str)
 		{
 			OnStatus(this, str);
-			d_job.Optimizer.Log("status", str);
+			
+			if (d_log)
+			{
+				d_job.Optimizer.Log("status", str);
+			}
 		}
 
 		protected void Error(string format, params object[] args)
