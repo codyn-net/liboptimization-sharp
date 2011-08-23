@@ -86,7 +86,7 @@ namespace Optimization
 		public static Job NewFromXml(string filename)
 		{
 			Job job = new Job();
-
+			
 			job.d_filename = System.IO.Path.GetFullPath(filename);
 			job.d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
 			XmlDocument doc = new XmlDocument();
@@ -269,10 +269,6 @@ namespace Optimization
 				if (attr != null)
 				{
 					d_name = attr.Value;
-				}
-				else
-				{
-					throw new Exception("XML: No name specified for job");
 				}
 			}
 
