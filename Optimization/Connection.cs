@@ -391,7 +391,7 @@ namespace Optimization
 			
 			Progress pgs = new Progress();
 			
-			pgs.Tick = job.Optimizer.CurrentIteration;
+			pgs.Tick = job.Optimizer.CurrentIteration + 1;
 
 			int num = d_unknowns.Count + d_variables.Count + 1;
 			
