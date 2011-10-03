@@ -15,6 +15,10 @@ namespace Optimization.Dispatcher.Internal
 		{
 			d_job = job;
 		}
+		
+		public virtual void FromXml(System.Xml.XmlNode node)
+		{
+		}
 
 		public static string GetDescription(Type type)
 		{

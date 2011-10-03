@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<job>
+  <dispatcher>
+    <!-- Boundaries on parameters should be -5.12 and 5.12 -->
+    <fitness name="rastrigin">10 * length(parameters) + sum(parameters^2 - 10 * cos(2 * pi * parameters))</fitness>
+
+    <fitness name="rosenbrock">
+      <expression>sum((1 - x1)^2 + 100 * (x2 - x1^2)^2)</expression>
+      <variable name="x1">parameters[0..-2]</variable>
+      <variable name="x2">parameters[1..-1]</variable>
+    </fitness>
+
+    <fitness name="quadratic">sum(parameters^2)</fitness>
+   </dispatcher>
+</job>
+
+<!-- vi:ex:ts=2:et -->

@@ -6,6 +6,8 @@ namespace Optimization
 	{
 		public static string Prefix = "@prefix@";
 		public static string Lib = "@expanded_libdir@";
+		public static string Data = "@expanded_datadir@";
 		public static string Optimizers = Path.Combine(Path.Combine("@expanded_libdir@", "@PACKAGE@"), "optimizers");
+		public static string Includes = Path.Combine(Path.Combine("@expanded_datadir@", "@PACKAGE@"), "includes");
 	}
 }

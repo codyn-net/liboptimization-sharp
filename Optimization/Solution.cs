@@ -53,6 +53,19 @@ namespace Optimization
 				return d_data;
 			}
 		}
+		
+		public Parameter Parameter(string name)
+		{
+			foreach (Parameter p in d_parameters)
+			{
+				if (p.Name == name)
+				{
+					return p;
+				}
+			}
+			
+			return null;
+		}
 
 		public List<Parameter> Parameters
 		{

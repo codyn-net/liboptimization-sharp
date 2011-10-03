@@ -31,8 +31,8 @@ namespace Optimization
 	{
 		public class Dispatch
 		{
-			Dictionary<string, string> d_settings;
-			string d_name;
+			private Dictionary<string, string> d_settings;
+			private string d_name;
 
 			public Dispatch()
 			{
@@ -71,6 +71,7 @@ namespace Optimization
 		private Storage.Storage d_storage;
 		private bool d_synchronous;
 		private string d_filename;
+		private Optimization.Dispatcher.Internal.Dispatcher d_internalDispatcher;
 
 		public Job()
 		{
@@ -135,7 +136,22 @@ namespace Optimization
 			
 			if (!uri.StartsWith("/"))
 			{
-				uri = Path.Combine(Path.GetDirectoryName(basename), uri);
+				string abs = Path.Combine(Path.GetDirectoryName(basename), uri);
+				
+				if (!File.Exists(abs))
+				{
+					// Try from system includes
+					uri = Path.Combine(Directories.Includes, uri);
+					
+					if (!File.Exists(uri))
+					{
+						uri = abs;
+					}
+				}
+				else
+				{
+					uri = abs;
+				}
 			}
 			
 			XmlDocument included;
@@ -179,7 +195,12 @@ namespace Optimization
 				parent.InsertAfter(intern, node);
 			}
 		}
-
+		
+		public Optimization.Dispatcher.Internal.Dispatcher InternalDispatcher
+		{
+			get { return d_internalDispatcher; }
+		}
+		
 		public bool LoadFromStorage(string filename)
 		{
 			Storage.Storage storage = new Storage.Storage(this);
@@ -301,17 +322,6 @@ namespace Optimization
 			}
 		}
 
-		public static Job FromXml(string xml)
-		{
-			XmlDocument doc = new XmlDocument();
-			doc.LoadXml(xml);
-
-			Job ret = new Job();
-			ret.Load(doc);
-
-			return ret;
-		}
-
 		private void EnsureStorage()
 		{
 			if (d_optimizer == null || d_optimizer.Storage != null)
@@ -387,6 +397,24 @@ namespace Optimization
 				}
 
 				d_dispatcher.Settings[nm.Value] = ExpandJobPath(node.InnerText);
+			}
+			
+			Optimization.Dispatcher.Internal.Dispatcher disp = null;
+			
+			try
+			{
+				disp = Optimization.Dispatcher.Internal.Registry.Create(d_dispatcher.Name);
+			}
+			catch
+			{
+			}
+			
+			if (disp != null)
+			{
+				disp.Initialize(this);
+				disp.FromXml(dispatcher);
+				
+				d_internalDispatcher = disp;
 			}
 		}
 		

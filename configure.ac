@@ -69,6 +69,8 @@ m4/Makefile
 optimization-sharp.pc
 Makefile
 Optimization/Directories.cs
+data/Makefile
+data/benchmarks/Makefile
 ])
 
 AC_OUTPUT

@@ -582,8 +582,6 @@ namespace Optimization
 
 		private void RunInternal(Optimization.Dispatcher.Internal.Dispatcher dispatcher)
 		{
-			dispatcher.Initialize(d_job);
-
 			while (true)
 			{
 				foreach (Solution solution in d_job.Optimizer.Population)
@@ -870,22 +868,10 @@ use the --token option to use a new token with an existing database.");
 
 			OnJob(this, job);
 			OnProgress(this, d_job.Optimizer.CurrentIteration / (double)d_job.Optimizer.Configuration.MaxIterations);
-
-			// Check if we can handle the job internally
-			Optimization.Dispatcher.Internal.Dispatcher internalDispatcher;
-
-			try
+			
+			if (job.InternalDispatcher != null)
 			{
-				internalDispatcher = Optimization.Dispatcher.Internal.Registry.Create(job.Dispatcher.Name);
-			}
-			catch
-			{
-				internalDispatcher = null;
-			}
-
-			if (internalDispatcher != null)
-			{
-				RunInternal(internalDispatcher);
+				RunInternal(job.InternalDispatcher);
 				return;
 			}
 			

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<job>
+  <dispatcher name="internal">
+    <fitness name="f1">sum(pow(parameters, 2))</fitness>
+    <fitness name="f2">
+      <expression>sum(100 * t1^2 + t2^2)</expression>
+      <variable name="p1">parameters[0..-2]</variable>
+      <variable name="p2">parameters[1..-1]</variable>
+      <variable name="t1">p2 - p1^2</variable>
+      <variable name="t2">p1 - 1</variable>
+    </fitness>
+    <fitness name="f3">sum(parameters^2 - 10 * cos(2 * pi * parameters) + 10)</fitness>
+    <fitness name="f4">0.00025 * sum(parameters^2) - product(cos(parameters / sqrt([0..(length(parameters) - 1)])))</fitness>
+  </dispatcher>
+</job>
+
+<!-- vi:ex:ts=2:et -->
