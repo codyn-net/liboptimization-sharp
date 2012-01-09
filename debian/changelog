@@ -1,3 +1,11 @@
+liboptimization2-sharp (2.19-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * Parse priority/timeout as double
+  * Add support for defines in includes
+
+ -- Jesse van den Kieboom <jvanden@biorobpc21.epfl.ch>  Mon, 09 Jan 2012 15:43:32 +0100
+
 liboptimization2-sharp (2.18-1) UNRELEASED; urgency=low
 
   * New upstream release
