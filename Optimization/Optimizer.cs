@@ -397,6 +397,14 @@ namespace Optimization
 
 		protected void AddBoundary(Boundary boundary)
 		{
+			Boundary existing;
+
+			if (d_boundaryHash.TryGetValue(boundary.Name, out existing))
+			{
+				d_boundaries.Remove(existing);
+				d_boundaryHash.Remove(boundary.Name);
+			}
+
 			d_boundaries.Add(boundary);
 			d_boundaryHash.Add(boundary.Name, boundary);
 		}
@@ -413,6 +421,14 @@ namespace Optimization
 
 		protected void AddParameter(Parameter parameter)
 		{
+			Parameter existing;
+
+			if (d_parameterHash.TryGetValue(parameter.Name, out existing))
+			{
+				d_parameters.Remove(existing);
+				d_parameterHash.Remove(parameter.Name);
+			}
+
 			d_parameters.Add(parameter);
 			d_parameterHash.Add(parameter.Name, parameter);
 		}

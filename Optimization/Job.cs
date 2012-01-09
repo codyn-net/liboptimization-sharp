@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Xml;
 using System.Collections.Generic;
@@ -71,6 +70,12 @@ namespace Optimization
 		private Storage.Storage d_storage;
 		private bool d_synchronous;
 		private string d_filename;
+		private static System.Text.RegularExpressions.Regex s_defineRegex;
+
+		static Job()
+		{
+			s_defineRegex = new System.Text.RegularExpressions.Regex("{{([^}]*)}}");
+		}
 
 		public Job()
 		{
@@ -89,22 +94,27 @@ namespace Optimization
 			
 			job.d_filename = System.IO.Path.GetFullPath(filename);
 			job.d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
+
+			job.d_name = job.d_name.Replace(",", "-").Replace("=", "-");
+
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);
 			
-			Dictionary<string, XmlDocument> includeCache = new Dictionary<string, XmlDocument>();
+			Dictionary<string, XmlDocument > includeCache = new Dictionary<string, XmlDocument>();
 			includeCache[Path.GetFullPath(filename)] = doc;
+
+			Dictionary<string, string > defines = new Dictionary<string, string>();
 			
-			ProcessInclude(doc, doc, filename, includeCache);
+			ProcessInclude(doc, doc, filename, includeCache, defines);
 			
 			job.Load(doc);
 
 			return job;
 		}
 
-		private static void ProcessInclude(XmlDocument doc, XmlNode root, string basename, Dictionary<string, XmlDocument> cache)
+		private static void ProcessInclude(XmlDocument doc, XmlNode root, string basename, Dictionary<string, XmlDocument> cache, Dictionary<string, string> defines)
 		{
-			List<XmlNode> includes = new List<XmlNode>();
+			List<XmlNode > includes = new List<XmlNode>();
 
 			foreach (XmlNode node in root.SelectNodes("//include"))
 			{
@@ -122,17 +132,29 @@ namespace Optimization
 
 				if (parent == root)
 				{
-					ProcessInclude(doc, root, node, basename, cache);
+					ProcessInclude(doc, root, node, basename, cache, defines);
 				}
 				
 				node.ParentNode.RemoveChild(node);
 			}
 		}
 		
-		private static void ProcessInclude(XmlDocument doc, XmlNode root, XmlNode node, string basename, Dictionary<string, XmlDocument> cache)
+		private static void ProcessInclude(XmlDocument doc, XmlNode root, XmlNode node, string basename, Dictionary<string, XmlDocument> cache, Dictionary<string, string> defs)
 		{
+			Dictionary<string, string > defines = new Dictionary<string, string>(defs);
+
+			foreach (XmlAttribute def in node.Attributes)
+			{
+				if (def.Name == "path")
+				{
+					continue;
+				}
+
+				defines[def.Name] = def.Value.Trim();
+			}
+
 			string uri = node.InnerText.Trim();
-			
+
 			if (!uri.StartsWith("/"))
 			{
 				uri = Path.Combine(Path.GetDirectoryName(basename), uri);
@@ -147,7 +169,7 @@ namespace Optimization
 				
 				cache[uri] = included;
 				
-				ProcessInclude(included, included, uri, cache);
+				ProcessInclude(included, included, uri, cache, defines);
 			}
 			else
 			{
@@ -155,7 +177,7 @@ namespace Optimization
 			}
 			
 			XmlAttribute path = node.Attributes["path"];
-			List<XmlNode> nodes = new List<XmlNode>();
+			List<XmlNode > nodes = new List<XmlNode>();
 			
 			if (path != null)
 			{
@@ -173,10 +195,65 @@ namespace Optimization
 			
 			foreach (XmlNode ext in nodes)
 			{
-				ProcessInclude(included, ext, uri, cache);
+				ProcessInclude(included, ext, uri, cache, defines);
 
 				XmlNode intern = doc.ImportNode(ext, true);
+
+				ProcessDefines(intern, defines);
 				parent.InsertAfter(intern, node);
+			}
+		}
+
+		private static string ProcessDefines(string s, Dictionary<string, string> defs)
+		{
+			return s_defineRegex.Replace(s, (a) => {
+				string repl;
+
+				if (defs.TryGetValue(a.Groups[1].Value, out repl))
+				{
+					return repl;
+				}
+				else
+				{
+					return a.Value;
+				}
+			});
+		}
+
+		private static void ProcessDefines(XmlNode node, Dictionary<string, string> defs)
+		{
+			if (defs.Count == 0)
+			{
+				return;
+			}
+
+			if (node.Attributes != null)
+			{
+				foreach (XmlAttribute attr in node.Attributes)
+				{
+					attr.Value = ProcessDefines(attr.Value, defs);
+	
+					string ret = ProcessDefines(attr.Name, defs);
+	
+					if (ret != attr.Name)
+					{
+						XmlAttribute cp = node.OwnerDocument.CreateAttribute(ret);
+						cp.Value = attr.Value;
+	
+						node.Attributes.InsertAfter(attr, cp);
+						node.Attributes.Remove(attr);
+					}
+				}
+			}
+
+			foreach (XmlNode child in node.ChildNodes)
+			{
+				ProcessDefines(child, defs);
+			}
+
+			if (node.ChildNodes.Count == 0)
+			{
+				node.InnerText = ProcessDefines(node.InnerText, defs);
 			}
 		}
 
@@ -276,14 +353,14 @@ namespace Optimization
 
 			if (node != null)
 			{
-				d_priority = int.Parse(node.InnerText);
+				d_priority = double.Parse(node.InnerText);
 			}
 
 			node = doc.SelectSingleNode("/job/timeout");
 
 			if (node != null)
 			{
-				d_timeout = int.Parse(node.InnerText);
+				d_timeout = double.Parse(node.InnerText);
 			}
 
 			node = doc.SelectSingleNode("/job/token");
