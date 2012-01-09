@@ -89,6 +89,9 @@ namespace Optimization
 			
 			job.d_filename = System.IO.Path.GetFullPath(filename);
 			job.d_name = System.IO.Path.GetFileNameWithoutExtension(filename);
+
+			job.d_name = job.d_name.Replace(",", "-").Replace("=", "-");
+
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);
 			
