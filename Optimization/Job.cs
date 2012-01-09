@@ -276,14 +276,14 @@ namespace Optimization
 
 			if (node != null)
 			{
-				d_priority = int.Parse(node.InnerText);
+				d_priority = double.Parse(node.InnerText);
 			}
 
 			node = doc.SelectSingleNode("/job/timeout");
 
 			if (node != null)
 			{
-				d_timeout = int.Parse(node.InnerText);
+				d_timeout = double.Parse(node.InnerText);
 			}
 
 			node = doc.SelectSingleNode("/job/token");
