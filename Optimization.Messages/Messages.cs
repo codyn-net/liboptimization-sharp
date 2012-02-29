@@ -29,7 +29,49 @@ namespace Optimization.Messages
 			}
 		}
 
-		public static T[] Extract<T>(Stream stream)
+		public static T ExtractOne<T>(Stream stream) where T : class
+		{
+			if (!stream.CanRead)
+			{
+				return null;
+			}
+
+			// First read the '<size> ' header
+			int num;
+
+			try
+			{
+				num = ReadMessageSize(stream);
+			}
+			catch (IOException)
+			{
+				return null;
+			}
+
+			byte[] msg = new byte[num];
+
+			try
+			{
+				int start = 0;
+
+				while (num > 0)
+				{
+					int len = stream.Read(msg, start, num);
+
+					num -= len;
+					start += len;
+				}
+			}
+			catch (IOException)
+			{
+				return null;
+			}
+
+			MemoryStream ss = new MemoryStream(msg, 0, msg.Length);
+			return ProtoBuf.Serializer.Deserialize<T>(ss);
+		}
+
+		public static T[] Extract<T>(Stream stream) where T : class
 		{
 			List<T> ret = new List<T>();
 
@@ -40,34 +82,16 @@ namespace Optimization.Messages
 
 			while (true)
 			{
-				// First read the '<size> ' header
-				int num;
+				T one = ExtractOne<T>(stream);
 
-				try
+				if (one != null)
 				{
-					num = ReadMessageSize(stream);
+					ret.Add(one);
 				}
-				catch (IOException)
-				{
-					break;
-				}
-
-				byte[] msg = new byte[num];
-
-				try
-				{
-					if (stream.Read(msg, 0, num) != num)
-					{
-						break;
-					}
-				}
-				catch (IOException)
+				else
 				{
 					break;
 				}
-
-				MemoryStream ss = new MemoryStream(msg, 0, num);
-				ret.Add(ProtoBuf.Serializer.Deserialize<T>(ss));
 			}
 
 			return ret.ToArray();
