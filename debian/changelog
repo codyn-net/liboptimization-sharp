@@ -1,3 +1,10 @@
+liboptimization2-sharp (2.20-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * Added command messages
+
+ -- Jesse van den Kieboom <jvanden@biorobpc21.epfl.ch>  Wed, 29 Feb 2012 10:50:31 +0100
+
 liboptimization2-sharp (2.19-1) UNRELEASED; urgency=low
 
   * New upstream release
