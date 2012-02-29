@@ -24,7 +24,11 @@ namespace Optimization
 {
 	public enum Constants
 	{
+		DiscoveryPort = 4756,
+		WorkerPort = 8723,
 		MasterPort = 9485,
+		CommandPort = 7123,
+		MonitorPort = 8175,
 		ProtocolVersion = 2
 	}
 }
