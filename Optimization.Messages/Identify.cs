@@ -34,17 +34,21 @@ namespace Optimization.Messages
 			{
 				[ProtoEnum]
 				Maximize = 0,
-				
+
 				[ProtoEnum]
 				Minimize = 1
 			}
-			
+
 			[ProtoMember(1, IsRequired=true)]
 			public Type FitnessType;
-			
+
 			[ProtoMember(2, IsRequired=true)]
 			public string Name;
-			
+
+			public Fitness()
+			{
+			}
+
 			public Fitness(Type type, string name)
 			{
 				FitnessType = type;
@@ -60,13 +64,13 @@ namespace Optimization.Messages
 
 		[ProtoMember(3, IsRequired=true)]
 		public double Priority;
-		
+
 		[ProtoMember(4, IsRequired=false)]
 		public double Timeout;
-		
+
 		[ProtoMember(5, IsRequired=false)]
-		public UInt64 Version; 
-		
+		public UInt64 Version;
+
 		[ProtoMember(6)]
 		public Fitness[] FitnessTerms;
 	}
