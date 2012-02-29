@@ -77,6 +77,7 @@ FILES = \
 	Optimization.Attributes/Attributes.cs \
 	Optimization.Messages/Batch.cs \
 	Optimization.Messages/Cancel.cs \
+	Optimization.Messages/Command.cs \
 	Optimization.Messages/Communication.cs \
 	Optimization.Messages/Identify.cs \
 	Optimization.Messages/Ping.cs \
