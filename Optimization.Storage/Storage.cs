@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Data;
 using System.Data.Common;
@@ -326,7 +325,7 @@ namespace Optimization.Storage
 
 			foreach (KeyValuePair<string, object> pair in Job.Optimizer.State.Settings)
 			{
-				builder.AppendFormat(", `_s_{0}`",  NormalizeName(pair.Key));
+				builder.AppendFormat(", `_s_{0}`", NormalizeName(pair.Key));
 			}
 
 			builder.Append(")");
@@ -347,7 +346,7 @@ namespace Optimization.Storage
 			transaction.Commit();
 		}
 
-		delegate bool GenerateSavePair(object container, out string name, out object val);
+		delegate bool GenerateSavePair(object container,out string name,out object val);
 
 		private void SavePairs(Solution solution, ICollection collection, string table, Dictionary<string, object> additional, GenerateSavePair generator)
 		{
@@ -813,7 +812,7 @@ namespace Optimization.Storage
 			
 			/* Optimizer stuff */
 			Query("SELECT `name`, `value` FROM `settings`", delegate (IDataReader reader) {
-				job.Optimizer.Settings[(string)reader[0]] = (string)reader[1];
+				job.Optimizer.Settings[(string)reader[0]] = reader[1] as string;
 				return true;
 			});
 
