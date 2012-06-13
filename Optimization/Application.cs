@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,15 +32,16 @@ namespace Optimization
 {
 	public class Application
 	{
-		public delegate void MessageHandler(object source, string message);
-		public delegate void ProgressHandler(object source, double progress);
-		public delegate void JobHandler(object source, Job job);
+		public delegate void MessageHandler(object source,string message);
+
+		public delegate void ProgressHandler(object source,double progress);
+
+		public delegate void JobHandler(object source,Job job);
 
 		public event MessageHandler OnStatus = delegate {};
 		public event MessageHandler OnError = delegate {};
 		public event MessageHandler OnMessage = delegate {};
 		public event MessageHandler OnWarning = delegate {};
-
 		public event ProgressHandler OnProgress = delegate {};
 		public event JobHandler OnJob = delegate {};
 		public event EventHandler OnIterate = delegate {};
@@ -79,11 +79,9 @@ namespace Optimization
 
 		Job d_job;
 		Connection d_connection;
-
 		string d_masterAddress;
 		string d_tokenAddress;
 		object d_messageLock;
-
 		Queue<Message> d_messages;
 		bool d_quitting;
 		bool d_reconnect;
@@ -92,7 +90,6 @@ namespace Optimization
 		string d_token;
 		object d_lastRevalidate;
 		Dictionary<string, string> d_overrideSettings;
-
 		Dictionary<uint, Solution> d_running;
 		bool d_log;
 
@@ -175,7 +172,7 @@ namespace Optimization
 
 		private void AddMessage(params Message[] messages)
 		{
-			lock(d_messageLock)
+			lock (d_messageLock)
 			{
 				foreach (Message msg in messages)
 				{
@@ -194,13 +191,13 @@ namespace Optimization
 			{
 				switch (comm.Type)
 				{
-					case Communication.CommunicationType.Response:
-						messages.Add(new MessageResponse(comm.Response));
+				case Communication.CommunicationType.Response:
+					messages.Add(new MessageResponse(comm.Response));
 					break;
-					case Communication.CommunicationType.Notification:
-						messages.Add(new MessageNotification(comm.Notification));
+				case Communication.CommunicationType.Notification:
+					messages.Add(new MessageNotification(comm.Notification));
 					break;
-					default:
+				default:
 						// NOOP
 					break;
 				}
@@ -422,7 +419,7 @@ namespace Optimization
 			}
 
 			// Update the solution fitness
-			solution.Update(fitness);
+			d_job.Optimizer.UpdateFitness(solution, fitness);
 
 			try
 			{
@@ -440,20 +437,20 @@ namespace Optimization
 		{
 			switch (failure.Type)
 			{
-				case Response.FailureType.TypeType.Disconnected:
-					return "Disconnected";
-				case Response.FailureType.TypeType.Dispatcher:
-					return "Dispatcher failure";
-				case Response.FailureType.TypeType.DispatcherNotFound:
-					return "Dispatcher not found";
-				case Response.FailureType.TypeType.NoResponse:
-					return "No response";
-				case Response.FailureType.TypeType.Timeout:
-					return "Timeout";
-				case Response.FailureType.TypeType.WrongRequest:
-					return "Wrong request";
-				default:
-					return "Unknown";
+			case Response.FailureType.TypeType.Disconnected:
+				return "Disconnected";
+			case Response.FailureType.TypeType.Dispatcher:
+				return "Dispatcher failure";
+			case Response.FailureType.TypeType.DispatcherNotFound:
+				return "Dispatcher not found";
+			case Response.FailureType.TypeType.NoResponse:
+				return "No response";
+			case Response.FailureType.TypeType.Timeout:
+				return "Timeout";
+			case Response.FailureType.TypeType.WrongRequest:
+				return "Wrong request";
+			default:
+				return "Unknown";
 			}
 		}
 
@@ -502,14 +499,14 @@ namespace Optimization
 			// Handle response by default handler
 			switch (response.Status)
 			{
-				case Response.StatusType.Success:
-					OnSuccess(response);
+			case Response.StatusType.Success:
+				OnSuccess(response);
 				break;
-				case Response.StatusType.Failed:
-					OnFailed(response);
+			case Response.StatusType.Failed:
+				OnFailed(response);
 				break;
-				case Response.StatusType.Challenge:
-					OnChallenge(response);
+			case Response.StatusType.Challenge:
+				OnChallenge(response);
 				break;
 			}
 		}
@@ -523,14 +520,14 @@ namespace Optimization
 		{
 			switch (notification.NotificationType)
 			{
-				case Notification.Type.Info:
-					OnMessage(this, notification.Message);
+			case Notification.Type.Info:
+				OnMessage(this, notification.Message);
 				break;
-				case Notification.Type.Warning:
-					OnWarning(this, notification.Message);
+			case Notification.Type.Warning:
+				OnWarning(this, notification.Message);
 				break;
-				case Notification.Type.Error:
-					OnError(this, notification.Message);
+			case Notification.Type.Error:
+				OnError(this, notification.Message);
 				break;
 			}
 		}
@@ -591,7 +588,7 @@ namespace Optimization
 					Dictionary<string, double> fitness;
 
 					fitness = dispatcher.Evaluate(solution);
-					solution.Update(fitness);
+					d_job.Optimizer.UpdateFitness(solution, fitness);
 				}
 				
 				if (!d_job.Optimizer.Next())
@@ -628,7 +625,8 @@ namespace Optimization
 				int secs = d_reconnectTimeout[d_reconnectTimeoutIndex];
 				int val = secs >= 60 ? (secs / 60) : secs;
 
-				Error("Could not connect to master, retrying in {0} {1}{2}...", val, secs >= 60 ? "minute" : "second", val != 1 ? "s" : "");;
+				Error("Could not connect to master, retrying in {0} {1}{2}...", val, secs >= 60 ? "minute" : "second", val != 1 ? "s" : "");
+				;
 				
 				d_waitHandle.WaitOne(secs * 1000, false);
 				
@@ -685,7 +683,7 @@ namespace Optimization
 			return ret;
 		}
 		
-		delegate bool TokenAsyncCallback(TcpClient client, IAsyncResult result);
+		delegate bool TokenAsyncCallback(TcpClient client,IAsyncResult result);
 		
 		private TcpClient ConnectTokenServer(TokenAsyncCallback callback)
 		{
@@ -707,7 +705,7 @@ namespace Optimization
 						return;
 					}
 				}
-				catch  (Exception e)
+				catch (Exception e)
 				{
 					Console.WriteLine(e);
 				}

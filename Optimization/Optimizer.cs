@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -34,48 +33,34 @@ namespace Optimization
 		{
 			[Setting("max-iterations", 60, Description="Maximum number of iterations")]
 			public uint MaxIterations;
-
 			[Setting("population-size", 30, Description="Solution population size")]
 			public uint PopulationSize;
-
 			[Setting("convergence-threshold", "0", Description="Threshold on minimum change in the objective function improvement over convergence-window measurements")]
 			public string ConvergenceThreshold;
-
 			[Setting("convergence-window", "10", Description="Window over which to measure fitness improvement for convergence")]
 			public string ConvergenceWindow;
-
 			[Setting("min-iterations", "20", Description="Minimum number of iterations before calculating convergence")]
 			public string MinIterations;
-			
 			[Setting("initial-population", null, Description="Database file from which to generate the initial population")]
 			public string InitialPopulation;
-			
 			[Setting("initial-population-noise", 0, Description="Noise to add to initial sampling from the initial population database")]
 			public double InitialPopulationNoise;
 		}
 
 		private Storage.Storage d_storage;
-
 		private State d_state;
 		private Fitness d_fitness;
-
 		private List<Parameter> d_parameters;
 		private List<Boundary> d_boundaries;
 		private Dictionary<string, Boundary> d_boundaryHash;
 		private Dictionary<string, Parameter> d_parameterHash;
-
 		private List<Solution> d_population;
 		private Solution d_best;
-
 		private LinkedList<Fitness> d_lastBest;
-
 		private uint d_currentIteration;
-
 		private Settings d_settings;
 		private ConstructorInfo d_solutionConstructor;
-
 		private List<Extension> d_extensions;
-
 		private Expression d_convergenceThreshold;
 		private Expression d_convergenceWindow;
 		private Expression d_minIterations;
@@ -355,7 +340,7 @@ namespace Optimization
 			}
 			set
 			{
-				 d_storage = value;
+				d_storage = value;
 			}
 		}
 
@@ -508,6 +493,16 @@ namespace Optimization
 				{
 					d_best = solution.Clone() as Solution;
 				}
+			}
+		}
+
+		public virtual void UpdateFitness(Solution sol, Dictionary<string, double> fitness)
+		{
+			sol.Update(fitness);
+
+			foreach (Extension ext in Extensions)
+			{
+				ext.UpdateFitness(sol);
 			}
 		}
 
