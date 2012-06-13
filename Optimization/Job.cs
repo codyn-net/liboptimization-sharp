@@ -71,10 +71,12 @@ namespace Optimization
 		private bool d_synchronous;
 		private string d_filename;
 		private static System.Text.RegularExpressions.Regex s_defineRegex;
+		private static System.Text.RegularExpressions.Regex s_envRegex;
 
 		static Job()
 		{
 			s_defineRegex = new System.Text.RegularExpressions.Regex("{{([^}]*)}}");
+			s_envRegex = new System.Text.RegularExpressions.Regex("(\\\\)?\\$(([A-Z_]+)|{([A-Z_]+}))");
 		}
 
 		public Job()
@@ -201,6 +203,9 @@ namespace Optimization
 
 				ProcessDefines(intern, defines);
 				parent.InsertAfter(intern, node);
+
+				// Insert then after the node to keep the order...
+				node = intern;
 			}
 		}
 
@@ -275,7 +280,37 @@ namespace Optimization
 		
 		private string ExpandJobPath(string s)
 		{
-			return s.Replace("$OPTIMIZATION_JOB_PATH", System.IO.Path.GetDirectoryName(d_filename));
+			string ename = "OPTIMIZATION_JOB_PATH";
+			var dic = Environment.GetEnvironmentVariables();
+
+			dic[ename] = System.IO.Path.GetDirectoryName(d_filename);
+
+			string ret = s_envRegex.Replace(s, (m) => {
+				string key;
+				string val = "";
+
+				if (m.Groups[1].Success)
+				{
+					val = m.Value.Substring(1);
+				}
+				else if (m.Groups[4].Success)
+				{
+					key = m.Groups[4].Value;
+				}
+				else
+				{
+					key = m.Groups[3].Value;
+				}
+
+				if (key != null && dic.Contains(key))
+				{
+					val = dic[key] as string;
+				}
+
+				return val != null ? val : "";
+			});
+
+			return ret;
 		}
 
 		private void Load(Storage.Storage storage)
