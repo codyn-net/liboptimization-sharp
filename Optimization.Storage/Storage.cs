@@ -74,7 +74,6 @@ namespace Optimization.Storage
 			Uri = UniqueFile(Uri);
 
 			Open();
-			CreateTables();
 		}
 
 		public new bool Open()
@@ -646,6 +645,7 @@ namespace Optimization.Storage
 			}
 
 			Query("CREATE TABLE IF NOT EXISTS `extensions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT)");
+			Query("DELETE FROM `extensions`");
 
 			foreach (Extension ext in Job.Optimizer.Extensions)
 			{
