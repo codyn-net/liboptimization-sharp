@@ -505,7 +505,7 @@ namespace Optimization
 		private void LoadExtensions(XmlDocument doc)
 		{
 			XmlNodeList extensions = doc.SelectNodes("/job/extensions/extension");
-			
+
 			foreach (XmlNode node in extensions)
 			{
 				XmlAttribute name = node.Attributes["name"];

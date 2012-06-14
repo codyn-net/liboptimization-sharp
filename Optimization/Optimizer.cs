@@ -97,10 +97,10 @@ namespace Optimization
 			{
 				Storage.Database db = new Storage.Database(d_settings.InitialPopulation);
 				db.Open();
-				
+
 				d_storage.ImportTable(db, "initial_population");
 				d_storage.ImportTable(db, "initial_population_data");
-				
+
 				db.Close();
 			}
 			
@@ -209,7 +209,7 @@ namespace Optimization
 		
 		private void SolutionFromInitial(Solution solution, Optimization.Storage.Records.InitialPopulation population)
 		{
-			int idx = (int)System.Math.Round(State.Random.NextDouble() * population.Population.Count);
+			int idx = (int)System.Math.Round(State.Random.NextDouble() * (population.Population.Count - 1));
 			Optimization.Storage.Records.InitialSolution sol = population.Population[idx];
 			
 			foreach (Parameter parameter in solution.Parameters)
@@ -218,7 +218,7 @@ namespace Optimization
 				
 				if (d_settings.InitialPopulationNoise > 0)
 				{
-					val += (State.Random.NextDouble() * 2 - 1) * d_settings.InitialPopulationNoise;
+					val += (State.Random.NextDouble() * 2 - 1) * d_settings.InitialPopulationNoise * (parameter.Boundary.Max - parameter.Boundary.Min);
 					val = System.Math.Max(System.Math.Min(val, parameter.Boundary.Max), parameter.Boundary.Min);
 				}
 				
@@ -234,7 +234,7 @@ namespace Optimization
 		virtual public void InitializePopulation()
 		{
 			d_population.Clear();
-			
+
 			Optimization.Storage.Records.InitialPopulation initial = d_storage.ReadInitialPopulation();
 
 			// Create initial population

@@ -965,7 +965,7 @@ namespace Optimization.Storage
 			
 			List<string> data = new List<string>();
 			
-			Query("PRAGMA table_info(`initial_population`)", delegate (IDataReader reader) {
+			Query("PRAGMA table_info(`initial_population_data`)", delegate (IDataReader reader) {
 				string name = reader.GetString(1);
 				
 				if (name.StartsWith("_d_"))
@@ -985,7 +985,7 @@ namespace Optimization.Storage
 
 			string paramsel = String.Join(", ", Array.ConvertAll(parameters.ToArray(), a => String.Format("`initial_population`.`{0}`", a)));
 			string datasel = String.Join(", ", Array.ConvertAll(data.ToArray(), a => String.Format("`initial_population_data`.`{0}`", a)));
-			
+
 			Query("SELECT " + paramsel + ", " + datasel + " FROM `initial_population` " +
 			       "LEFT JOIN `initial_population_data` ON " +
 			       "(`initial_population`.`id` = `initial_population_data`.`id`)", delegate (IDataReader reader) {
