@@ -214,6 +214,12 @@ namespace Optimization
 			
 			foreach (Parameter parameter in solution.Parameters)
 			{
+				// skip parameters that are not in the initial database
+				if (!sol.Parameters.ContainsKey(parameter.Name))
+				{
+					continue;
+				}
+
 				double val = sol.Parameters[parameter.Name];
 				
 				if (d_settings.InitialPopulationNoise > 0)
