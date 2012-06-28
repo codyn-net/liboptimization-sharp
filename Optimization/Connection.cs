@@ -178,12 +178,12 @@ namespace Optimization
 			}
 		}
 
-		private Task Construct(Job job, Solution solution)
+		private Task Construct(Job job, Solution solution, uint idx, uint numid)
 		{
 			Task task = new Task();
 
 			// Set task id, dispatcher
-			task.Id = solution.Id;
+			task.Id = solution.Id + idx * numid;
 			task.Dispatcher = job.Dispatcher.Name;
 
 			// Set the job and optimizer name
@@ -242,9 +242,16 @@ namespace Optimization
 
 			List<Task> tasks = new List<Task>();
 
+			uint numid = (uint)job.Optimizer.Population.Count;
+
 			foreach (Solution solution in job.Optimizer)
 			{
-				tasks.Add(Construct(job, solution));
+				uint num = Math.Max(1, job.Optimizer.Configuration.RepeatTask);
+
+				for (uint i = 0; i < num; ++i)
+				{
+					tasks.Add(Construct(job, solution, i, numid));
+				}
 			}
 
 			batch.Tasks = tasks.ToArray();
@@ -420,7 +427,7 @@ namespace Optimization
 					
 					if (fitness.Variables.ContainsKey(key))
 					{
-						return fitness.Variables[key].Expression.Evaluate(fitness.Context);
+						return fitness.Variables[key].Expression.Evaluate(Biorob.Math.Constants.Context, fitness.Context);
 					}
 					else
 					{					

@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Collections.Generic;
 using Biorob.Math;
@@ -52,15 +51,12 @@ namespace Optimization
 		}
 
 		private Expression d_expression;
-
 		private Dictionary<string, Variable> d_variables;
-
 		private Dictionary<string, double> d_values;
 		private Dictionary<string, object> d_context;
 		private static Mode s_mode;
 		private object d_value;
 		private List<string> d_unknowns;
-
 		private static Comparison<Fitness> s_comparer;
 
 		static Fitness()
@@ -72,10 +68,10 @@ namespace Optimization
 		{
 			switch (mode)
 			{
-				case Mode.Maximize:
-					return a.CompareTo(b);
-				case Mode.Minimize:
-					return b.CompareTo(a);
+			case Mode.Maximize:
+				return a.CompareTo(b);
+			case Mode.Minimize:
+				return b.CompareTo(a);
 			}
 			
 			return 0;
@@ -85,17 +81,17 @@ namespace Optimization
 		{
 			switch (mode)
 			{
-				case Mode.Maximize:
-					s_comparer = delegate (Fitness a, Fitness b)
-					{
-						return a.Value.CompareTo(b.Value);
-					};
+			case Mode.Maximize:
+				s_comparer = delegate (Fitness a, Fitness b)
+				{
+					return a.Value.CompareTo(b.Value);
+				};
 				break;
-				case Mode.Minimize:
-					s_comparer = delegate (Fitness a, Fitness b)
-					{
-						return b.Value.CompareTo(a.Value);
-					};
+			case Mode.Minimize:
+				s_comparer = delegate (Fitness a, Fitness b)
+				{
+					return b.Value.CompareTo(a.Value);
+				};
 				break;
 			}
 
@@ -175,7 +171,7 @@ namespace Optimization
 			d_unknowns = null;
 		}
 
-		public double this [string key]
+		public double this[string key]
 		{
 			get
 			{
@@ -417,7 +413,7 @@ namespace Optimization
 				
 				if (expr != null)
 				{
-					parts.Add(String.Format("{0} = {1}", v.Key, expr.Evaluate(Context)));
+					parts.Add(String.Format("{0} = {1}", v.Key, expr.Evaluate(Biorob.Math.Constants.Context, Context)));
 				}
 				else
 				{

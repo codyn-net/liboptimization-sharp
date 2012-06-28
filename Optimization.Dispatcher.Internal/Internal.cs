@@ -43,7 +43,7 @@ namespace Optimization.Dispatcher.Internal
 			{
 				try
 				{
-					double val = pair.Value.Evaluate(variables);
+					double val = pair.Value.Evaluate(Biorob.Math.Constants.Context, variables);
 					fitness.Add(pair.Key, val);
 				}
 				catch (Biorob.Math.Expression.ContextException)

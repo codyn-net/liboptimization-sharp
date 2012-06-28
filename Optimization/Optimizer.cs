@@ -31,6 +31,14 @@ namespace Optimization
 	{
 		public class Settings : Optimization.Settings
 		{
+			public enum RepeatTaskCombineType
+			{
+				Average,
+				Minimum,
+				Maximum,
+				Snr
+			}
+
 			[Setting("max-iterations", 60, Description="Maximum number of iterations")]
 			public uint MaxIterations;
 			[Setting("population-size", 30, Description="Solution population size")]
@@ -45,6 +53,10 @@ namespace Optimization
 			public string InitialPopulation;
 			[Setting("initial-population-noise", 0, Description="Noise to add to initial sampling from the initial population database")]
 			public double InitialPopulationNoise;
+			[Setting("repeat-task", 1, Description="Number of times to repeat a task")]
+			public uint RepeatTask;
+			[Setting("repeat-task-combine", RepeatTaskCombineType.Average, Description="Function computing how to combine fitness values from multiple task runs")]
+			public RepeatTaskCombineType RepeatTaskCombine;
 		}
 
 		private Storage.Storage d_storage;
