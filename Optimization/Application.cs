@@ -926,7 +926,7 @@ namespace Optimization
 				return true;
 			});
 			
-			signaller.WaitOne(1000, false);
+			signaller.WaitOne(5000, false);
 
 			if (!client.Connected)
 			{
