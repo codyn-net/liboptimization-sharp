@@ -692,8 +692,8 @@ namespace Optimization.Storage
 		{
 			Records.Solution solution = new Records.Solution();
 
-			solution.Index = (int)reader["the_index"];
-			solution.Iteration = (int)reader["the_iteration"];
+			solution.Index = As<int>(reader["the_index"]);
+			solution.Iteration = As<int>(reader["the_iteration"]);
 
 			for (int i = 0; i < reader.FieldCount; ++i)
 			{
@@ -703,19 +703,19 @@ namespace Optimization.Storage
 
 				if (name.StartsWith("_f_"))
 				{
-					solution.Fitness.Add(name.Substring(3), val == null ? 0 : reader.GetDouble(i));
+					solution.Fitness.Add(name.Substring(3), As<double>(val));
 				}
 				else if (name.StartsWith("_p_"))
 				{
-					solution.Parameters.Add(name.Substring(3), val == null ? 0 : reader.GetDouble(i));
+					solution.Parameters.Add(name.Substring(3), As<double>(val));
 				}
 				else if (name.StartsWith("_d_"))
 				{
-					solution.Data.Add(name.Substring(3), val == null ? "" : reader.GetString(i));
+					solution.Data.Add(name.Substring(3), As<string>(val));
 				}
 			}
 
-			solution.FitnessValue = (double)reader["fitness"];
+			solution.FitnessValue = As<double>(reader["fitness"]);
 			return solution;
 		}
 
@@ -725,10 +725,10 @@ namespace Optimization.Storage
 
 			object[] vals = QueryFirst("SELECT `best_id`, `time` FROM iteration WHERE `iteration` = @0", iteration);
 
-			int bestId = (int)vals[0];
+			int bestId = As<int>(vals[0]);
 
 			ret.Index = iteration;
-			ret.Time = FromUnixTimestamp((int)vals[1]);
+			ret.Time = FromUnixTimestamp(As<int>(vals[1]));
 
 			Dictionary<int, Records.Solution> idmap = new Dictionary<int, Records.Solution>();
 
@@ -797,22 +797,39 @@ namespace Optimization.Storage
 			return solution;
 		}
 
+		public static T As<T>(object val, T def = default(T))
+		{
+			if (val == null)
+			{
+				return def;
+			}
+
+			try
+			{
+				return (T)Convert.ChangeType(val, typeof(T));
+			}
+			catch
+			{
+				return def;
+			}
+		}
+
 		public Records.Job ReadJob()
 		{
 			Records.Job job = new Records.Job();
 			object[] jobspec = QueryFirst("SELECT `name`, `priority`, `timeout`, `token`, `optimizer`, `dispatcher`, `filename` FROM `job`");
 
-			job.Name = (string)jobspec[0];
-			job.Priority = (double)jobspec[1];
-			job.Timeout = (double)jobspec[2];
-			job.Token = (string)jobspec[3];
-			job.Optimizer.Name = (string)jobspec[4];
-			job.Dispatcher.Name = (string)jobspec[5];
-			job.Filename = jobspec[6] as string;
+			job.Name = As<string>(jobspec[0]);
+			job.Priority = As<double>(jobspec[1], 1);
+			job.Timeout = As<double>(jobspec[2]);
+			job.Token = As<string>(jobspec[3]);
+			job.Optimizer.Name = As<string>(jobspec[4]);
+			job.Dispatcher.Name = As<string>(jobspec[5]);
+			job.Filename = As<string>(jobspec[6]);
 			
 			/* Optimizer stuff */
 			Query("SELECT `name`, `value` FROM `settings`", delegate (IDataReader reader) {
-				job.Optimizer.Settings[(string)reader[0]] = reader[1] as string;
+				job.Optimizer.Settings[As<string>(reader[0])] = As<string>(reader[1]);
 				return true;
 			});
 
@@ -822,11 +839,11 @@ namespace Optimization.Storage
 			        FROM `boundaries`", delegate (IDataReader reader) {
 				Records.Boundary boundary = new Records.Boundary();
 
-				boundary.Name = (string)reader[0];
-				boundary.Min = (string)reader[1];
-				boundary.Max = (string)reader[2];
-				boundary.MinInitial = (string)reader[3];
-				boundary.MaxInitial = (string)reader[4];
+				boundary.Name = As<string>(reader[0]);
+				boundary.Min = As<string>(reader[1]);
+				boundary.Max = As<string>(reader[2]);
+				boundary.MinInitial = As<string>(reader[3]);
+				boundary.MaxInitial = As<string>(reader[4]);
 
 				job.Optimizer.Boundaries.Add(boundary);
 				boundaries[boundary.Name] = boundary;
@@ -836,8 +853,8 @@ namespace Optimization.Storage
 
 			Query("SELECT `name`, `boundary` FROM `parameters`", delegate (IDataReader reader) {
 				Records.Parameter parameter = new Records.Parameter();
-				parameter.Name = (string)reader[0];
-				parameter.Boundary = boundaries[(string)reader[1]];
+				parameter.Name = As<string>(reader[0]);
+				parameter.Boundary = boundaries[As<string>(reader[1])];
 
 				job.Optimizer.Parameters.Add(parameter);
 				return true;
@@ -845,15 +862,15 @@ namespace Optimization.Storage
 
 			/* Dispatcher stuff */
 			Query("SELECT `name`, `value` FROM `dispatcher`", delegate (IDataReader reader) {
-				job.Dispatcher.Settings[(string)reader[0]] = (string)reader[1];
+				job.Dispatcher.Settings[As<string>(reader[0])] = As<string>(reader[1]);
 				return true;
 			});
 
 			/* Fitness stuff */
 			Query("SELECT `name`, `value`, `mode` FROM `fitness_settings`", delegate (IDataReader reader) {
-				string name = (string)reader[0];
-				string val = (string)reader[1];
-				string mode = reader[2] as string;
+				string name = As<string>(reader[0]);
+				string val = As<string>(reader[1]);
+				string mode = As<string>(reader[2]);
 
 				if (name == "__expression__")
 				{
@@ -872,7 +889,7 @@ namespace Optimization.Storage
 			});
 
 			/* State stuff */
-			Int64 iteration = (Int64)QueryValue("SELECT COUNT(iteration) FROM iteration");
+			Int64 iteration = As<Int64>(QueryValue("SELECT COUNT(iteration) FROM iteration"));
 
 			if (iteration > 0)
 			{
@@ -895,7 +912,7 @@ namespace Optimization.Storage
 
 						if (name.StartsWith("_s_"))
 						{
-							job.Optimizer.State.Settings.Add(name.Substring(3), Convert.ChangeType(reader[i], typeof(string)) as string);
+							job.Optimizer.State.Settings.Add(name.Substring(3), As<string>(reader[i]));
 						}
 					}
 
@@ -905,7 +922,7 @@ namespace Optimization.Storage
 
 			/* Extensions stuff */
 			Query("SELECT `name` FROM `extensions`", delegate (IDataReader reader) {
-				string name = (string)reader[0];
+				string name = As<string>(reader[0]);
 
 				job.Extensions.Add(name);
 				return true;
@@ -916,12 +933,12 @@ namespace Optimization.Storage
 
 		public long ReadIterations()
 		{
-			return (long)QueryValue("SELECT COUNT(`iteration`) FROM iteration");
+			return As<long>(QueryValue("SELECT COUNT(`iteration`) FROM iteration"));
 		}
 
 		public long ReadSolutions(long iteration)
 		{
-			return (long)QueryValue("SELECT COUNT(*) FROM solution WHERE iteration = @0", iteration);
+			return As<long>(QueryValue("SELECT COUNT(*) FROM solution WHERE iteration = @0", iteration));
 		}
 
 		private DateTime FromUnixTimestamp(int seconds)
@@ -937,9 +954,9 @@ namespace Optimization.Storage
 			Query("SELECT * FROM `log`", delegate (IDataReader reader) {
 				Records.Log log = new Records.Log();
 
-				log.Time = FromUnixTimestamp((int)reader["time"]);
-				log.Type = (string)reader["type"];
-				log.Message = (string)reader["message"];
+				log.Time = FromUnixTimestamp(As<int>(reader["time"]));
+				log.Type = As<string>(reader["type"]);
+				log.Message = As<string>(reader["message"]);
 
 				ret.Add(log);
 				return true;
@@ -953,7 +970,7 @@ namespace Optimization.Storage
 			List<string> parameters = new List<string>();
 			
 			Query("PRAGMA table_info(`initial_population`)", delegate (IDataReader reader) {
-				string name = reader.GetString(1);
+				string name = As<string>(reader[1]);
 				
 				if (name.StartsWith("_p_"))
 				{
@@ -966,7 +983,7 @@ namespace Optimization.Storage
 			List<string> data = new List<string>();
 			
 			Query("PRAGMA table_info(`initial_population_data`)", delegate (IDataReader reader) {
-				string name = reader.GetString(1);
+				string name = As<string>(reader[1]);
 				
 				if (name.StartsWith("_d_"))
 				{
@@ -997,11 +1014,11 @@ namespace Optimization.Storage
 				
 					if (name.StartsWith("_p_"))
 					{
-						solution.Parameters[name.Substring(3)] = reader.GetDouble(i);
+						solution.Parameters[name.Substring(3)] = As<double>(reader[i]);
 					}
 					else if (name.StartsWith("_d_"))
 					{
-						solution.Data[name.Substring(3)] = reader.GetString(i);
+						solution.Data[name.Substring(3)] = As<string>(reader[i]);
 					}
 				}
 				
