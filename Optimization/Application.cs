@@ -403,7 +403,7 @@ namespace Optimization
 					double val = pair.Value;
 					bool ismin = false;
 
-					if (d_job.Optimizer.Configuration.RepeatTaskCombine != Optimizer.Settings.RepeatTaskCombineType.Average &&
+					if (rt != Optimizer.Settings.RepeatTaskCombineType.Average &&
 					    d_job.Optimizer.Fitness.Variables.TryGetValue(pair.Key, out v) &&
 					    v.Mode == Fitness.Mode.Minimize)
 					{
