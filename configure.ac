@@ -23,11 +23,11 @@ SHAMROCK_EXPAND_DATADIR
 
 AC_PROG_INSTALL
 
-AC_PATH_PROG(GMCS, gmcs, no)
-if test "x$GMCS" = "xno"; then
-        AC_MSG_ERROR([gmcs Not found])
-fi
+AC_PATH_PROG(CMCS, dmcs gmcs, no)
 
+if test "x$CMCS" = "xno"; then
+	AC_MSG_ERROR([dmcs nor gmcs found])
+fi
 
 AC_ARG_ENABLE(debug,
 	AC_HELP_STRING([--enable-debug],
