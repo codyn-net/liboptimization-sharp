@@ -298,12 +298,12 @@ namespace Optimization
 			byte[] message = stream.GetBuffer();
 			NetworkStream str = d_client.GetStream();
 
-			byte[] header = Encoding.ASCII.GetBytes(((uint)message.Length).ToString() + " ");
+			byte[] header = Encoding.ASCII.GetBytes(((uint)stream.Length).ToString() + " ");
 
 			try
 			{
 				str.Write(header, 0, header.Length);
-				str.Write(message, 0, message.Length);
+				str.Write(message, 0, (int)stream.Length);
 			}
 			catch
 			{
