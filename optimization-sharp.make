@@ -147,3 +147,5 @@ uninstall-hook:
 	for ASM in $(INSTALLED_ASSEMBLIES); do \
 		rm -f $(DESTDIR)$(pkglibdir)/`basename $$ASM`; \
 	done
+
+ .NOTPARALLEL:
