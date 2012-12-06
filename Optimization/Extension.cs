@@ -112,6 +112,10 @@ namespace Optimization
 		public virtual void Next()
 		{
 		}
+
+		public virtual void UpdateFitness(Solution solution)
+		{
+		}
 		
 		public virtual Solution UpdateBest()
 		{

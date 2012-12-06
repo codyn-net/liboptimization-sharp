@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,15 +32,16 @@ namespace Optimization
 {
 	public class Application
 	{
-		public delegate void MessageHandler(object source, string message);
-		public delegate void ProgressHandler(object source, double progress);
-		public delegate void JobHandler(object source, Job job);
+		public delegate void MessageHandler(object source,string message);
+
+		public delegate void ProgressHandler(object source,double progress);
+
+		public delegate void JobHandler(object source,Job job);
 
 		public event MessageHandler OnStatus = delegate {};
 		public event MessageHandler OnError = delegate {};
 		public event MessageHandler OnMessage = delegate {};
 		public event MessageHandler OnWarning = delegate {};
-
 		public event ProgressHandler OnProgress = delegate {};
 		public event JobHandler OnJob = delegate {};
 		public event EventHandler OnIterate = delegate {};
@@ -79,11 +79,9 @@ namespace Optimization
 
 		Job d_job;
 		Connection d_connection;
-
 		string d_masterAddress;
 		string d_tokenAddress;
 		object d_messageLock;
-
 		Queue<Message> d_messages;
 		bool d_quitting;
 		bool d_reconnect;
@@ -92,8 +90,8 @@ namespace Optimization
 		string d_token;
 		object d_lastRevalidate;
 		Dictionary<string, string> d_overrideSettings;
-
 		Dictionary<uint, Solution> d_running;
+		Dictionary<uint, List<Dictionary<string, double>>> d_repeatFitness;
 		bool d_log;
 
 #if USE_UNIXSIGNAL
@@ -145,6 +143,8 @@ namespace Optimization
 			
 			d_waitHandle = new AutoResetEvent(false);
 			d_sha1Provider = new SHA1CryptoServiceProvider();
+
+			d_repeatFitness = new Dictionary<uint, List<Dictionary<string, double>>>();
 		}
 
 #if USE_UNIXSIGNAL
@@ -175,7 +175,7 @@ namespace Optimization
 
 		private void AddMessage(params Message[] messages)
 		{
-			lock(d_messageLock)
+			lock (d_messageLock)
 			{
 				foreach (Message msg in messages)
 				{
@@ -194,13 +194,13 @@ namespace Optimization
 			{
 				switch (comm.Type)
 				{
-					case Communication.CommunicationType.Response:
-						messages.Add(new MessageResponse(comm.Response));
+				case Communication.CommunicationType.Response:
+					messages.Add(new MessageResponse(comm.Response));
 					break;
-					case Communication.CommunicationType.Notification:
-						messages.Add(new MessageNotification(comm.Notification));
+				case Communication.CommunicationType.Notification:
+					messages.Add(new MessageNotification(comm.Notification));
 					break;
-					default:
+				default:
 						// NOOP
 					break;
 				}
@@ -390,9 +390,97 @@ namespace Optimization
 			}
 		}
 
+		private Dictionary<string, double> CombineFitness(List<Dictionary<string, double>> f)
+		{
+			Dictionary<string, double> ret = new Dictionary<string, double>();
+			var rt = d_job.Optimizer.Configuration.RepeatTaskCombine;
+
+			foreach (var dic in f)
+			{
+				foreach (KeyValuePair<string, double> pair in dic)
+				{
+					Fitness.Variable v;
+					double val = pair.Value;
+					bool ismin = false;
+
+					if (rt != Optimizer.Settings.RepeatTaskCombineType.Average &&
+					    d_job.Optimizer.Fitness.Variables.TryGetValue(pair.Key, out v) &&
+					    v.Mode == Fitness.Mode.Minimize)
+					{
+						ismin = true;
+					}
+
+					double nv = 0;
+					bool notfirst = ret.TryGetValue(pair.Key, out nv);
+
+					switch (rt)
+					{
+					case Optimizer.Settings.RepeatTaskCombineType.Average:
+					case Optimizer.Settings.RepeatTaskCombineType.Snr:
+						nv += val / f.Count;
+						break;
+					case Optimizer.Settings.RepeatTaskCombineType.Minimum:
+					case Optimizer.Settings.RepeatTaskCombineType.Maximum:
+						if (notfirst)
+						{
+							if ((rt == Optimizer.Settings.RepeatTaskCombineType.Minimum) == ismin)
+							{
+								nv = Math.Max(nv, val);
+							}
+							else
+							{
+								nv = Math.Min(nv, val);
+							}
+						}
+						else
+						{
+							nv = val;
+						}
+						break;
+					}
+
+					ret[pair.Key] = nv;
+				}
+			}
+
+			if (rt == Optimizer.Settings.RepeatTaskCombineType.Snr)
+			{
+				Dictionary<string, double> vari = new Dictionary<string, double>();
+
+				// Compute variance
+				foreach (var dic in f)
+				{
+					foreach (KeyValuePair<string, double> pair in dic)
+					{
+						double vval = 0;
+
+						vari.TryGetValue(pair.Key, out vval);
+
+						var dd = pair.Value - ret[pair.Key];
+						vval += dd * dd;
+
+						vari[pair.Key] = vval;
+					}
+				}
+
+				Dictionary<string, double> snr = new Dictionary<string, double>();
+
+				// calculate snr
+				foreach (var pair in ret)
+				{
+					snr[pair.Key] = (ret[pair.Key] * ret[pair.Key]) / Math.Sqrt(vari[pair.Key] / f.Count);
+				}
+
+				return snr;
+			}
+
+			return ret;
+		}
+
 		protected virtual void OnSuccess(Response response)
 		{
-			Solution solution = d_running[response.Id];
+			uint realid = d_job.Optimizer.RealSolutionId(response.Id);
+			Solution solution = d_running[realid];
 
 			// Create fitness dictionary from response
 			Dictionary<string, double> fitness = new Dictionary<string, double>();
@@ -406,13 +494,31 @@ namespace Optimization
 					vals.Add(String.Format("{0} = {1}", item.Name, item.Value));
 				}
 			}
-			
+
 			if (fitness.Count == 0)
 			{
 				Error("Did not receive any fitness!");
 				fitness["value"] = 0;
 			}
-			
+
+			// Check for repeated fitness
+			if (d_repeatFitness.ContainsKey(realid))
+			{
+				var lst = d_repeatFitness[realid];
+
+				lst.Add(fitness);
+
+				if (lst.Count < d_job.Optimizer.Configuration.RepeatTask)
+				{
+					return;
+				}
+				else
+				{
+					fitness = CombineFitness(lst);
+					d_repeatFitness.Remove(realid);
+				}
+			}
+
 			if (response.Data != null)
 			{
 				foreach (Response.KeyValueType item in response.Data)
@@ -422,7 +528,7 @@ namespace Optimization
 			}
 
 			// Update the solution fitness
-			solution.Update(fitness);
+			d_job.Optimizer.UpdateFitness(solution, fitness);
 
 			try
 			{
@@ -440,26 +546,28 @@ namespace Optimization
 		{
 			switch (failure.Type)
 			{
-				case Response.FailureType.TypeType.Disconnected:
-					return "Disconnected";
-				case Response.FailureType.TypeType.Dispatcher:
-					return "Dispatcher failure";
-				case Response.FailureType.TypeType.DispatcherNotFound:
-					return "Dispatcher not found";
-				case Response.FailureType.TypeType.NoResponse:
-					return "No response";
-				case Response.FailureType.TypeType.Timeout:
-					return "Timeout";
-				case Response.FailureType.TypeType.WrongRequest:
-					return "Wrong request";
-				default:
-					return "Unknown";
+			case Response.FailureType.TypeType.Disconnected:
+				return "Disconnected";
+			case Response.FailureType.TypeType.Dispatcher:
+				return "Dispatcher failure";
+			case Response.FailureType.TypeType.DispatcherNotFound:
+				return "Dispatcher not found";
+			case Response.FailureType.TypeType.NoResponse:
+				return "No response";
+			case Response.FailureType.TypeType.Timeout:
+				return "Timeout";
+			case Response.FailureType.TypeType.WrongRequest:
+				return "Wrong request";
+			default:
+				return "Unknown";
 			}
 		}
 
 		protected virtual void OnFailed(Response response)
 		{
-			Solution solution = d_running[response.Id];
+			uint realid = d_job.Optimizer.RealSolutionId(response.Id);
+			Solution solution = d_running[realid];
+
 			Error("Solution {0} failed: {1} ({2})", solution.Id, FailureToString(response.Failure), response.Failure.Message);
 
 			// Setting value directly will override expressions until Fitness.Clear()
@@ -493,7 +601,9 @@ namespace Optimization
 
 		private void HandleResponse(Response response)
 		{
-			if (!d_running.ContainsKey(response.Id))
+			uint realid = d_job.Optimizer.RealSolutionId(response.Id);
+
+			if (!d_running.ContainsKey(realid))
 			{
 				Error("Received response for inactive solution: {0}", response.Id);
 				return;
@@ -502,14 +612,14 @@ namespace Optimization
 			// Handle response by default handler
 			switch (response.Status)
 			{
-				case Response.StatusType.Success:
-					OnSuccess(response);
+			case Response.StatusType.Success:
+				OnSuccess(response);
 				break;
-				case Response.StatusType.Failed:
-					OnFailed(response);
+			case Response.StatusType.Failed:
+				OnFailed(response);
 				break;
-				case Response.StatusType.Challenge:
-					OnChallenge(response);
+			case Response.StatusType.Challenge:
+				OnChallenge(response);
 				break;
 			}
 		}
@@ -523,14 +633,14 @@ namespace Optimization
 		{
 			switch (notification.NotificationType)
 			{
-				case Notification.Type.Info:
-					OnMessage(this, notification.Message);
+			case Notification.Type.Info:
+				OnMessage(this, notification.Message);
 				break;
-				case Notification.Type.Warning:
-					OnWarning(this, notification.Message);
+			case Notification.Type.Warning:
+				OnWarning(this, notification.Message);
 				break;
-				case Notification.Type.Error:
-					OnError(this, notification.Message);
+			case Notification.Type.Error:
+				OnError(this, notification.Message);
 				break;
 			}
 		}
@@ -570,10 +680,16 @@ namespace Optimization
 		protected virtual bool Send()
 		{
 			d_running.Clear();
+			d_repeatFitness.Clear();
 
 			foreach (Solution solution in d_job.Optimizer.Population)
 			{
 				d_running[solution.Id] = solution;
+
+				if (d_job.Optimizer.Configuration.RepeatTask > 1)
+				{
+					d_repeatFitness[solution.Id] = new List<Dictionary<string, double>>();
+				}
 			}
 
 			Status("Sending new iteration {0} => {1}", d_job.Optimizer.CurrentIteration, d_job.Optimizer.Population.Count);
@@ -588,10 +704,25 @@ namespace Optimization
 			{
 				foreach (Solution solution in d_job.Optimizer.Population)
 				{
-					Dictionary<string, double> fitness;
+					List<Dictionary<string, double>> fitness = new List<Dictionary<string, double>>();
 
-					fitness = dispatcher.Evaluate(solution);
-					solution.Update(fitness);
+					for (uint i = 0; i < Math.Max(1, d_job.Optimizer.Configuration.RepeatTask); ++i)
+					{
+						fitness.Add(dispatcher.Evaluate(solution));
+					}
+
+					Dictionary<string, double> rf;
+
+					if (fitness.Count != 1)
+					{
+						rf = CombineFitness(fitness);
+					}
+					else
+					{
+						rf = fitness[0];
+					}
+
+					d_job.Optimizer.UpdateFitness(solution, rf);
 				}
 				
 				if (!d_job.Optimizer.Next())
@@ -628,7 +759,8 @@ namespace Optimization
 				int secs = d_reconnectTimeout[d_reconnectTimeoutIndex];
 				int val = secs >= 60 ? (secs / 60) : secs;
 
-				Error("Could not connect to master, retrying in {0} {1}{2}...", val, secs >= 60 ? "minute" : "second", val != 1 ? "s" : "");;
+				Error("Could not connect to master, retrying in {0} {1}{2}...", val, secs >= 60 ? "minute" : "second", val != 1 ? "s" : "");
+				;
 				
 				d_waitHandle.WaitOne(secs * 1000, false);
 				
@@ -685,7 +817,7 @@ namespace Optimization
 			return ret;
 		}
 		
-		delegate bool TokenAsyncCallback(TcpClient client, IAsyncResult result);
+		delegate bool TokenAsyncCallback(TcpClient client,IAsyncResult result);
 		
 		private TcpClient ConnectTokenServer(TokenAsyncCallback callback)
 		{
@@ -707,7 +839,7 @@ namespace Optimization
 						return;
 					}
 				}
-				catch  (Exception e)
+				catch (Exception e)
 				{
 					Console.WriteLine(e);
 				}
@@ -795,7 +927,7 @@ namespace Optimization
 				return true;
 			});
 			
-			signaller.WaitOne(1000, false);
+			signaller.WaitOne(5000, false);
 
 			if (!client.Connected)
 			{

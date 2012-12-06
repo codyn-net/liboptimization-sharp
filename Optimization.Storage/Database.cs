@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Data;
 using Mono.Data.Sqlite;
@@ -35,6 +34,7 @@ namespace Optimization.Storage
 	public class Database
 	{
 		public delegate bool RowCallback(IDataReader reader);
+
 		private SqliteConnection d_connection;
 		private string d_uri;
 
@@ -175,7 +175,7 @@ namespace Optimization.Storage
 		
 		public void ImportTable(Database other, string table)
 		{
-			DataTable schema = other.d_connection.GetSchema("Columns", new string[] {null, table});
+			DataTable schema = other.d_connection.GetSchema("Columns", new string[] {null, null, table, null});
 			StringBuilder q = new StringBuilder();
 			
 			q.AppendFormat("CREATE TABLE `{0}` (", table);
@@ -209,12 +209,12 @@ namespace Optimization.Storage
 				
 				first = false;
 			}
-			
+
 			q.Append(")");
 			Query(q.ToString(), pars);
 			
 			DbTransaction transaction = BeginTransaction();
-			
+
 			// Copy data
 			other.Query("SELECT * FROM " + table, delegate (IDataReader reader) {
 				DataTable tbl = new DataTable();

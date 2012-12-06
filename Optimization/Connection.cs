@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -33,13 +32,12 @@ namespace Optimization
 		private TcpClient d_client;
 		private byte[] d_readBuffer;
 		private byte[] d_buffer;
-		
 		private List<string> d_unknowns;
 		private List<string> d_variables;
 
-		public delegate void CommunicationReceivedHandler(object source, Communication[] communication);
-		public event CommunicationReceivedHandler OnCommunicationReceived = delegate {};
+		public delegate void CommunicationReceivedHandler(object source,Communication[] communication);
 
+		public event CommunicationReceivedHandler OnCommunicationReceived = delegate {};
 		public event EventHandler OnClosed = delegate {};
 
 		public Connection()
@@ -180,12 +178,12 @@ namespace Optimization
 			}
 		}
 
-		private Task Construct(Job job, Solution solution)
+		private Task Construct(Job job, Solution solution, uint idx, uint numid)
 		{
 			Task task = new Task();
 
 			// Set task id, dispatcher
-			task.Id = solution.Id;
+			task.Id = solution.Id + idx * numid;
 			task.Dispatcher = job.Dispatcher.Name;
 
 			// Set the job and optimizer name
@@ -244,9 +242,16 @@ namespace Optimization
 
 			List<Task> tasks = new List<Task>();
 
+			uint numid = job.Optimizer.NumId;
+
 			foreach (Solution solution in job.Optimizer)
 			{
-				tasks.Add(Construct(job, solution));
+				uint num = Math.Max(1, job.Optimizer.Configuration.RepeatTask);
+
+				for (uint i = 0; i < num; ++i)
+				{
+					tasks.Add(Construct(job, solution, i, numid));
+				}
 			}
 
 			batch.Tasks = tasks.ToArray();
@@ -293,12 +298,12 @@ namespace Optimization
 			byte[] message = stream.GetBuffer();
 			NetworkStream str = d_client.GetStream();
 
-			byte[] header = Encoding.ASCII.GetBytes(((uint)message.Length).ToString() + " ");
+			byte[] header = Encoding.ASCII.GetBytes(((uint)stream.Length).ToString() + " ");
 
 			try
 			{
 				str.Write(header, 0, header.Length);
-				str.Write(message, 0, message.Length);
+				str.Write(message, 0, (int)stream.Length);
 			}
 			catch
 			{
@@ -377,7 +382,7 @@ namespace Optimization
 			return Send(communication);
 		}
 		
-		delegate double FitnessForIndex(Fitness fitness, int i);
+		delegate double FitnessForIndex(Fitness fitness,int i);
 		
 		public bool Progress(Job job)
 		{
@@ -422,7 +427,7 @@ namespace Optimization
 					
 					if (fitness.Variables.ContainsKey(key))
 					{
-						return fitness.Variables[key].Expression.Evaluate(fitness.Context);
+						return fitness.Variables[key].Expression.Evaluate(Biorob.Math.Constants.Context, fitness.Context);
 					}
 					else
 					{					

@@ -17,7 +17,6 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -32,50 +31,48 @@ namespace Optimization
 	{
 		public class Settings : Optimization.Settings
 		{
+			public enum RepeatTaskCombineType
+			{
+				Average,
+				Minimum,
+				Maximum,
+				Snr
+			}
+
 			[Setting("max-iterations", 60, Description="Maximum number of iterations")]
 			public uint MaxIterations;
-
 			[Setting("population-size", 30, Description="Solution population size")]
 			public uint PopulationSize;
-
 			[Setting("convergence-threshold", "0", Description="Threshold on minimum change in the objective function improvement over convergence-window measurements")]
 			public string ConvergenceThreshold;
-
 			[Setting("convergence-window", "10", Description="Window over which to measure fitness improvement for convergence")]
 			public string ConvergenceWindow;
-
 			[Setting("min-iterations", "20", Description="Minimum number of iterations before calculating convergence")]
 			public string MinIterations;
-			
 			[Setting("initial-population", null, Description="Database file from which to generate the initial population")]
 			public string InitialPopulation;
-			
 			[Setting("initial-population-noise", 0, Description="Noise to add to initial sampling from the initial population database")]
 			public double InitialPopulationNoise;
+			[Setting("repeat-task", 1, Description="Number of times to repeat a task")]
+			public uint RepeatTask;
+			[Setting("repeat-task-combine", RepeatTaskCombineType.Average, Description="Function computing how to combine fitness values from multiple task runs")]
+			public RepeatTaskCombineType RepeatTaskCombine;
 		}
 
 		private Storage.Storage d_storage;
-
 		private State d_state;
 		private Fitness d_fitness;
-
 		private List<Parameter> d_parameters;
 		private List<Boundary> d_boundaries;
 		private Dictionary<string, Boundary> d_boundaryHash;
 		private Dictionary<string, Parameter> d_parameterHash;
-
 		private List<Solution> d_population;
 		private Solution d_best;
-
 		private LinkedList<Fitness> d_lastBest;
-
 		private uint d_currentIteration;
-
 		private Settings d_settings;
 		private ConstructorInfo d_solutionConstructor;
-
 		private List<Extension> d_extensions;
-
 		private Expression d_convergenceThreshold;
 		private Expression d_convergenceWindow;
 		private Expression d_minIterations;
@@ -112,10 +109,10 @@ namespace Optimization
 			{
 				Storage.Database db = new Storage.Database(d_settings.InitialPopulation);
 				db.Open();
-				
+
 				d_storage.ImportTable(db, "initial_population");
 				d_storage.ImportTable(db, "initial_population_data");
-				
+
 				db.Close();
 			}
 			
@@ -167,6 +164,23 @@ namespace Optimization
 			}
 
 			return found;
+		}
+
+		public virtual uint NumId
+		{
+			get { return (uint)d_population.Count; }
+		}
+
+		public uint RealSolutionId(uint id)
+		{
+			if (d_settings.RepeatTask > 1)
+			{
+				return id % NumId;
+			}
+			else
+			{
+				return id;
+			}
 		}
 
 		protected virtual Settings CreateSettings()
@@ -224,16 +238,22 @@ namespace Optimization
 		
 		private void SolutionFromInitial(Solution solution, Optimization.Storage.Records.InitialPopulation population)
 		{
-			int idx = (int)System.Math.Round(State.Random.NextDouble() * population.Population.Count);
+			int idx = (int)System.Math.Round(State.Random.NextDouble() * (population.Population.Count - 1));
 			Optimization.Storage.Records.InitialSolution sol = population.Population[idx];
 			
 			foreach (Parameter parameter in solution.Parameters)
 			{
+				// skip parameters that are not in the initial database
+				if (!sol.Parameters.ContainsKey(parameter.Name))
+				{
+					continue;
+				}
+
 				double val = sol.Parameters[parameter.Name];
 				
 				if (d_settings.InitialPopulationNoise > 0)
 				{
-					val += (State.Random.NextDouble() * 2 - 1) * d_settings.InitialPopulationNoise;
+					val += (State.Random.NextDouble() * 2 - 1) * d_settings.InitialPopulationNoise * (parameter.Boundary.Max - parameter.Boundary.Min);
 					val = System.Math.Max(System.Math.Min(val, parameter.Boundary.Max), parameter.Boundary.Min);
 				}
 				
@@ -249,7 +269,7 @@ namespace Optimization
 		virtual public void InitializePopulation()
 		{
 			d_population.Clear();
-			
+
 			Optimization.Storage.Records.InitialPopulation initial = d_storage.ReadInitialPopulation();
 
 			// Create initial population
@@ -355,7 +375,7 @@ namespace Optimization
 			}
 			set
 			{
-				 d_storage = value;
+				d_storage = value;
 			}
 		}
 
@@ -508,6 +528,16 @@ namespace Optimization
 				{
 					d_best = solution.Clone() as Solution;
 				}
+			}
+		}
+
+		public virtual void UpdateFitness(Solution sol, Dictionary<string, double> fitness)
+		{
+			sol.Update(fitness);
+
+			foreach (Extension ext in Extensions)
+			{
+				ext.UpdateFitness(sol);
 			}
 		}
 

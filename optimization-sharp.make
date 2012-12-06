@@ -5,7 +5,7 @@
 ASSEMBLY_COMPILER_FLAGS =
 
 if ENABLE_DEBUG
-ASSEMBLY_COMPILER_COMMAND = gmcs
+ASSEMBLY_COMPILER_COMMAND = $(CMCS)
 ASSEMBLY_COMPILER_FLAGS +=  -noconfig -codepage:utf8 -warn:4 -optimize- -debug "-define:DEBUG"
 ASSEMBLY = bin/Debug/Optimization.dll
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
@@ -20,7 +20,7 @@ OPTIMIZATION_SHARP_DLL_MDB=$(BUILD_DIR)/Optimization.dll.mdb
 endif
 
 if ENABLE_RELEASE
-ASSEMBLY_COMPILER_COMMAND = gmcs
+ASSEMBLY_COMPILER_COMMAND = $(CMCS)
 ASSEMBLY_COMPILER_FLAGS +=  -noconfig -codepage:utf8 -warn:4 -optimize-
 ASSEMBLY = bin/Release/Optimization.dll
 ASSEMBLY_MDB = 
@@ -147,3 +147,5 @@ uninstall-hook:
 	for ASM in $(INSTALLED_ASSEMBLIES); do \
 		rm -f $(DESTDIR)$(pkglibdir)/`basename $$ASM`; \
 	done
+
+ .NOTPARALLEL:
