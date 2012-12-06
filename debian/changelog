@@ -1,3 +1,12 @@
+liboptimization2-sharp (2.23-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * Fixed restoring from database
+  * New feature: repeat N times
+  * Fixed initial population
+
+ -- Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>  Thu, 06 Dec 2012 10:39:44 +0100
+
 liboptimization2-sharp (2.22-1) precise; urgency=low
 
   * New upstream version 2.22 for precise
