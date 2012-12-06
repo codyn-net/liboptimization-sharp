@@ -479,7 +479,7 @@ namespace Optimization
 
 		protected virtual void OnSuccess(Response response)
 		{
-			uint realid = response.Id % (uint)d_job.Optimizer.Population.Count;
+			uint realid = d_job.Optimizer.RealSolutionId(response.Id);
 			Solution solution = d_running[realid];
 
 			// Create fitness dictionary from response
@@ -565,8 +565,9 @@ namespace Optimization
 
 		protected virtual void OnFailed(Response response)
 		{
-			uint realid = response.Id % (uint)d_job.Optimizer.Population.Count;
+			uint realid = d_job.Optimizer.RealSolutionId(response.Id);
 			Solution solution = d_running[realid];
+
 			Error("Solution {0} failed: {1} ({2})", solution.Id, FailureToString(response.Failure), response.Failure.Message);
 
 			// Setting value directly will override expressions until Fitness.Clear()
@@ -600,7 +601,7 @@ namespace Optimization
 
 		private void HandleResponse(Response response)
 		{
-			uint realid = response.Id % (uint)d_job.Optimizer.Population.Count;
+			uint realid = d_job.Optimizer.RealSolutionId(response.Id);
 
 			if (!d_running.ContainsKey(realid))
 			{

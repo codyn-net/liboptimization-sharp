@@ -166,6 +166,23 @@ namespace Optimization
 			return found;
 		}
 
+		public virtual uint NumId
+		{
+			get { return (uint)d_population.Count; }
+		}
+
+		public uint RealSolutionId(uint id)
+		{
+			if (d_settings.RepeatTask > 1)
+			{
+				return id % NumId;
+			}
+			else
+			{
+				return id;
+			}
+		}
+
 		protected virtual Settings CreateSettings()
 		{
 			Type type = FindTypeClass(typeof(Settings));

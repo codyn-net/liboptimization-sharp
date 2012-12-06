@@ -242,7 +242,7 @@ namespace Optimization
 
 			List<Task> tasks = new List<Task>();
 
-			uint numid = (uint)job.Optimizer.Population.Count;
+			uint numid = job.Optimizer.NumId;
 
 			foreach (Solution solution in job.Optimizer)
 			{
