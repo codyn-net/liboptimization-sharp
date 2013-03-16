@@ -85,6 +85,7 @@ namespace Optimization.Storage
 			if (!d_job.SynchronousStorage)
 			{
 				Query("PRAGMA synchronous = OFF");
+				Query("PRAGMA journal_mode = MEMORY");
 			}
 
 			if (!exists)
