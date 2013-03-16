@@ -93,19 +93,55 @@ namespace Optimization.Storage
 			return d_connection.BeginTransaction();
 		}
 
+		public bool Query(ref IDbCommand cmd, params object[] parameters)
+		{
+			return Query(ref cmd, null, parameters);
+		}
+
+		public bool Query(ref IDbCommand cmd, string s, params object[] parameters)
+		{
+			return Query(s, null, ref cmd, parameters);
+		}
+		
 		public bool Query(string s, RowCallback cb, params object[] parameters)
 		{
-			IDbCommand cmd = d_connection.CreateCommand();
-			cmd.CommandText = s;
+			IDbCommand cmd = null;
+			bool ret = Query(s, cb, ref cmd, parameters);
 
-			for (int idx = 0; idx < parameters.Length; ++idx)
+			cmd.Dispose();
+			cmd = null;
+
+			return ret;
+		}
+
+		public bool Query(string s, RowCallback cb, ref IDbCommand cmd, params object[] parameters)
+		{
+			var ss = new System.Diagnostics.Stopwatch();
+			ss.Start();
+
+			if (cmd == null)
 			{
-				IDbDataParameter par = cmd.CreateParameter();
-				par.ParameterName = "@" + idx;
-				par.Value = parameters[idx];
+				SqliteCommand scmd = d_connection.CreateCommand();
+				scmd.CommandText = s;
 
-				cmd.Parameters.Add(par);
+				for (int idx = 0; idx < parameters.Length; ++idx)
+				{
+					scmd.Parameters.AddWithValue("@" + idx, parameters[idx]);
+				}
+
+				cmd = scmd;
 			}
+			else
+			{
+				SqliteCommand scmd = (SqliteCommand)cmd;
+
+				for (int idx = 0; idx < parameters.Length; ++idx)
+				{
+					scmd.Parameters[idx].Value = parameters[idx];
+				}
+			}
+
+			var paramst = ss.Elapsed.TotalSeconds;
 
 			bool ret = false;
 
@@ -135,9 +171,6 @@ namespace Optimization.Storage
 					reader = null;
 				}
 			}
-
-			cmd.Dispose();
-			cmd = null;
 
 			return ret;
 		}
