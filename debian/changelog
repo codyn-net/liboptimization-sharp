@@ -1,3 +1,10 @@
+liboptimization2-sharp (2.24-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * Much improved performance for writing data
+
+ -- Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>  Sun, 17 Mar 2013 18:08:16 +0100
+
 liboptimization2-sharp (2.23-1) UNRELEASED; urgency=low
 
   * New upstream release
