@@ -85,6 +85,7 @@ namespace Optimization.Storage
 			if (!d_job.SynchronousStorage)
 			{
 				Query("PRAGMA synchronous = OFF");
+				Query("PRAGMA journal_mode = MEMORY");
 			}
 
 			if (!exists)
@@ -345,27 +346,45 @@ namespace Optimization.Storage
 			transaction.Commit();
 		}
 
-		delegate bool GenerateSavePair(object container,out string name,out object val);
+		delegate bool GenerateSavePair(object container, out string name, out object val);
 
 		private void SavePairs(Solution solution, ICollection collection, string table, Dictionary<string, object> additional, GenerateSavePair generator)
 		{
-			StringBuilder builder = new StringBuilder();
-			builder.AppendFormat("INSERT INTO `{0}` (`iteration`", table);
+			IDbCommand cmd = null;
+			SavePairs(solution, collection, table, additional, generator, ref cmd);
 
+			cmd.Dispose();
+			cmd = null;
+		}
+
+		private void SavePairs(Solution solution, ICollection collection, string table, Dictionary<string, object> additional, GenerateSavePair generator, ref IDbCommand cmd)
+		{
 			List<object> vals = new List<object>();
+			StringBuilder builder = null;
+			StringBuilder values = null;
+
+			if (cmd == null)
+			{
+				builder = new StringBuilder();
+				builder.AppendFormat("INSERT INTO `{0}` (`iteration`", table);
+
+				values = new StringBuilder();
+				values.Append("VALUES(@0");
+			}
 
 			vals.Add(Job.Optimizer.CurrentIteration);
-
-			StringBuilder values = new StringBuilder();
-			values.Append("VALUES(@0");
 
 			int i = 1;
 
 			if (solution != null)
 			{
-				builder.Append(", `index`");
+				if (cmd == null)
+				{
+					builder.Append(", `index`");
+					values.Append(", @1");
+				}
+
 				vals.Add(solution.Id);
-				values.Append(", @1");
 				++i;
 			}
 
@@ -373,11 +392,13 @@ namespace Optimization.Storage
 			{
 				foreach (KeyValuePair<string, object> pair in additional)
 				{
-					builder.AppendFormat(", `{0}`", pair.Key);
+					if (cmd == null)
+					{
+						builder.AppendFormat(", `{0}`", pair.Key);
+						values.AppendFormat(", @{0}", i);
+					}
+
 					vals.Add(pair.Value);
-
-					values.AppendFormat(", @{0}", i);
-
 					++i;
 				}
 			}
@@ -389,17 +410,30 @@ namespace Optimization.Storage
 
 				if (generator(o, out name, out val))
 				{
-					builder.AppendFormat(", `{0}`", NormalizeName(name));
-					values.AppendFormat(", @{0}", i);
+					if (cmd == null)
+					{
+						builder.AppendFormat(", `{0}`", NormalizeName(name));
+						values.AppendFormat(", @{0}", i);
+					}
 
 					vals.Add(val);
-
 					++i;
 				}
 			}
 
-			builder.Append(") ").Append(values).Append(")");
-			Query(builder.ToString(), vals.ToArray());
+			string q = null;
+			var v = vals.ToArray();
+
+			if (cmd == null)
+			{
+				builder.Append(") ").Append(values).Append(")");
+				q = builder.ToString();
+				Query(ref cmd, q, v);
+			}
+			else
+			{
+				Query(ref cmd, v);
+			}
 		}
 
 		private void SaveFitness(Solution solution)
@@ -429,7 +463,7 @@ namespace Optimization.Storage
 			});
 		}
 
-		private void SaveParameters(Solution solution)
+		private void SaveParameters(Solution solution, ref IDbCommand cmd)
 		{
 			SavePairs(solution, solution.Parameters, "parameter_values", null, delegate (object o, out string name, out object val) {
 				Parameter parameter = (Parameter)o;
@@ -438,7 +472,7 @@ namespace Optimization.Storage
 				val = parameter.Value;
 
 				return true;
-			});
+			}, ref cmd);
 		}
 		
 		private void SaveActiveParameters(Solution solution)
@@ -481,7 +515,7 @@ namespace Optimization.Storage
 			transaction.Commit();
 		}
 
-		private void SaveData(Solution solution)
+		private void SaveData(Solution solution, ref IDbCommand cmd)
 		{
 			SavePairs(solution, solution.Data, "data", null, delegate (object o, out string name, out object val) {
 				KeyValuePair<string, object> data = (KeyValuePair<string, object>)o;
@@ -490,7 +524,7 @@ namespace Optimization.Storage
 				val = data.Value;
 
 				return true;
-			});
+			}, ref cmd);
 		}
 
 		private void SaveState()
@@ -516,14 +550,34 @@ namespace Optimization.Storage
 			});
 		}
 
-		private void Save(Solution solution)
+		private void Save(Solution solution, List<IDbCommand> cmds)
 		{
 			Query("INSERT INTO `solution` (`index`, `iteration`, `fitness`) VALUES (@0, @1, @2)",
 			      solution.Id, Job.Optimizer.CurrentIteration, solution.Fitness.Value);
 
 			SaveFitness(solution);
-			SaveParameters(solution);
-			SaveData(solution);
+
+			bool first = false;
+
+			if (cmds.Count == 0)
+			{
+				cmds.Add(null);
+				cmds.Add(null);
+
+				first = true;
+			}
+
+			IDbCommand cmdParameters = cmds[0];
+			IDbCommand cmdData = cmds[1];
+
+			SaveParameters(solution, ref cmdParameters);
+			SaveData(solution, ref cmdData);
+
+			if (first)
+			{
+				cmds[0] = cmdParameters;
+				cmds[1] = cmdData;
+			}
 		}
 		
 		private void SaveLog()
@@ -557,9 +611,11 @@ namespace Optimization.Storage
 			Query("INSERT INTO `iteration` (`iteration`, `best_id`, `best_fitness`, `time`) VALUES(@0, @1, @2, @3)",
 			      Job.Optimizer.CurrentIteration, bestid, bestfitness, UnixTimeStamp);
 
+			List<IDbCommand> cmds = new List<IDbCommand>();
+
 			foreach (Solution solution in Job.Optimizer)
 			{
-				Save(solution);
+				Save(solution, cmds);
 			}
 
 			SaveState();
